@@ -5,7 +5,7 @@ import math
 import matplotlib.pyplot as plt
 
 # accepts a gpx filename and returns a dataframe
-# with 2 columns: lat/lon pairs and elevation (in feet)
+# with 2 columns: lat/lon pairs and elevation (in meters)
 
 
 def load_data(filename):
@@ -24,14 +24,14 @@ def load_data(filename):
     df['elevation'] = elevation
     return df
 
-# accepts a list of lat/lon pairs and returns a list of distances (in feet)
+# accepts a list of lat/lon pairs and returns a list of distances (in meters)
 
 
 def calculate_dist(coordinates):
     previous_row = (NAN, NAN)
     distance = []
     for row in coordinates:
-        distance.append(hs.haversine(row, previous_row, unit=hs.Unit.FEET))
+        distance.append(hs.haversine(row, previous_row, unit=hs.Unit.METERS))
         previous_row = row
     return distance
 
