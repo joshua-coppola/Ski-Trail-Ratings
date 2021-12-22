@@ -60,13 +60,24 @@ def calulate_elevation_change(elevation):
 def calculate_slope(elevation_change, distance):
     return [math.degrees(math.atan(x/y)) for x,y in zip(elevation_change, distance)]
 
-#df = load_data('rimrock-415690.gpx')
-df = load_data('tuckered-out.gpx')
+df = load_data('rimrock-415690.gpx')
+df2 = load_data('tuckered-out.gpx')
 df['distance'] = calculate_dist(df['coordinates'])
 df['elevation_change'] = calulate_elevation_change(df['elevation'])
 df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
 
+df2['distance'] = calculate_dist(df2['coordinates'])
+df2['elevation_change'] = calulate_elevation_change(df2['elevation'])
+df2['slope'] = calculate_slope(df2['elevation_change'], df2['distance'])
+
 print(df.slope.min())
 plt.plot(df.lon, df.lat, alpha=.25)
 plt.scatter(df.lon, df.lat, s=8 ,c=abs(df.slope), alpha=1)
+plt.plot(df2.lon, df2.lat, alpha=.25)
+plt.scatter(df2.lon, df2.lat, s=8 ,c=abs(df2.slope), alpha=1)
+plt.colorbar(label='Degrees', orientation='horizontal')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.xticks([])
+plt.yticks([])
 plt.show()
