@@ -5,8 +5,8 @@ import haversine as hs
 import math
 import matplotlib.pyplot as plt
 
-# accepts a gpx filename and returns a dataframe
-# with 4 columns: latitude, longitude, lat/lon pairs and elevation (in meters)
+# accepts a gpx filename and returns a list of 1 dataframe
+# with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
 
 
 def load_gpx(filename):
@@ -29,7 +29,10 @@ def load_gpx(filename):
     df['lon'] = lon
     df['coordinates'] = coordinates
     df['elevation'] = elevation
-    return df
+    return [df]
+
+# accepts a osm filename and returns a list of dataframes with
+# 4 columns: latitude, longitude, lat/lon pairs, and elevation (meteres)
 
 def load_osm(filename):
     file = open(filename, 'r')
@@ -44,15 +47,11 @@ def load_osm(filename):
     in_way_ids = []
     way_name = ''
     is_trail = False
+    blank_name_count = 0
     for row in raw_table:
         row = str(row)
+        # handling when inside a way
         if in_way:
-            if '<node' in row:
-                split_row = row.split('"')
-                id.append(split_row[1])
-                lat.append(float(split_row[15]))
-                lon.append(float(split_row[17]))
-                coordinates.append((float(split_row[15]), float(split_row[17])))
             if '<nd' in row:
                 split_row = row.split('"')
                 in_way_ids.append(split_row[1])
@@ -64,21 +63,40 @@ def load_osm(filename):
             if '</way>' in row:
                 if is_trail:
                     way_name = ''.join(ch for ch in way_name if ch.isalnum())
+                    if way_name == '':
+                        way_name = str(blank_name_count)
+                        blank_name_count += 1
+                    if way_name in way_df.columns:
+                        way_name = way_name + str(blank_name_count)
+                        blank_name_count += 1
                     temp_df = pd.DataFrame()
                     temp_df[way_name] = in_way_ids
                     way_df = pd.concat([way_df, temp_df], axis=1)
                 in_way_ids = []
                 in_way = False
                 way_name = ''
+        # start of a way
         if '<way' in row:
             in_way = True
             is_trail = False
-    print(way_df)
+        # handling nodes
+        if '<node' in row:
+            split_row = row.split('"')
+            id.append(split_row[1])
+            lat.append(float(split_row[15]))
+            lon.append(float(split_row[17]))
+            coordinates.append((float(split_row[15]), float(split_row[17])))
     node_df['id'] = id
     node_df['lat'] = lat
     node_df['lon'] = lon
     node_df['coordinates'] = coordinates
-    return node_df
+
+    trail_list = []
+    for column in way_df:
+        temp_df = pd.merge(way_df[column], node_df, left_on=column, right_on='id')
+        del temp_df['id']
+        trail_list.append(temp_df)
+    return trail_list
 
 # accepts a list of lat/lon pairs and returns a list of distances (in meters)
 
@@ -111,8 +129,8 @@ def calculate_slope(elevation_change, distance):
     return [math.degrees(math.atan(x/y)) for x, y in zip(elevation_change, distance)]
 
 def main():
-    df = load_gpx('rimrock-415690.gpx')
-    df2 = load_gpx('tuckered-out.gpx')
+    df = load_gpx('rimrock-415690.gpx')[0]
+    df2 = load_gpx('tuckered-out.gpx')[0]
     df['distance'] = calculate_dist(df['coordinates'])
     df['elevation_change'] = calulate_elevation_change(df['elevation'])
     df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
@@ -133,6 +151,7 @@ def main():
     plt.yticks([])
     plt.show()
 
-df = load_osm('map.osm')
-plt.scatter(df.lon, df.lat)
+trail_list = load_osm('jay_peak.osm')
+for trail in trail_list:
+    plt.plot(trail.lon, trail.lat)
 plt.show()
