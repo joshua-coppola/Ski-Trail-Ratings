@@ -4,6 +4,7 @@ import pandas as pd
 import haversine as hs
 import math
 import matplotlib.pyplot as plt
+import requests
 
 # accepts a gpx filename and returns a list of 1 dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
@@ -95,7 +96,16 @@ def load_osm(filename):
     for column in way_df:
         temp_df = pd.merge(way_df[column], node_df, left_on=column, right_on='id')
         del temp_df['id']
+        elevation = []
+        for coordinate in temp_df['coordinates']:
+            url = 'https://api.open-elevation.com/api/v1/lookup?locations={},{}'
+            response = requests.get(url.format(coordinate[0], coordinate[1]))
+            if response.status_code == 200:
+                elevation.append(float(str(response.content).split()[-1].split('}')[0]))
+        temp_df['elevation'] = elevation
+        print(elevation)
         trail_list.append(temp_df)
+
     return trail_list
 
 # accepts a list of lat/lon pairs and returns a list of distances (in meters)
@@ -151,7 +161,19 @@ def main():
     plt.yticks([])
     plt.show()
 
-trail_list = load_osm('jay_peak.osm')
-for trail in trail_list:
-    plt.plot(trail.lon, trail.lat)
-plt.show()
+def main2():
+    trail_list = load_osm('jay_peak.osm')
+    for trail in trail_list:
+        trail['distance'] = calculate_dist(trail['coordinates'])
+        trail['elevation_change'] = calulate_elevation_change(trail['elevation'])
+        trail['slope'] = calculate_slope(trail['elevation_change'], trail['distance'])
+        plt.plot(trail.lon, trail.lat, alpha=.25)
+        plt.scatter(trail.lon, trail.lat, s=8, c=abs(trail.slope), alpha=1)
+    plt.colorbar(label='Degrees', orientation='horizontal')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
+
+main2()
