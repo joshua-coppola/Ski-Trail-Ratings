@@ -36,19 +36,20 @@ def load_gpx(filename):
     return [df]
 
 # accepts a list of elevations and smooths the gaps between groupings of
-# same valued points. Returns a list of elevations
+# same valued points. Returns a list
 
 
 def smooth_elevations(elevations):
-    for _ in range(15):
-        previous_previous_point = NAN
-        previous_point = NAN
-        for index, point in enumerate(elevations):
+    for _ in range(1000):
+        previous_previous_point = elevations[0]
+        previous_point = elevations[0]
+        for i, point in enumerate(elevations):
             new_point = (point + previous_point + previous_previous_point) / 3
-            if new_point > 0:
-                elevations[index-1] = new_point
+            if i > 1:
+                elevations[i-1] = new_point
             previous_previous_point = previous_point
             previous_point = point
+        #elevations[-1] = (elevations[-2] + elevations[-1]) / 2
     return elevations
 
 # accepts a osm filename and returns a list of dataframes with
@@ -201,6 +202,9 @@ def calculate_slope(elevation_change, distance):
     slope = [math.degrees(math.atan(x/y))
              for x, y in zip(elevation_change, distance)]
     slope[0] = 0
+    for i, point in enumerate(slope):
+        if point > 0:
+            slope[i] = 0
     return slope
 
 
@@ -216,6 +220,7 @@ def main():
     #df = load_gpx('rimrock-415690.gpx')[0]
     df = load_gpx('tuckered-out.gpx')[0]
     df = fill_in_point_gaps(df)
+    df['elevation'] = smooth_elevations(df['elevation'].to_list())
     df['distance'] = calculate_dist(df['coordinates'])
     df['elevation_change'] = calulate_elevation_change(df['elevation'])
     df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
@@ -245,7 +250,7 @@ def main2():
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
         tempDF = tempDF.append(trail)
         plt.plot(trail.lon, trail.lat, alpha=.25)
-    plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope), alpha=1)
+    plt.scatter(tempDF.lon, tempDF.lat, s=6, c=tempDF.difficulty, cmap='gist_rainbow', alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
