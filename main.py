@@ -5,6 +5,7 @@ import haversine as hs
 import math
 import matplotlib.pyplot as plt
 import requests
+import json
 
 # accepts a gpx filename and returns a list of 1 dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
@@ -96,12 +97,18 @@ def load_osm(filename):
     for column in way_df:
         temp_df = pd.merge(way_df[column], node_df, left_on=column, right_on='id')
         del temp_df['id']
-        elevation = []
+        piped_coords = ''
         for coordinate in temp_df['coordinates']:
-            url = 'https://api.open-elevation.com/api/v1/lookup?locations={},{}'
-            response = requests.get(url.format(coordinate[0], coordinate[1]))
-            if response.status_code == 200:
-                elevation.append(float(str(response.content).split()[-1].split('}')[0]))
+            if piped_coords == '':
+                piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
+                continue
+            piped_coords = piped_coords + '|{},{}'.format(coordinate[0], coordinate[1])
+        url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
+        response = requests.get(url.format(piped_coords))
+        if response.status_code == 200:
+            elevation = []
+            for result in json.loads(response.content)['results']:
+                elevation.append(result['elevation'])
         temp_df['elevation'] = elevation
         print(elevation)
         trail_list.append(temp_df)
