@@ -12,9 +12,8 @@ The next steps are to create a more informative visual display of the data, and 
 
 ### OSM files
 
-It will take an osm file, and output a map of all ski trails. Slope calculations do exist, but due to the quality of the data, a smoothing function will need to be added.
+It will take an osm file, and output a map of all ski trails. There are still some quirks with the slopes that are calculated, but overall the osm files are now working well.
 
 ## What's next?
 
-The next steps are to create a more informative visual display of the data, and creating the rating system to classify trails. For osm files in particular, the next
-step is adding feature parity with gpx files by adding smoothing to the elevation data.
+The next steps are to create a more informative visual display of the data, and creating the rating system to classify trails.

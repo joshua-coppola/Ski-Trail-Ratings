@@ -35,7 +35,7 @@ def load_gpx(filename):
     df['elevation'] = elevation
     return [df]
 
-# accepts a list of elevations and smooths the gaps between groupings of 
+# accepts a list of elevations and smooths the gaps between groupings of
 # same valued points. Returns a list of elevations
 
 
@@ -131,7 +131,6 @@ def load_osm(filename):
             for result in json.loads(response.content)['results']:
                 elevation.append(result['elevation'])
         temp_df['elevation'] = smooth_elevations(elevation)
-        print(elevation)
         trail_list.append(temp_df)
 
     return trail_list
@@ -149,7 +148,8 @@ def calculate_dist(coordinates):
     return distance
 
 # accepts a df with lat, lon, lat/lon pairs, and elevation and returns
-# a df with the same columns, but points spaced out by no more than 25
+# a df with the same columns, but points spaced out by no more than 20
+
 
 def fill_in_point_gaps(df):
     lat = df['lat'].tolist()
@@ -161,13 +161,14 @@ def fill_in_point_gaps(df):
         distances = calculate_dist(coordinates)
         not_changed = 0
         for index, point in enumerate(distances):
-            if point > 25:
+            if point > 20:
                 new_lat = (lat[index]+lat[index-1])/2
                 new_lon = (lon[index]+lon[index-1])/2
                 lat.insert(index, new_lat)
                 lon.insert(index, new_lon)
-                coordinates.insert(index, (new_lat,new_lon))
-                elevation.insert(index, (elevation[index]+elevation[index-1])/2)
+                coordinates.insert(index, (new_lat, new_lon))
+                elevation.insert(
+                    index, (elevation[index]+elevation[index-1])/2)
                 break
             not_changed += 1
         if not_changed == len(coordinates):
@@ -178,8 +179,7 @@ def fill_in_point_gaps(df):
     new_df['coordinates'] = coordinates
     new_df['elevation'] = elevation
     return new_df
-    
-    
+
 
 # accepts a list of elevations and returns the difference between
 # neighboring elevations
@@ -198,11 +198,24 @@ def calulate_elevation_change(elevation):
 
 
 def calculate_slope(elevation_change, distance):
-    return [math.degrees(math.atan(x/y)) for x, y in zip(elevation_change, distance)]
+    slope = [math.degrees(math.atan(x/y))
+             for x, y in zip(elevation_change, distance)]
+    slope[0] = 0
+    return slope
+
+
+def calculate_point_difficulty(slope):
+    difficulty = []
+    for point in slope:
+        difficulty.append(abs(point)/90)
+    difficulty[0] = 0
+    return difficulty
 
 
 def main():
-    df = load_gpx('rimrock-415690.gpx')[0]
+    #df = load_gpx('rimrock-415690.gpx')[0]
+    df = load_gpx('tuckered-out.gpx')[0]
+    df = fill_in_point_gaps(df)
     df['distance'] = calculate_dist(df['coordinates'])
     df['elevation_change'] = calulate_elevation_change(df['elevation'])
     df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
@@ -219,7 +232,9 @@ def main():
 
 
 def main2():
-    trail_list = load_osm('okemo.osm')
+    trail_list = load_osm('jay_peak.osm')
+    tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
+                          'distance', 'elevation_change', 'slope', 'difficulty'])
     for trail in trail_list:
         trail = fill_in_point_gaps(trail)
         trail['distance'] = calculate_dist(trail['coordinates'])
@@ -227,8 +242,10 @@ def main2():
             trail['elevation'])
         trail['slope'] = calculate_slope(
             trail['elevation_change'], trail['distance'])
+        trail['difficulty'] = calculate_point_difficulty(trail['slope'])
+        tempDF = tempDF.append(trail)
         plt.plot(trail.lon, trail.lat, alpha=.25)
-        plt.scatter(trail.lon, trail.lat, s=8, c=abs(trail.slope), alpha=1)
+    plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope), alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
