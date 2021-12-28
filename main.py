@@ -136,6 +136,7 @@ def load_osm(filename):
 
     return trail_list
 
+
 # accepts a list of lat/lon pairs and returns a list of distances (in meters)
 
 
@@ -146,6 +147,39 @@ def calculate_dist(coordinates):
         distance.append(hs.haversine(row, previous_row, unit=hs.Unit.METERS))
         previous_row = row
     return distance
+
+# accepts a df with lat, lon, lat/lon pairs, and elevation and returns
+# a df with the same columns, but points spaced out by no more than 25
+
+def fill_in_point_gaps(df):
+    lat = df['lat'].tolist()
+    lon = df['lon'].tolist()
+    coordinates = df['coordinates'].tolist()
+    elevation = df['elevation'].tolist()
+    done = False
+    while not done:
+        distances = calculate_dist(coordinates)
+        not_changed = 0
+        for index, point in enumerate(distances):
+            if point > 25:
+                new_lat = (lat[index]+lat[index-1])/2
+                new_lon = (lon[index]+lon[index-1])/2
+                lat.insert(index, new_lat)
+                lon.insert(index, new_lon)
+                coordinates.insert(index, (new_lat,new_lon))
+                elevation.insert(index, (elevation[index]+elevation[index-1])/2)
+                break
+            not_changed += 1
+        if not_changed == len(coordinates):
+            done = True
+    new_df = pd.DataFrame()
+    new_df['lat'] = lat
+    new_df['lon'] = lon
+    new_df['coordinates'] = coordinates
+    new_df['elevation'] = elevation
+    return new_df
+    
+    
 
 # accepts a list of elevations and returns the difference between
 # neighboring elevations
@@ -169,20 +203,13 @@ def calculate_slope(elevation_change, distance):
 
 def main():
     df = load_gpx('rimrock-415690.gpx')[0]
-    df2 = load_gpx('tuckered-out.gpx')[0]
     df['distance'] = calculate_dist(df['coordinates'])
     df['elevation_change'] = calulate_elevation_change(df['elevation'])
     df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
 
-    df2['distance'] = calculate_dist(df2['coordinates'])
-    df2['elevation_change'] = calulate_elevation_change(df2['elevation'])
-    df2['slope'] = calculate_slope(df2['elevation_change'], df2['distance'])
-
     print(df.slope.min())
     plt.plot(df.lon, df.lat, alpha=.25)
     plt.scatter(df.lon, df.lat, s=8, c=abs(df.slope), alpha=1)
-    plt.plot(df2.lon, df2.lat, alpha=.25)
-    plt.scatter(df2.lon, df2.lat, s=8, c=abs(df2.slope), alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -194,6 +221,7 @@ def main():
 def main2():
     trail_list = load_osm('okemo.osm')
     for trail in trail_list:
+        trail = fill_in_point_gaps(trail)
         trail['distance'] = calculate_dist(trail['coordinates'])
         trail['elevation_change'] = calulate_elevation_change(
             trail['elevation'])
