@@ -1,5 +1,7 @@
-from numpy import NAN
+from numpy import NAN, maximum, not_equal
 import numpy as np
+from numpy.lib.arraysetops import unique
+from numpy.lib.function_base import average
 import pandas as pd
 import haversine as hs
 import math
@@ -33,8 +35,25 @@ def load_gpx(filename):
     df['elevation'] = elevation
     return [df]
 
+# accepts a list of elevations and smooths the gaps between groupings of 
+# same valued points. Returns a list of elevations
+
+
+def smooth_elevations(elevations):
+    for _ in range(15):
+        previous_previous_point = NAN
+        previous_point = NAN
+        for index, point in enumerate(elevations):
+            new_point = (point + previous_point + previous_previous_point) / 3
+            if new_point > 0:
+                elevations[index-1] = new_point
+            previous_previous_point = previous_point
+            previous_point = point
+    return elevations
+
 # accepts a osm filename and returns a list of dataframes with
 # 4 columns: latitude, longitude, lat/lon pairs, and elevation (meteres)
+
 
 def load_osm(filename):
     file = open(filename, 'r')
@@ -95,21 +114,23 @@ def load_osm(filename):
 
     trail_list = []
     for column in way_df:
-        temp_df = pd.merge(way_df[column], node_df, left_on=column, right_on='id')
+        temp_df = pd.merge(way_df[column], node_df,
+                           left_on=column, right_on='id')
         del temp_df['id']
         piped_coords = ''
         for coordinate in temp_df['coordinates']:
             if piped_coords == '':
                 piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
                 continue
-            piped_coords = piped_coords + '|{},{}'.format(coordinate[0], coordinate[1])
+            piped_coords = piped_coords + \
+                '|{},{}'.format(coordinate[0], coordinate[1])
         url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
         response = requests.get(url.format(piped_coords))
         if response.status_code == 200:
             elevation = []
             for result in json.loads(response.content)['results']:
                 elevation.append(result['elevation'])
-        temp_df['elevation'] = elevation
+        temp_df['elevation'] = smooth_elevations(elevation)
         print(elevation)
         trail_list.append(temp_df)
 
@@ -145,6 +166,7 @@ def calulate_elevation_change(elevation):
 def calculate_slope(elevation_change, distance):
     return [math.degrees(math.atan(x/y)) for x, y in zip(elevation_change, distance)]
 
+
 def main():
     df = load_gpx('rimrock-415690.gpx')[0]
     df2 = load_gpx('tuckered-out.gpx')[0]
@@ -168,12 +190,15 @@ def main():
     plt.yticks([])
     plt.show()
 
+
 def main2():
-    trail_list = load_osm('jay_peak.osm')
+    trail_list = load_osm('okemo.osm')
     for trail in trail_list:
         trail['distance'] = calculate_dist(trail['coordinates'])
-        trail['elevation_change'] = calulate_elevation_change(trail['elevation'])
-        trail['slope'] = calculate_slope(trail['elevation_change'], trail['distance'])
+        trail['elevation_change'] = calulate_elevation_change(
+            trail['elevation'])
+        trail['slope'] = calculate_slope(
+            trail['elevation_change'], trail['distance'])
         plt.plot(trail.lon, trail.lat, alpha=.25)
         plt.scatter(trail.lon, trail.lat, s=8, c=abs(trail.slope), alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
@@ -182,5 +207,6 @@ def main2():
     plt.xticks([])
     plt.yticks([])
     plt.show()
+
 
 main2()
