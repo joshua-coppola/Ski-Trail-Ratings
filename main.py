@@ -40,7 +40,7 @@ def load_gpx(filename):
 
 
 def smooth_elevations(elevations):
-    for _ in range(1000):
+    for _ in range(20):
         previous_previous_point = elevations[0]
         previous_point = elevations[0]
         for i, point in enumerate(elevations):
@@ -49,7 +49,6 @@ def smooth_elevations(elevations):
                 elevations[i-1] = new_point
             previous_previous_point = previous_point
             previous_point = point
-        #elevations[-1] = (elevations[-2] + elevations[-1]) / 2
     return elevations
 
 # accepts a osm filename and returns a list of dataframes with
@@ -131,7 +130,7 @@ def load_osm(filename):
             elevation = []
             for result in json.loads(response.content)['results']:
                 elevation.append(result['elevation'])
-        temp_df['elevation'] = smooth_elevations(elevation)
+        temp_df['elevation'] = pd.Series(smooth_elevations(elevation))
         trail_list.append(temp_df)
 
     return trail_list
@@ -199,21 +198,48 @@ def calulate_elevation_change(elevation):
 
 
 def calculate_slope(elevation_change, distance):
-    slope = [math.degrees(math.atan(x/y))
-             for x, y in zip(elevation_change, distance)]
+    slope = []
+    for x, y in zip(elevation_change, distance):
+        if y != 0:
+            slope.append(math.degrees(math.atan(x/y)))
+        else:
+            slope.append(0)
     slope[0] = 0
     for i, point in enumerate(slope):
         if point > 0:
             slope[i] = 0
     return slope
 
+# accepts a list of slopes and returns a list of difficulties (0-.9 scale)
+
 
 def calculate_point_difficulty(slope):
     difficulty = []
     for point in slope:
-        difficulty.append(abs(point)/90)
+        difficulty.append((abs(point)/90)*.9)
     difficulty[0] = 0
     return difficulty
+
+# accepts a series of difficulties and returns an overall trail rating (0-.9 scale) as a float
+
+
+def rate_trail(difficulty):
+    sorted_difficulty = difficulty.sort_values(ascending=False)
+    if len(sorted_difficulty) >= 10:
+        return sorted_difficulty.head(10).sum()/10
+    return sorted_difficulty.sum()/len(sorted_difficulty)
+
+# accepts a float and converts it into a trail color (return a string)
+
+
+def set_color(rating):
+    if rating < .18:
+        return 'green'
+    if rating < .24:
+        return 'royalblue'
+    if rating < .45:
+        return 'black'
+    return 'red'
 
 
 def main():
@@ -224,10 +250,12 @@ def main():
     df['distance'] = calculate_dist(df['coordinates'])
     df['elevation_change'] = calulate_elevation_change(df['elevation'])
     df['slope'] = calculate_slope(df['elevation_change'], df['distance'])
+    df['difficulty'] = calculate_point_difficulty(df['slope'].to_list())
+    rating = rate_trail(df['difficulty'])
+    color = set_color(rating)
 
-    print(df.slope.min())
-    plt.plot(df.lon, df.lat, alpha=.25)
-    plt.scatter(df.lon, df.lat, s=8, c=abs(df.slope), alpha=1)
+    plt.plot(df.lon, df.lat, c = color, alpha = .25)
+    plt.scatter(df.lon, df.lat, s=8, c=abs(df.slope), cmap='gist_rainbow',alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -237,7 +265,7 @@ def main():
 
 
 def main2():
-    trail_list = load_osm('jay_peak.osm')
+    trail_list = load_osm('okemo.osm')
     tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
                           'distance', 'elevation_change', 'slope', 'difficulty'])
     for trail in trail_list:
@@ -248,10 +276,13 @@ def main2():
         trail['slope'] = calculate_slope(
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
+        rating = rate_trail(trail['difficulty'])
+        color = set_color(rating)
         tempDF = tempDF.append(trail)
-        plt.plot(trail.lon, trail.lat, alpha=.25)
-    plt.scatter(tempDF.lon, tempDF.lat, s=6, c=tempDF.difficulty, cmap='gist_rainbow', alpha=1)
-    plt.colorbar(label='Degrees', orientation='horizontal')
+        plt.plot(abs(trail.lat), abs(trail.lon), c = color)
+    #plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope),
+    #            cmap='gist_rainbow', alpha=1)
+    #plt.colorbar(label='Rating (Higher is more difficult)', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.xticks([])
