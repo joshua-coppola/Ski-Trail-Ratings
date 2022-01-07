@@ -224,10 +224,24 @@ def calculate_point_difficulty(slope):
 
 
 def rate_trail(difficulty):
-    sorted_difficulty = difficulty.sort_values(ascending=False)
-    if len(sorted_difficulty) >= 10:
-        return sorted_difficulty.head(10).sum()/10
-    return sorted_difficulty.sum()/len(sorted_difficulty)
+    #sorted_difficulty = difficulty.sort_values(ascending=False)
+    #if len(sorted_difficulty) >= 10:
+    #    return sorted_difficulty.head(10).sum()/10
+    #return sorted_difficulty.sum()/len(sorted_difficulty)
+    max_difficulty = 0
+    previous = 0
+    previous_2 = 0
+    previous_3 = 0
+    for point in difficulty:
+        nearby_avg = (point + previous + previous_2 + previous_3) / 4
+        if nearby_avg > max_difficulty:
+            max_difficulty = nearby_avg
+        previous_3 = previous_2
+        previous_2 = previous
+        previous = point
+    return max_difficulty
+
+        
 
 # accepts a float and converts it into a trail color (return a string)
 
@@ -244,7 +258,8 @@ def set_color(rating):
 
 def main():
     #df = load_gpx('rimrock-415690.gpx')[0]
-    df = load_gpx('tuckered-out.gpx')[0]
+    #df = load_gpx('tuckered-out.gpx')[0]
+    df = load_gpx('big-bang-409529.gpx')[0]
     df = fill_in_point_gaps(df)
     df['elevation'] = smooth_elevations(df['elevation'].to_list())
     df['distance'] = calculate_dist(df['coordinates'])
@@ -253,6 +268,8 @@ def main():
     df['difficulty'] = calculate_point_difficulty(df['slope'].to_list())
     rating = rate_trail(df['difficulty'])
     color = set_color(rating)
+    print(rating)
+    print(color)
 
     plt.plot(df.lon, df.lat, c = color, alpha = .25)
     plt.scatter(df.lon, df.lat, s=8, c=abs(df.slope), cmap='gist_rainbow',alpha=1)
@@ -265,7 +282,7 @@ def main():
 
 
 def main2():
-    trail_list = load_osm('okemo.osm')
+    trail_list = load_osm('cannon.osm')
     tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
                           'distance', 'elevation_change', 'slope', 'difficulty'])
     for trail in trail_list:
