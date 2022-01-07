@@ -224,10 +224,6 @@ def calculate_point_difficulty(slope):
 
 
 def rate_trail(difficulty):
-    #sorted_difficulty = difficulty.sort_values(ascending=False)
-    #if len(sorted_difficulty) >= 10:
-    #    return sorted_difficulty.head(10).sum()/10
-    #return sorted_difficulty.sum()/len(sorted_difficulty)
     max_difficulty = 0
     previous = 0
     previous_2 = 0
