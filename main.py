@@ -1,4 +1,4 @@
-from numpy import NAN, maximum, not_equal
+from numpy import NAN
 import numpy as np
 from numpy.lib.arraysetops import unique
 from numpy.lib.function_base import average
@@ -8,6 +8,8 @@ import math
 import matplotlib.pyplot as plt
 import requests
 import json
+from os.path import exists
+from ast import literal_eval
 
 # accepts a gpx filename and returns a list of 1 dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
@@ -39,8 +41,8 @@ def load_gpx(filename):
 # same valued points. Returns a list
 
 
-def smooth_elevations(elevations):
-    for _ in range(20):
+def smooth_elevations(elevations, passes=20):
+    for _ in range(passes):
         previous_previous_point = elevations[0]
         previous_point = elevations[0]
         for i, point in enumerate(elevations):
@@ -55,7 +57,7 @@ def smooth_elevations(elevations):
 # 4 columns: latitude, longitude, lat/lon pairs, and elevation (meteres)
 
 
-def load_osm(filename):
+def load_osm(filename, cached=False, cached_filename=''):
     file = open(filename, 'r')
     raw_table = file.readlines()
     node_df = pd.DataFrame()
@@ -85,10 +87,10 @@ def load_osm(filename):
                 if is_trail:
                     way_name = ''.join(ch for ch in way_name if ch.isalnum())
                     if way_name == '':
-                        way_name = str(blank_name_count)
+                        way_name = ' _' + str(blank_name_count)
                         blank_name_count += 1
                     if way_name in way_df.columns:
-                        way_name = way_name + str(blank_name_count)
+                        way_name = way_name + '_' + str(blank_name_count)
                         blank_name_count += 1
                     temp_df = pd.DataFrame()
                     temp_df[way_name] = in_way_ids
@@ -118,19 +120,29 @@ def load_osm(filename):
                            left_on=column, right_on='id')
         del temp_df['id']
         piped_coords = ''
-        for coordinate in temp_df['coordinates']:
-            if piped_coords == '':
-                piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
-                continue
-            piped_coords = piped_coords + \
-                '|{},{}'.format(coordinate[0], coordinate[1])
-        url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
-        response = requests.get(url.format(piped_coords))
-        if response.status_code == 200:
-            elevation = []
-            for result in json.loads(response.content)['results']:
-                elevation.append(result['elevation'])
-        temp_df['elevation'] = pd.Series(smooth_elevations(elevation))
+        if not cached:
+            for coordinate in temp_df['coordinates']:
+                if piped_coords == '':
+                    piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
+                    continue
+                piped_coords = piped_coords + \
+                    '|{},{}'.format(coordinate[0], coordinate[1])
+            url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
+            response = requests.get(url.format(piped_coords))
+            if response.status_code == 200:
+                elevation = []
+                for result in json.loads(response.content)['results']:
+                    elevation.append(result['elevation'])
+                temp_df['elevation'] = pd.Series(elevation)
+            else:
+                print(response.status_code)
+                print(response.content)
+                return
+        else:
+            elevation_df = pd.read_csv(cached_filename, converters={
+                                       'coordinates': literal_eval})
+            elevation_df = elevation_df[['coordinates', 'elevation']]
+            temp_df = pd.merge(temp_df, elevation_df, on='coordinates')
         trail_list.append(temp_df)
 
     return trail_list
@@ -151,7 +163,7 @@ def calculate_dist(coordinates):
 # a df with the same columns, but points spaced out by no more than 20
 
 
-def fill_in_point_gaps(df):
+def fill_in_point_gaps(df, max_gap=20):
     lat = df['lat'].tolist()
     lon = df['lon'].tolist()
     coordinates = df['coordinates'].tolist()
@@ -161,7 +173,7 @@ def fill_in_point_gaps(df):
         distances = calculate_dist(coordinates)
         not_changed = 0
         for index, point in enumerate(distances):
-            if point > 20:
+            if point > max_gap:
                 new_lat = (lat[index]+lat[index-1])/2
                 new_lon = (lon[index]+lon[index-1])/2
                 lat.insert(index, new_lat)
@@ -237,19 +249,32 @@ def rate_trail(difficulty):
         previous = point
     return max_difficulty
 
-        
 
 # accepts a float and converts it into a trail color (return a string)
 
 
 def set_color(rating):
-    if rating < .18:
+    if rating < .16:
         return 'green'
-    if rating < .24:
+    if rating < .22:
         return 'royalblue'
     if rating < .45:
         return 'black'
     return 'red'
+
+# accepts a list of trails and saves the latitude, longitude, and elevation
+# to a csv as a cache
+
+
+def cache_elevation(filename, list_dfs):
+    if exists(filename):
+        return
+    output_df = pd.DataFrame(columns=['coordinates', 'elevation'])
+    for trail in list_dfs:
+        trail = trail[['coordinates', 'elevation']]
+        output_df = output_df.append(trail)
+    print(output_df)
+    output_df.to_csv(filename)
 
 
 def main():
@@ -267,8 +292,9 @@ def main():
     print(rating)
     print(color)
 
-    plt.plot(df.lon, df.lat, c = color, alpha = .25)
-    plt.scatter(df.lon, df.lat, s=8, c=abs(df.slope), cmap='gist_rainbow',alpha=1)
+    plt.plot(df.lon, df.lat, c=color, alpha=.25)
+    plt.scatter(df.lon, df.lat, s=8, c=abs(
+        df.slope), cmap='gist_rainbow', alpha=1)
     plt.colorbar(label='Degrees', orientation='horizontal')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -278,10 +304,14 @@ def main():
 
 
 def main2():
-    trail_list = load_osm('cannon.osm')
+    trail_list = load_osm('okemo.osm', True, 'okemo.csv')
     tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
                           'distance', 'elevation_change', 'slope', 'difficulty'])
+    cache_elevation('okemo.csv', trail_list)
     for trail in trail_list:
+        #trail = fill_in_point_gaps(trail)
+        trail['elevation'] = smooth_elevations(
+            trail['elevation'].to_list(), 50)
         trail = fill_in_point_gaps(trail)
         trail['distance'] = calculate_dist(trail['coordinates'])
         trail['elevation_change'] = calulate_elevation_change(
@@ -292,8 +322,8 @@ def main2():
         rating = rate_trail(trail['difficulty'])
         color = set_color(rating)
         tempDF = tempDF.append(trail)
-        plt.plot(abs(trail.lat), abs(trail.lon), c = color)
-    #plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope),
+        plt.plot(abs(trail.lat), abs(trail.lon), c=color)
+    # plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope),
     #            cmap='gist_rainbow', alpha=1)
     #plt.colorbar(label='Rating (Higher is more difficult)', orientation='horizontal')
     plt.xlabel('Longitude')
