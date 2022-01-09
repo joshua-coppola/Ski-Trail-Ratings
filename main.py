@@ -155,7 +155,8 @@ def load_osm(filename, cached=False, cached_filename=''):
             else:
                 print('Elevation API call failed on {} with code:'.format(column))
                 print(response.status_code)
-                return
+                print(response.content)
+                return -1
         else:
             elevation_df = pd.read_csv(cached_filename, converters={
                                        'coordinates': literal_eval})
@@ -362,8 +363,11 @@ def main():
 
 
 def main2():
-    mountain = 'sunday_river'
+    difficultly_modifiers = False
+    mountain = 'okemo'
     trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
+    if trail_list == -1:
+        return
     tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
                           'distance', 'elevation_change', 'slope', 'difficulty'])
     cache_elevation(mountain + '.csv', trail_list)
@@ -379,7 +383,10 @@ def main2():
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
         rating = rate_trail(trail['difficulty'])
-        color = set_color(rating, entry[2])
+        if difficultly_modifiers:
+            color = set_color(rating, entry[2])
+        else:
+            color = set_color(rating)
         tempDF = tempDF.append(trail)
         plt.plot(abs(trail.lat), abs(trail.lon), c=color)
     # plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope),
