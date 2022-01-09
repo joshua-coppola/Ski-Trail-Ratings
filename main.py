@@ -10,6 +10,7 @@ import requests
 import json
 from os.path import exists
 from ast import literal_eval
+import time
 
 # accepts a gpx filename and returns a list of 1 dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
@@ -37,10 +38,29 @@ def load_gpx(filename):
     df['elevation'] = elevation
     return [df]
 
+# accepts a string with coords separated by a | and returns a list of elevations
+
+
+def get_elevation(piped_coords, column):
+    #url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
+    url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
+    time.sleep(1)
+    response = requests.get(url.format(piped_coords))
+    if response.status_code == 200:
+        elevation = []
+        for result in json.loads(response.content)['results']:
+            elevation.append(result['elevation'])
+    else:
+        print('Elevation API call failed on {} with code:'.format(column))
+        print(response.status_code)
+        print(response.content)
+        return -1
+    return elevation
+
 # accepts a osm filename and returns a list of tuples.
 # Each tuple contains a dataframe with
 # 4 columns: latitude, longitude, lat/lon pairs, and elevation (meters)
-# a string with the trailname, 
+# a string with the trailname,
 # and an int (0-2) to denote if the trail is gladed, has moguls, or both (unlikely)
 
 
@@ -86,7 +106,7 @@ def load_osm(filename, cached=False, cached_filename=''):
             if 'glade' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
-            
+
             if '</way>' in row:
                 if is_trail:
                     way_name = ''.join(ch for ch in way_name if ch.isalnum())
@@ -99,7 +119,8 @@ def load_osm(filename, cached=False, cached_filename=''):
                     temp_df = pd.DataFrame()
                     temp_df[way_name] = in_way_ids
                     way_df = pd.concat([way_df, temp_df], axis=1)
-                    difficulty_modifier_list.append((way_name, difficulty_modifier))
+                    difficulty_modifier_list.append(
+                        (way_name, difficulty_modifier))
                 in_way_ids = []
                 in_way = False
                 way_name = ''
@@ -127,6 +148,11 @@ def load_osm(filename, cached=False, cached_filename=''):
 
     trail_list = []
     trail_num = 0
+    api_requests = 0
+    if cached:
+        elevation_df = pd.read_csv(cached_filename, converters={
+                                   'coordinates': literal_eval})
+        elevation_df = elevation_df[['coordinates', 'elevation']]
     for column in way_df:
         trail_num += 1
         if trail_num % 10 == 1:
@@ -134,43 +160,48 @@ def load_osm(filename, cached=False, cached_filename=''):
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']
+        temp_df = fill_in_point_gaps(temp_df, 15)
         piped_coords = ''
         if not cached:
+            point_count = 0
+            elevations = []
             for coordinate in temp_df['coordinates']:
                 if piped_coords == '':
                     piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
                     continue
                 piped_coords = piped_coords + \
                     '|{},{}'.format(coordinate[0], coordinate[1])
-            url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
-            response = requests.get(url.format(piped_coords))
-            if response.status_code == 200:
-                elevation = []
-                for result in json.loads(response.content)['results']:
-                    elevation.append(result['elevation'])
-                temp_df['elevation'] = pd.Series(elevation)
-            elif response.status_code == 502:
-                print('{} has too many datapoints. It will be skipped.'.format(column))
-                continue
-            else:
-                print('Elevation API call failed on {} with code:'.format(column))
-                print(response.status_code)
-                print(response.content)
-                return -1
+                point_count += 1
+                if point_count >= 99:
+                    temp_elevations = get_elevation(piped_coords, column)
+                    api_requests += 1
+                    if temp_elevations == -1:
+                        return -1
+                    piped_coords = ''
+                    point_count = 0
+                    for point in temp_elevations:
+                        elevations.append(point)
+            if piped_coords != '':
+                temp_elevations = get_elevation(piped_coords, column)
+                api_requests += 1
+                if temp_elevations == -1:
+                    return -1
+                for point in temp_elevations:
+                    elevations.append(point)
+            temp_df['elevation'] = pd.Series(elevations)
         else:
-            elevation_df = pd.read_csv(cached_filename, converters={
-                                       'coordinates': literal_eval})
-            elevation_df = elevation_df[['coordinates', 'elevation']]
             row_count = temp_df.shape[0]
             temp_df = pd.merge(temp_df, elevation_df, on='coordinates')
             if temp_df.shape[0] < row_count:
-                print('{} has missing elevation data. It will be skipped.'.format(column))
+                print(
+                    '{} has missing elevation data. It will be skipped.'.format(column))
                 continue
         for row in difficulty_modifier_list:
             if column in row[0]:
                 difficulty_modifier = row[1]
         trail_list.append((temp_df, column, difficulty_modifier))
     print('All trails sucessfully loaded')
+    print('{} API requests made'.format(api_requests))
 
     return trail_list
 
@@ -194,7 +225,6 @@ def fill_in_point_gaps(df, max_gap=20):
     lat = df['lat'].tolist()
     lon = df['lon'].tolist()
     coordinates = df['coordinates'].tolist()
-    elevation = df['elevation'].tolist()
     done = False
     while not done:
         distances = calculate_dist(coordinates)
@@ -206,8 +236,8 @@ def fill_in_point_gaps(df, max_gap=20):
                 lat.insert(index, new_lat)
                 lon.insert(index, new_lon)
                 coordinates.insert(index, (new_lat, new_lon))
-                elevation.insert(
-                    index, (elevation[index]+elevation[index-1])/2)
+                # elevation.insert(
+                #    index, (elevation[index]+elevation[index-1])/2)
                 break
             not_changed += 1
         if not_changed == len(coordinates):
@@ -216,7 +246,6 @@ def fill_in_point_gaps(df, max_gap=20):
     new_df['lat'] = lat
     new_df['lon'] = lon
     new_df['coordinates'] = coordinates
-    new_df['elevation'] = elevation
     return new_df
 
 # accepts a list of elevations and smooths the gaps between groupings of
@@ -301,15 +330,17 @@ def rate_trail(difficulty):
 
 def set_color(rating, difficultly_modifier=0):
     numeric_color = 0
-    if rating < .15:
+    if rating < .16:
         numeric_color = 1
-    elif rating < .21:
+    elif rating < .23:
         numeric_color = 2
-    elif rating < .40:
+    elif rating < .32:
         numeric_color = 3
-    else:
+    elif rating < .45:
         numeric_color = 4
-    numeric_color += difficultly_modifier
+    else:
+        numeric_color = 5
+    numeric_color += int(difficultly_modifier)
     if numeric_color == 1:
         return 'green'
     if numeric_color == 2:
@@ -319,8 +350,8 @@ def set_color(rating, difficultly_modifier=0):
     if numeric_color == 4:
         return 'red'
     if numeric_color >= 5:
-        return 'yellow'
-    
+        return 'gold'
+
 
 # accepts a list of trails and saves the latitude, longitude, and elevation
 # to a csv as a cache
@@ -334,6 +365,38 @@ def cache_elevation(filename, list_dfs):
         trail = entry[0][['coordinates', 'elevation']]
         output_df = output_df.append(trail)
     output_df.to_csv(filename)
+
+# accepts a list of trail tuples, a boolean for whether to use difficulty
+# modifiers, and a pair of ints (plus a bool) to rotate the map. Their values should
+# be -1 or 1 and T/F for the bool.
+
+
+def create_map(trails, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False):
+    for entry in trails:
+        rating = rate_trail(entry[0]['difficulty'])
+        if difficulty_modifiers:
+            color = set_color(rating, entry[2])
+        else:
+            color = set_color(rating)
+        if not flip_lat_lon:
+            if entry[2] == 0:
+                plt.plot(entry[0].lat * lat_mirror,
+                         entry[0].lon * lon_mirror, c=color)
+            if entry[2] > 0:
+                plt.plot(entry[0].lat * lat_mirror, entry[0].lon *
+                         lon_mirror, c=color, linestyle='dashed')
+        if flip_lat_lon:
+            if entry[2] == 0:
+                plt.plot(entry[0].lon * lon_mirror,
+                         entry[0].lat * lat_mirror, c=color)
+            if entry[2] > 0:
+                plt.plot(entry[0].lon * lon_mirror, entry[0].lat *
+                         lat_mirror, c=color, linestyle='dashed')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
 
 
 def main():
@@ -363,40 +426,36 @@ def main():
 
 
 def main2():
-    difficultly_modifiers = False
-    mountain = 'okemo'
+    difficulty_modifiers = True
+    mountain = 'stowe'
     trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return
     tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
                           'distance', 'elevation_change', 'slope', 'difficulty'])
+    finished_trail_list = []
     cache_elevation(mountain + '.csv', trail_list)
     for entry in trail_list:
-        trail = fill_in_point_gaps(entry[0], 10)
+        trail = entry[0]
         trail['elevation'] = smooth_elevations(
-            trail['elevation'].to_list(), 500)
-        #trail = fill_in_point_gaps(trail)
+            trail['elevation'].to_list(), 1)
         trail['distance'] = calculate_dist(trail['coordinates'])
         trail['elevation_change'] = calulate_elevation_change(
             trail['elevation'])
         trail['slope'] = calculate_slope(
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
-        rating = rate_trail(trail['difficulty'])
-        if difficultly_modifiers:
-            color = set_color(rating, entry[2])
-        else:
-            color = set_color(rating)
-        tempDF = tempDF.append(trail)
-        plt.plot(abs(trail.lat), abs(trail.lon), c=color)
-    # plt.scatter(tempDF.lon, tempDF.lat, s=6, c=abs(tempDF.slope),
-    #            cmap='gist_rainbow', alpha=1)
-    #plt.colorbar(label='Rating (Higher is more difficult)', orientation='horizontal')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
+        finished_trail_list.append((trail, entry[1], entry[2]))
+    create_map(finished_trail_list, difficulty_modifiers, 1, -1)
+    # ^^west facing
+    # okemo, killington, stowe
+    create_map(finished_trail_list, difficulty_modifiers, -1, 1)
+    # ^^east facing
+    create_map(finished_trail_list, difficulty_modifiers, 1, 1, True)
+    # ^^south facing
+    create_map(finished_trail_list, difficulty_modifiers, -1, -1, True)
+    # ^^north facing
+    # cannon, holiday_valley, sunday_river
 
 
 main2()
