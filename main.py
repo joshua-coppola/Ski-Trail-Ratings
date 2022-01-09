@@ -79,6 +79,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     way_name = ''
     is_trail = False
     is_glade = False
+    is_backcountry = False
     blank_name_count = 0
     difficulty_modifier = 0
     difficulty_modifier_list = []
@@ -95,8 +96,11 @@ def load_osm(filename, cached=False, cached_filename=''):
                 split_row = row.split('"')
                 way_name = split_row[3]
             if '<tag k="piste:difficulty"' in row:
-                total_trail_count += 1
                 is_trail = True
+            if '<tag k="piste:type" v="backcountry"/>' in row:
+                is_backcountry = True
+            if '<tag k="piste:type" v="nordic"/>' in row:
+                is_backcountry = True
             if '<tag k="gladed" v="yes"/>' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
@@ -108,7 +112,8 @@ def load_osm(filename, cached=False, cached_filename=''):
                 is_glade = True
 
             if '</way>' in row:
-                if is_trail:
+                if is_trail and not is_backcountry:
+                    total_trail_count += 1
                     way_name = ''.join(ch for ch in way_name if ch.isalnum())
                     if way_name == '':
                         way_name = ' _' + str(blank_name_count)
@@ -129,6 +134,7 @@ def load_osm(filename, cached=False, cached_filename=''):
             in_way = True
             is_trail = False
             is_glade = False
+            is_backcountry = False
             difficulty_modifier = 0
         # handling nodes
         if '<node' in row:
@@ -372,6 +378,35 @@ def cache_elevation(filename, list_dfs):
 
 
 def create_map(trails, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False):
+    mountain_max_lat = 0
+    mountain_min_lat = 90
+    mountain_max_lon = 0
+    mountain_min_lon = 90
+    for entry in trails:
+        trail_max_lat = abs(entry[0]['lat']).max()
+        trail_min_lat = abs(entry[0]['lat']).min()
+        if trail_max_lat > mountain_max_lat:
+            mountain_max_lat = trail_max_lat
+        if trail_min_lat < mountain_min_lat:
+            mountain_min_lat = trail_min_lat
+        trail_max_lon = abs(entry[0]['lon']).max()
+        trail_min_lon = abs(entry[0]['lon']).min()
+        if trail_max_lon > mountain_max_lon:
+            mountain_max_lon = trail_max_lon
+        if trail_min_lon < mountain_min_lon:
+            mountain_min_lon = trail_min_lon
+    top_corner = (mountain_max_lat, mountain_max_lon)
+    bottom_corner = (mountain_min_lat, mountain_max_lon)
+    bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
+    n_s_length = calculate_dist([top_corner, bottom_corner])[1] / 1000
+    e_w_length = calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
+    if flip_lat_lon:
+        temp = n_s_length
+        n_s_length = e_w_length
+        e_w_length = temp
+    print((n_s_length, e_w_length))
+    plt.figure(figsize=(n_s_length*2,e_w_length*2))
+
     for entry in trails:
         rating = rate_trail(entry[0]['difficulty'])
         if difficulty_modifiers:
@@ -392,10 +427,9 @@ def create_map(trails, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_la
             if entry[2] > 0:
                 plt.plot(entry[0].lon * lon_mirror, entry[0].lat *
                          lat_mirror, c=color, linestyle='dashed')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
     plt.xticks([])
     plt.yticks([])
+    plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.show()
 
 
@@ -427,12 +461,10 @@ def main():
 
 def main2():
     difficulty_modifiers = True
-    mountain = 'stowe'
+    mountain = 'sunday_river'
     trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return
-    tempDF = pd.DataFrame(columns=['lat', 'lon', 'coordinates', 'elevation',
-                          'distance', 'elevation_change', 'slope', 'difficulty'])
     finished_trail_list = []
     cache_elevation(mountain + '.csv', trail_list)
     for entry in trail_list:
