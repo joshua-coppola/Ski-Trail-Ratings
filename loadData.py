@@ -1,10 +1,12 @@
 import pandas as pd
 from os.path import exists
 from ast import literal_eval
+import matplotlib.pyplot as plt
 
 import helper
+import saveData
 
-# accepts a gpx filename and returns a list of 1 dataframe
+# accepts a gpx filename and returns a dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
 
 
@@ -28,7 +30,36 @@ def load_gpx(filename):
     df['lon'] = lon
     df['coordinates'] = coordinates
     df['elevation'] = elevation
-    return [df]
+    return df
+
+# Parameters:
+# filename: name of gpx file. GPX file should contain 1 trail.
+#   type-string
+#
+# Return Type: none
+
+def runGPX(filename):
+    df = load_gpx(filename)
+    df = helper.fill_in_point_gaps(df, 15, 'gpx')
+    df['elevation'] = helper.smooth_elevations(df['elevation'].to_list())
+    df['distance'] = helper.calculate_dist(df['coordinates'])
+    df['elevation_change'] = helper.calulate_elevation_change(df['elevation'])
+    df['slope'] = helper.calculate_slope(df['elevation_change'], df['distance'])
+    df['difficulty'] = helper.calculate_point_difficulty(df['slope'].to_list())
+    rating = helper.rate_trail(df['difficulty'])
+    color = helper.set_color(rating)
+    print(rating)
+    print(color)
+
+    plt.plot(df.lon, df.lat, c=color, alpha=.25)
+    plt.scatter(df.lon, df.lat, s=8, c=abs(
+        df.slope), cmap='gist_rainbow', alpha=1)
+    plt.colorbar(label='Degrees', orientation='horizontal')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
 
 # accepts a osm filename and returns a list of tuples.
 # Each tuple contains a dataframe with
@@ -165,7 +196,8 @@ def load_osm(filename, cached=False, cached_filename=''):
                     '|{},{}'.format(coordinate[0], coordinate[1])
                 point_count += 1
                 if point_count >= 99:
-                    temp_elevations = helper.get_elevation(piped_coords, column)
+                    temp_elevations = helper.get_elevation(
+                        piped_coords, column)
                     api_requests += 1
                     if temp_elevations == -1:
                         return -1
@@ -193,3 +225,55 @@ def load_osm(filename, cached=False, cached_filename=''):
     print('{} API requests made'.format(api_requests))
 
     return trail_list
+
+# Parameters:
+# mountain: name of ski area
+#   type-string
+# difficulty_modifiers: run with or without increased difficulty for tree trails
+#   type-bool
+# cardinal_direction: which way does the ski area face
+#   type-string
+#   valid options-'n','s','e','w' or some combination of the 4
+# save_map: whethere to save the output to an svg file
+#   type-bool
+#   note-not recommended to be set to 'True' if more than one cardinal_direction 
+#   is chosen
+
+
+def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map=False):
+    trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
+    if trail_list == -1:
+        return -1
+    finished_trail_list = []
+    saveData.cache_elevation(mountain + '.csv', trail_list)
+    for entry in trail_list:
+        trail = entry[0]
+        trail['elevation'] = helper.smooth_elevations(
+            trail['elevation'].to_list(), 1)
+        trail['distance'] = helper.calculate_dist(trail['coordinates'])
+        trail['elevation_change'] = helper.calulate_elevation_change(
+            trail['elevation'])
+        trail['slope'] = helper.calculate_slope(
+            trail['elevation_change'], trail['distance'])
+        trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
+        finished_trail_list.append((trail, entry[1], entry[2]))
+    if 'w' in cardinal_direction or 'W' in cardinal_direction:
+        saveData.create_map(finished_trail_list, mountain,
+                            difficulty_modifiers, 1, -1, False, save_map)
+        # ^^west facing
+        # okemo, killington, stowe, bristol
+    if 'e' in cardinal_direction or 'E' in cardinal_direction:
+        saveData.create_map(finished_trail_list, mountain,
+                            difficulty_modifiers, -1, 1, False, save_map)
+        # ^^east facing
+    if 's' in cardinal_direction or 'S' in cardinal_direction:
+        saveData.create_map(finished_trail_list, mountain,
+                            difficulty_modifiers, 1, 1, True, save_map)
+        # ^^south facing
+        # bromley
+    if 'n' in cardinal_direction or 'N' in cardinal_direction:
+        saveData.create_map(finished_trail_list, mountain,
+                            difficulty_modifiers, -1, -1, True, save_map)
+        # ^^north facing
+        # cannon, holiday_valley, sunday_river, purgatory, pat's_peak, 
+        # jay_peak, crested_butte

@@ -120,3 +120,4 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
         print('SVG saved')
     plt.show()
+    

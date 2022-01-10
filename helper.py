@@ -40,10 +40,12 @@ def calculate_dist(coordinates):
 # a df with the same columns, but points spaced out by no more than 20
 
 
-def fill_in_point_gaps(df, max_gap=20):
+def fill_in_point_gaps(df, max_gap=20, filetype='osm'):
     lat = df['lat'].tolist()
     lon = df['lon'].tolist()
     coordinates = df['coordinates'].tolist()
+    if filetype == 'gpx':
+        elevation = df['elevation'].tolist()
     done = False
     while not done:
         distances = calculate_dist(coordinates)
@@ -55,8 +57,9 @@ def fill_in_point_gaps(df, max_gap=20):
                 lat.insert(index, new_lat)
                 lon.insert(index, new_lon)
                 coordinates.insert(index, (new_lat, new_lon))
-                # elevation.insert(
-                #    index, (elevation[index]+elevation[index-1])/2)
+                if filetype == 'gpx':
+                    elevation.insert(
+                        index, (elevation[index]+elevation[index-1])/2)
                 break
             not_changed += 1
         if not_changed == len(coordinates):
@@ -65,6 +68,8 @@ def fill_in_point_gaps(df, max_gap=20):
     new_df['lat'] = lat
     new_df['lon'] = lon
     new_df['coordinates'] = coordinates
+    if filetype == 'gpx':
+        new_df['elevation'] = elevation
     return new_df
 
 # accepts a df with 3 columns: lat, lon, lat/lon pairs. Retruns the information

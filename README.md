@@ -19,3 +19,5 @@ At this point, the maps are mostly down to fine tuning. There are some trails th
 Trail name placement is working well most of the time, but there is room for improvement.
 
 Areas are converted into a line with mixed results. Additional logic would probably improve results.
+
+Adding chair lifts to the maps may add some clarity.
