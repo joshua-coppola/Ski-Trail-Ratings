@@ -14,8 +14,4 @@ It will take an osm file, and output a map of all ski trails with a difficultly 
 
 ## What's next?
 
-The difficultly and smoothing functions still need some work. While they usually produce good results, some trail ratings that are output are either too hard or too easy. 
-
-I need to add whether a trail is gladed or has moguls, and take that into account when setting difficulty.
-
-The maps produced also need labels, and an autoscaler to size the chart to be proportional.
+At this point, the maps are mostly down to fine tuning. There are some trails that are broken up into several pieces, and I want to stitch them back together.

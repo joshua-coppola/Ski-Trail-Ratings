@@ -1,16 +1,17 @@
+from math import atan2, degrees
+import time
+from ast import literal_eval
+from os.path import exists
+import json
+import requests
+import matplotlib.pyplot as plt
 from numpy import NAN
-import numpy as np
 from numpy.lib.arraysetops import unique
 from numpy.lib.function_base import average
 import pandas as pd
 import haversine as hs
 import math
-import matplotlib.pyplot as plt
-import requests
-import json
-from os.path import exists
-from ast import literal_eval
-import time
+import random
 
 # accepts a gpx filename and returns a list of 1 dataframe
 # with 4 columns: latitude, longitude, lat/lon pairs and elevation (meters)
@@ -42,7 +43,7 @@ def load_gpx(filename):
 
 
 def get_elevation(piped_coords, column):
-    #url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
+    # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
     time.sleep(1)
     response = requests.get(url.format(piped_coords))
@@ -65,7 +66,7 @@ def get_elevation(piped_coords, column):
 
 
 def load_osm(filename, cached=False, cached_filename=''):
-    file = open(filename, 'r')
+    file = open('osm/{}'.format(filename), 'r')
     print('Opening File')
     raw_table = file.readlines()
     node_df = pd.DataFrame()
@@ -110,11 +111,14 @@ def load_osm(filename, cached=False, cached_filename=''):
             if 'glade' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
+            if 'Glade' in row and not is_glade:
+                difficulty_modifier += 1
+                is_glade = True
 
             if '</way>' in row:
                 if is_trail and not is_backcountry:
                     total_trail_count += 1
-                    way_name = ''.join(ch for ch in way_name if ch.isalnum())
+                    # way_name = ''.join(ch for ch in way_name if ch.isalnum())
                     if way_name == '':
                         way_name = ' _' + str(blank_name_count)
                         blank_name_count += 1
@@ -148,7 +152,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     node_df['lon'] = lon
     node_df['coordinates'] = coordinates
 
-    if not exists(cached_filename) and cached:
+    if not exists('cached/{}'.format(cached_filename)) and cached:
         cached = False
         print('Disabling cache loading: no cache file found.')
 
@@ -156,7 +160,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     trail_num = 0
     api_requests = 0
     if cached:
-        elevation_df = pd.read_csv(cached_filename, converters={
+        elevation_df = pd.read_csv('cached/{}'.format(cached_filename), converters={
                                    'coordinates': literal_eval})
         elevation_df = elevation_df[['coordinates', 'elevation']]
     for column in way_df:
@@ -364,7 +368,7 @@ def set_color(rating, difficultly_modifier=0):
 
 
 def cache_elevation(filename, list_dfs):
-    if exists(filename):
+    if exists('cached/{}'.format(filename)):
         return
     output_df = pd.DataFrame(columns=['coordinates', 'elevation'])
     for entry in list_dfs:
@@ -372,16 +376,18 @@ def cache_elevation(filename, list_dfs):
         output_df = output_df.append(trail)
     output_df.to_csv(filename)
 
-# accepts a list of trail tuples, a boolean for whether to use difficulty
-# modifiers, and a pair of ints (plus a bool) to rotate the map. Their values should
-# be -1 or 1 and T/F for the bool.
+
+# accepts a list of trail tuples, the name of the ski area, a boolean for
+# whether to use difficulty modifiers, and a pair of ints (plus a bool) to
+# rotate the map. Their values should be -1 or 1 and T/F for the bool. The
+# last param is a bool for whether to save the map.
 
 
-def create_map(trails, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False):
+def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False, save=False):
     mountain_max_lat = 0
     mountain_min_lat = 90
     mountain_max_lon = 0
-    mountain_min_lon = 90
+    mountain_min_lon = 180
     for entry in trails:
         trail_max_lat = abs(entry[0]['lat']).max()
         trail_min_lat = abs(entry[0]['lat']).min()
@@ -404,39 +410,76 @@ def create_map(trails, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_la
         temp = n_s_length
         n_s_length = e_w_length
         e_w_length = temp
-    print((n_s_length, e_w_length))
-    plt.figure(figsize=(n_s_length*2,e_w_length*2))
 
+    plt.figure(figsize=(n_s_length*2, e_w_length*2))
     for entry in trails:
         rating = rate_trail(entry[0]['difficulty'])
         if difficulty_modifiers:
             color = set_color(rating, entry[2])
         else:
             color = set_color(rating)
+        trail_name = entry[1]
+        if '_' in trail_name:
+            trail_name = trail_name.split('_')[0]
+        midpoint = int(len(entry[0].lat.to_list())/2)
+        dx = (entry[0].lat.to_list()[midpoint]) - \
+            (entry[0].lat.to_list()[midpoint+2])
+        dy = (entry[0].lon.to_list()[midpoint])- \
+            (entry[0].lon.to_list()[midpoint+2])
         if not flip_lat_lon:
+            ang = degrees(atan2(dx, dy)) - 90
+            if ang < -90:
+                ang += 180
             if entry[2] == 0:
                 plt.plot(entry[0].lat * lat_mirror,
-                         entry[0].lon * lon_mirror, c=color)
+                         entry[0].lon * lon_mirror, c=color, label=trail_name)
             if entry[2] > 0:
                 plt.plot(entry[0].lat * lat_mirror, entry[0].lon *
-                         lon_mirror, c=color, linestyle='dashed')
+                         lon_mirror, c=color, linestyle='dashed', label=trail_name)
+            plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
+                     (entry[0].lon.to_list()[midpoint]) * lon_mirror, trail_name, 
+                     {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
+                     backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                     fc='white', ec='none'))
         if flip_lat_lon:
+            ang = degrees(atan2(dx, dy))
+            if ang < -90:
+                ang -= 180
+            if ang > 90:
+                ang -= 180
             if entry[2] == 0:
                 plt.plot(entry[0].lon * lon_mirror,
-                         entry[0].lat * lat_mirror, c=color)
+                         entry[0].lat * lat_mirror, c=color, label=trail_name)
             if entry[2] > 0:
                 plt.plot(entry[0].lon * lon_mirror, entry[0].lat *
-                         lat_mirror, c=color, linestyle='dashed')
+                         lat_mirror, c=color, linestyle='dashed', label=trail_name)
+            plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
+                     (entry[0].lat.to_list()[midpoint]) * lat_mirror, trail_name, 
+                     {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
+                     backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                     fc='white', ec='none'))
     plt.xticks([])
     plt.yticks([])
-    plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
+    if mountain != '':
+        mountain_list = mountain.split('_')
+        mountain = ''
+        for word in mountain_list:
+            mountain = mountain + ('{} '.format(word.capitalize()))
+        plt.title(mountain)
+        plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
+                            top=.92, wspace=0, hspace=0)
+    else:
+        plt.subplots_adjust(left=0, bottom=0, right=1,
+                            top=1, wspace=0, hspace=0)
+    if save:
+        plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
     plt.show()
 
 
 def main():
-    #df = load_gpx('rimrock-415690.gpx')[0]
-    #df = load_gpx('tuckered-out.gpx')[0]
-    df = load_gpx('big-bang-409529.gpx')[0]
+    # df = load_gpx('rimrock-415690.gpx')[0]
+    # df = load_gpx('tuckered-out.gpx')[0]
+    df = load_gpx('gpx/big-bang-409529.gpx')[0]
     df = fill_in_point_gaps(df)
     df['elevation'] = smooth_elevations(df['elevation'].to_list())
     df['distance'] = calculate_dist(df['coordinates'])
@@ -461,7 +504,7 @@ def main():
 
 def main2():
     difficulty_modifiers = True
-    mountain = 'sunday_river'
+    mountain = 'purgatory'
     trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return
@@ -478,16 +521,16 @@ def main2():
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
-    create_map(finished_trail_list, difficulty_modifiers, 1, -1)
+    #create_map(finished_trail_list, mountain, difficulty_modifiers, 1, -1)
     # ^^west facing
     # okemo, killington, stowe
-    create_map(finished_trail_list, difficulty_modifiers, -1, 1)
+    # create_map(finished_trail_list, mountain, difficulty_modifiers, -1, 1)
     # ^^east facing
-    create_map(finished_trail_list, difficulty_modifiers, 1, 1, True)
+    # create_map(finished_trail_list, mountain, difficulty_modifiers, 1, 1, True)
     # ^^south facing
-    create_map(finished_trail_list, difficulty_modifiers, -1, -1, True)
+    create_map(finished_trail_list, mountain, difficulty_modifiers, -1, -1, True, True)
     # ^^north facing
-    # cannon, holiday_valley, sunday_river
+    # cannon, holiday_valley, sunday_river, purgatory
 
 
 main2()
