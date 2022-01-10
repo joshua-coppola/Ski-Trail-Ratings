@@ -339,27 +339,17 @@ def rate_trail(difficulty):
 
 
 def set_color(rating, difficultly_modifier=0):
-    numeric_color = 0
+    rating += .07 * difficultly_modifier
     if rating < .16:
-        numeric_color = 1
-    elif rating < .23:
-        numeric_color = 2
-    elif rating < .32:
-        numeric_color = 3
-    elif rating < .45:
-        numeric_color = 4
-    else:
-        numeric_color = 5
-    numeric_color += int(difficultly_modifier)
-    if numeric_color == 1:
         return 'green'
-    if numeric_color == 2:
+    if rating < .23:
         return 'royalblue'
-    if numeric_color == 3:
+    if rating < .32:
         return 'black'
-    if numeric_color == 4:
+    elif rating < .45:
         return 'red'
-    if numeric_color >= 5:
+    else:
+        print(rating)
         return 'gold'
 
 
@@ -473,6 +463,7 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
                             top=1, wspace=0, hspace=0)
     if save:
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
+        print('SVG saved')
     plt.show()
 
 
@@ -504,7 +495,7 @@ def main():
 
 def main2():
     difficulty_modifiers = True
-    mountain = 'purgatory'
+    mountain = 'stowe'
     trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return
@@ -521,14 +512,14 @@ def main2():
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
-    #create_map(finished_trail_list, mountain, difficulty_modifiers, 1, -1)
+    create_map(finished_trail_list, mountain, difficulty_modifiers, 1, -1, False, True)
     # ^^west facing
     # okemo, killington, stowe
     # create_map(finished_trail_list, mountain, difficulty_modifiers, -1, 1)
     # ^^east facing
     # create_map(finished_trail_list, mountain, difficulty_modifiers, 1, 1, True)
     # ^^south facing
-    create_map(finished_trail_list, mountain, difficulty_modifiers, -1, -1, True, True)
+    #create_map(finished_trail_list, mountain, difficulty_modifiers, -1, -1, True, True)
     # ^^north facing
     # cannon, holiday_valley, sunday_river, purgatory
 

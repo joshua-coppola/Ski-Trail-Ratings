@@ -15,3 +15,5 @@ It will take an osm file, and output a map of all ski trails with a difficultly 
 ## What's next?
 
 At this point, the maps are mostly down to fine tuning. There are some trails that are broken up into several pieces, and I want to stitch them back together.
+
+I need to add code to address when trails are denoted by an area rather than a line.
