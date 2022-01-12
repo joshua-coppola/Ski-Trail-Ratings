@@ -32,6 +32,8 @@ def bulk_osm(input_csv):
         for line in csv_file:
             print('\nProcessing {}'.format(line[0]))
             diff_tuple = loadData.runOSM(line[0], difficulty_modifiers, line[1], save_map)
+            if diff_tuple == -1:
+                continue
             mountain_list = line[0].split('_')
             mountain_name = ''
             for word in mountain_list:
@@ -67,5 +69,6 @@ def bulk_osm(input_csv):
                             top=.9, wspace=0, hspace=0)
     plt.grid(axis='x')
     plt.show()
+
 bulk_osm('mountain_list.csv')
 #osm()

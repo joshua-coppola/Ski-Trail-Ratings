@@ -53,7 +53,7 @@ def runGPX(filename):
 # Each tuple contains a dataframe with
 # 4 columns: latitude, longitude, lat/lon pairs, and elevation (meters)
 # a string with the trailname,
-# and an int (0-2) to denote if the trail is gladed, has moguls, or both (unlikely)
+# and an int (0-1) to denote if the trail is gladed
 
 
 def load_osm(filename, cached=False, cached_filename=''):
@@ -205,7 +205,9 @@ def load_osm(filename, cached=False, cached_filename=''):
         del temp_df['id']
         del temp_df[column]
         lift_list.append((temp_df, column))
-
+    if total_trail_count == 0:
+        print('No trails found.')
+        return (-1, -1)
     print('All trails sucessfully loaded')
     print('{} API requests made'.format(api_requests))
 
