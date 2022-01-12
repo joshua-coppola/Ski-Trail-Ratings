@@ -62,6 +62,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     raw_table = file.readlines()
     node_df = pd.DataFrame()
     way_df = pd.DataFrame()
+    lift_df = pd.DataFrame()
     id = []
     lat = []
     lon = []
@@ -73,6 +74,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     is_glade = False
     is_backcountry = False
     is_area = True
+    is_lift = True
     blank_name_count = 0
     difficulty_modifier = 0
     useful_info_list = []
@@ -110,6 +112,8 @@ def load_osm(filename, cached=False, cached_filename=''):
             if 'Glade' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
+            if '<tag k="aerialway"' in row:
+                is_lift = True
 
             if '</way>' in row:
                 if is_trail and not is_backcountry:
@@ -125,6 +129,16 @@ def load_osm(filename, cached=False, cached_filename=''):
                     way_df = pd.concat([way_df, temp_df], axis=1)
                     useful_info_list.append(
                         (way_name, difficulty_modifier, is_area))
+                if is_lift:
+                    if way_name == '':
+                        way_name = ' _' + str(blank_name_count)
+                        blank_name_count += 1
+                    if way_name in lift_df.columns:
+                        way_name = way_name + '_' + str(blank_name_count)
+                        blank_name_count += 1
+                    temp_df = pd.DataFrame()
+                    temp_df[way_name] = in_way_ids
+                    lift_df = pd.concat([lift_df, temp_df], axis=1)
                 in_way_ids = []
                 in_way = False
                 way_name = ''
@@ -135,6 +149,7 @@ def load_osm(filename, cached=False, cached_filename=''):
             is_glade = False
             is_backcountry = False
             is_area = False
+            is_lift = False
             difficulty_modifier = 0
         # handling nodes
         if '<node' in row:
@@ -184,10 +199,17 @@ def load_osm(filename, cached=False, cached_filename=''):
                     '{} has missing elevation data. It will be skipped.'.format(column))
                 continue
         trail_list.append((temp_df, column, difficulty_modifier))
+    lift_list = []
+    for column in lift_df:
+        temp_df = pd.merge(lift_df[column], node_df, left_on=column, right_on='id')
+        del temp_df['id']
+        del temp_df[column]
+        lift_list.append((temp_df, column))
+
     print('All trails sucessfully loaded')
     print('{} API requests made'.format(api_requests))
 
-    return trail_list
+    return (trail_list, lift_list)
 
 # Parameters:
 # mountain: name of ski area
@@ -207,7 +229,7 @@ def load_osm(filename, cached=False, cached_filename=''):
 
 
 def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map=False):
-    trail_list = load_osm(mountain + '.osm', True, mountain + '.csv')
+    trail_list, lift_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return -1
     finished_trail_list = []
@@ -224,19 +246,19 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
     if 'w' in cardinal_direction or 'W' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, 1, -1, False, save_map)
         # ^^west facing
     if 'e' in cardinal_direction or 'E' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, -1, 1, False, save_map)
         # ^^east facing
     if 's' in cardinal_direction or 'S' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, 1, 1, True, save_map)
         # ^^south facing
     if 'n' in cardinal_direction or 'N' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, -1, -1, True, save_map)
         # ^^north facing
     return mtn_difficulty

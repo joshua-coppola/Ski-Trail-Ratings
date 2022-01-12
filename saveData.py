@@ -45,7 +45,7 @@ def cache_elevation(filename, list_dfs):
 #   type-tuple of tuples
 
 
-def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False, save=False):
+def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False, save=False):
     mountain_max_lat = 0
     mountain_min_lat = 90
     mountain_max_lon = 0
@@ -72,9 +72,51 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
         temp = n_s_length
         n_s_length = e_w_length
         e_w_length = temp
+    print((n_s_length, e_w_length))
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
     rating_list = []
+    for entry in lifts:
+        lift_name = entry[1]
+        if '_' in lift_name:
+            lift_name = lift_name.split('_')[0]
+        midpoint = int(len(entry[0].lat.to_list())/2)
+        if midpoint <= 2:
+            dx = 0
+            dy = 0
+        if midpoint > 2:    
+            dx = (entry[0].lat.to_list()[midpoint]) - \
+                (entry[0].lat.to_list()[midpoint+2])
+            dy = (entry[0].lon.to_list()[midpoint])- \
+                (entry[0].lon.to_list()[midpoint+2])
+        if not flip_lat_lon:
+            ang = degrees(atan2(dx, dy)) - 90
+            if ang < -90:
+                ang += 180
+            plt.plot(entry[0].lat * lat_mirror,
+                    entry[0].lon * lon_mirror, c='grey')
+            if helper.get_trail_length(entry[0].coordinates) > 200:
+                plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
+                        (entry[0].lon.to_list()[midpoint]) * lon_mirror, lift_name, 
+                        {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
+                        backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                        fc='white', ec='none'))
+        if flip_lat_lon:
+            ang = degrees(atan2(dx, dy))
+            if ang < -90:
+                ang -= 180
+            if ang > 90:
+                ang -= 180
+            plt.plot(entry[0].lon * lon_mirror,
+                    entry[0].lat * lat_mirror, c='grey')
+            if helper.get_trail_length(entry[0].coordinates) > 200:
+                plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
+                        (entry[0].lat.to_list()[midpoint]) * lat_mirror, lift_name, 
+                        {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
+                        backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                        fc='white', ec='none'))
+            
+        
     for entry in trails:
         rating = helper.rate_trail(entry[0]['difficulty'])
         rating_list.append(round((rating * 100), 0))
@@ -138,7 +180,12 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
         mountain = ''
         for word in mountain_list:
             mountain = mountain + ('{} '.format(word.capitalize()))
-        plt.title(mountain)
+        size = int(e_w_length*10)
+        if size > 25:
+            size = 25
+        if size < 5:
+            size = 5
+        plt.title(mountain, fontsize=size)
         if e_w_length < 1.5:
             top = .88
         if e_w_length >= 1.5:

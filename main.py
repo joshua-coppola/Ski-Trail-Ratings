@@ -11,16 +11,16 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "taos"
+    mountain = "cannon"
     cardinal_direction = 'n'
     difficulty_modifiers = True
-    save_map = True
+    save_map = False
     
     loadData.runOSM(mountain, difficulty_modifiers, cardinal_direction, save_map)
 
 def bulk_osm(input_csv):
     difficulty_modifiers = True
-    save_map = False
+    save_map = True
     mountain = []
     mountain_difficulty = []
     mountain_difficulty_color = []
@@ -67,5 +67,5 @@ def bulk_osm(input_csv):
                             top=.9, wspace=0, hspace=0)
     plt.grid(axis='x')
     plt.show()
-#bulk_osm('mountain_list.csv')
-osm()
+bulk_osm('mountain_list.csv')
+#osm()
