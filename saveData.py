@@ -214,3 +214,40 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
     print(mountain_ease_rating)
     plt.show()
     return((mountain_difficulty_rating, mountain_ease_rating))
+
+# Parameters:
+# df_difficulty: dataframe with column for mountain name, difficulty rating, and color
+#   type-df(string, float, string)
+# df_ease: dataframe with column for mountain name, beginner friendliness rating, and color
+#   type-df(string, float, string)
+# save: bool for whether to save the output to an svg
+#   type-bool
+# Return: none
+
+def create_difficulty_barplot(df_difficulty, df_ease, save=False):
+    df_difficulty = df_difficulty.sort_values(by='rating', ascending=False)
+    df_ease['rating'] = 20 - df_ease['rating'] 
+    df_ease = df_ease.sort_values(by='rating', ascending=True)
+    plt.barh(df_difficulty['mountain'], df_difficulty['rating'], color=df_difficulty['color'])
+    plt.title('Difficulty Comparison')
+    plt.xlabel('Longer bar = more expert friendly')
+    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
+                            top=.9, wspace=0, hspace=0)
+    plt.grid(axis='x')
+    if save:
+        plt.savefig('maps/comparative_difficulty.svg', format='svg')
+        print('SVG saved')
+        df_difficulty.to_csv('cached/mountain_difficulty')
+    plt.show()
+    plt.barh(df_ease['mountain'], df_ease['rating'], color=df_ease['color'])
+    plt.title('Beginner Friendliness')
+    plt.xlabel('Longer bar = more beginner friendly')
+    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
+                            top=.9, wspace=0, hspace=0)
+    plt.grid(axis='x')
+    if save:
+        plt.savefig('maps/beginner_friendliness.svg', format='svg')
+        print('SVG saved')
+        df_ease['rating'] = 20 - df_ease['rating']
+        df_ease.to_csv('cached/mountain_ease')
+    plt.show()

@@ -1,8 +1,9 @@
 import csv
+from genericpath import exists
 import pandas as pd
-import matplotlib.pyplot as plt
 
 import loadData
+import saveData
 
 def gpx():
     filename = 'gpx/big-bang-409529.gpx'
@@ -18,9 +19,7 @@ def osm():
     
     loadData.runOSM(mountain, difficulty_modifiers, cardinal_direction, save_map)
 
-def bulk_osm(input_csv):
-    difficulty_modifiers = True
-    save_map = True
+def bulk_osm(input_csv, difficulty_modifiers = True, save_map = False):
     mountain = []
     mountain_difficulty = []
     mountain_difficulty_color = []
@@ -51,24 +50,16 @@ def bulk_osm(input_csv):
     df_ease['mountain'] = mountain
     df_ease['rating'] = mountain_ease
     df_ease['color'] = mountain_ease_color
-    df_difficulty = df_difficulty.sort_values(by='rating', ascending=False)
-    df_ease = df_ease.sort_values(by='rating', ascending=False)
-    print(df_difficulty)
-    print(df_ease)
-    plt.barh(df_difficulty['mountain'], df_difficulty['rating'], color=df_difficulty['color'])
-    plt.title('Difficulty Comparison')
-    plt.xlabel('Higher is harder advanced terrain')
-    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                            top=.9, wspace=0, hspace=0)
-    plt.grid(axis='x')
-    plt.show()
-    plt.barh(df_ease['mountain'], df_ease['rating'], color=df_ease['color'])
-    plt.title('Beginner Friendliness')
-    plt.xlabel('Lower is easier beginner terrain')
-    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                            top=.9, wspace=0, hspace=0)
-    plt.grid(axis='x')
-    plt.show()
+    saveData.create_difficulty_barplot(df_difficulty, df_ease, save_map)
 
-bulk_osm('mountain_list.csv')
+def osm_standalone_barplot(save):
+    if not exists('cached/mountain_difficulty') or not exists('cached/mountain_ease'):
+        print('Missing cache files, please run bulk_osm with save=True to create them.')
+        return
+    df_difficulty = pd.read_csv('cached/mountain_difficulty')
+    df_ease = pd.read_csv('cached/mountain_ease')
+    saveData.create_difficulty_barplot(df_difficulty, df_ease, save)
+
+#bulk_osm('mountain_list.csv', True, True)
+#osm_standalone_barplot(True)
 #osm()
