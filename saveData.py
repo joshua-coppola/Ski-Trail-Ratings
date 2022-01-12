@@ -2,8 +2,25 @@ from math import atan2, degrees
 import matplotlib.pyplot as plt
 import pandas as pd
 from os.path import exists
+from decimal import Decimal
 
 import helper
+
+def create_gpx_map(df):
+    rating = helper.rate_trail(df['difficulty'])
+    color = helper.set_color(rating)
+    print(rating)
+    print(color)
+
+    plt.plot(df.lon, df.lat, c=color, alpha=.25)
+    plt.scatter(df.lon, df.lat, s=8, c=abs(
+        df.slope), cmap='gist_rainbow', alpha=1)
+    plt.colorbar(label='Degrees', orientation='horizontal')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
 
 # accepts a list of trails and saves the latitude, longitude, and elevation
 # to a csv as a cache
@@ -22,6 +39,10 @@ def cache_elevation(filename, list_dfs):
 # whether to use difficulty modifiers, and a pair of ints (plus a bool) to
 # rotate the map. Their values should be -1 or 1 and T/F for the bool. The
 # last param is a bool for whether to save the map.
+#
+# Return: the relative difficulty of hard terrain and the relative ease 
+# for beginner terrain
+#   type-tuple of tuples
 
 
 def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False, save=False):
@@ -53,20 +74,25 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
         e_w_length = temp
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
+    rating_list = []
     for entry in trails:
         rating = helper.rate_trail(entry[0]['difficulty'])
+        rating_list.append(round((rating * 100), 0))
         if difficulty_modifiers:
             color = helper.set_color(rating, entry[2])
         else:
             color = helper.set_color(rating)
+        rating = round(Decimal(rating) * 100, 1)
         trail_name = entry[1]
         if '_' in trail_name:
             trail_name = trail_name.split('_')[0]
+
+        trail_name = '{} {}{}'.format(trail_name, rating, u'\N{DEGREE SIGN}')
         midpoint = int(len(entry[0].lat.to_list())/2)
-        if midpoint < 2:
+        if midpoint <= 2:
             dx = 0
             dy = 0
-        if midpoint >= 2:    
+        if midpoint > 2:    
             dx = (entry[0].lat.to_list()[midpoint]) - \
                 (entry[0].lat.to_list()[midpoint+2])
             dy = (entry[0].lon.to_list()[midpoint])- \
@@ -81,7 +107,8 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
             if entry[2] > 0:
                 plt.plot(entry[0].lat * lat_mirror, entry[0].lon *
                          lon_mirror, c=color, linestyle='dashed')
-            plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
+            if helper.get_trail_length(entry[0].coordinates) > 200:
+                plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
                      (entry[0].lon.to_list()[midpoint]) * lon_mirror, trail_name, 
                      {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
                      backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
@@ -98,7 +125,8 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
             if entry[2] > 0:
                 plt.plot(entry[0].lon * lon_mirror, entry[0].lat *
                          lat_mirror, c=color, linestyle='dashed')
-            plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
+            if helper.get_trail_length(entry[0].coordinates) > 200:
+                plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
                      (entry[0].lat.to_list()[midpoint]) * lat_mirror, trail_name, 
                      {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
                      backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
@@ -111,13 +139,31 @@ def create_map(trails, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=
         for word in mountain_list:
             mountain = mountain + ('{} '.format(word.capitalize()))
         plt.title(mountain)
+        if e_w_length < 1.5:
+            top = .88
+        if e_w_length >= 1.5:
+            top = .92
+        if e_w_length < 1:
+            top = .80
         plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
-                            top=.92, wspace=0, hspace=0)
+                            top=top, wspace=0, hspace=0)
     else:
         plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=1, wspace=0, hspace=0)
     if save:
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
         print('SVG saved')
+    top5_median = pd.Series(rating_list).sort_values(ascending=False).head().median()
+    top20_median = pd.Series(rating_list).sort_values(ascending=False).head(20).median()
+    mountain_difficulty_rating = (top5_median + top20_median) / 2
+    mountain_difficulty_rating = (mountain_difficulty_rating, helper.set_color(mountain_difficulty_rating/100))
+    print('Difficultly Rating:')
+    print(mountain_difficulty_rating)
+    bottom5_median = pd.Series(rating_list).sort_values().head().median()
+    bottom20_median = pd.Series(rating_list).sort_values().head(20).median()
+    mountain_ease_rating = (bottom5_median + bottom20_median) / 2
+    mountain_ease_rating = (mountain_ease_rating, helper.set_color(mountain_ease_rating/100))
+    print('Beginner Friendliness Rating:')
+    print(mountain_ease_rating)
     plt.show()
-    
+    return((mountain_difficulty_rating, mountain_ease_rating))

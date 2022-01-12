@@ -9,7 +9,7 @@ from math import degrees, atan
 # accepts a string with coords separated by a | and returns a list of elevations
 
 
-def get_elevation(piped_coords, column):
+def elevation_api(piped_coords, trailname=''):
     # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
     time.sleep(1)
@@ -19,11 +19,50 @@ def get_elevation(piped_coords, column):
         for result in json.loads(response.content)['results']:
             elevation.append(result['elevation'])
     else:
-        print('Elevation API call failed on {} with code:'.format(column))
+        print('Elevation API call failed on {} with code:'.format(trailname))
         print(response.status_code)
         print(response.content)
         return -1
     return elevation
+
+# Parameters:
+# coordinates: list/series of latitude and longitude tuples
+#   type-list/series of tuples
+# trail_name: name of ski trail
+#   type-string
+# api-requests: number of api requests made
+#   type-int
+#
+# Returns: tuple containing series of coordinates and api_requests
+#   type-tuple(series of tuples, int)
+
+def get_elevation(coordinates, trail_name='', api_requests=0):
+    piped_coords = ''
+    point_count = 0
+    elevations = []
+    for coordinate in coordinates:
+        if piped_coords == '':
+            piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
+            continue
+        piped_coords = piped_coords + '|{},{}'.format(coordinate[0], coordinate[1])
+        point_count += 1
+        if point_count >= 99:
+            temp_elevations = elevation_api(piped_coords, trail_name)
+            api_requests += 1
+            if temp_elevations == -1:
+                return -1
+            piped_coords = ''
+            point_count = 0
+            for point in temp_elevations:
+                elevations.append(point)
+    if piped_coords != '':
+        temp_elevations = elevation_api(piped_coords, trail_name)
+        api_requests += 1
+        if temp_elevations == -1:
+            return -1
+        for point in temp_elevations:
+            elevations.append(point)
+    return (pd.Series(elevations), api_requests)
 
 # accepts a list of lat/lon pairs and returns a list of distances (in meters)
 
@@ -103,12 +142,10 @@ def rate_trail(difficulty):
     max_difficulty = 0
     previous = 0
     previous_2 = 0
-    previous_3 = 0
     for point in difficulty:
-        nearby_avg = (point + previous + previous_2 + previous_3) / 4
+        nearby_avg = (point + previous + previous_2) / 3
         if nearby_avg > max_difficulty:
             max_difficulty = nearby_avg
-        previous_3 = previous_2
         previous_2 = previous
         previous = point
     return max_difficulty
@@ -119,13 +156,13 @@ def rate_trail(difficulty):
 
 def set_color(rating, difficultly_modifier=0):
     rating += .07 * difficultly_modifier
-    # 0-16 degrees: green
-    if rating < .16:
+    # 0-17 degrees: green
+    if rating < .17:
         return 'green'
-    # 16-23 degrees: blue
-    if rating < .23:
+    # 17-22 degrees: blue
+    if rating < .24:
         return 'royalblue'
-    # 23-32 degrees: black
+    # 24-32 degrees: black
     if rating < .32:
         return 'black'
     # 32-45 degrees: red
@@ -133,7 +170,6 @@ def set_color(rating, difficultly_modifier=0):
         return 'red'
     # >45 degrees: yellow
     else:
-        print(rating)
         return 'gold'
 
 # accepts a list of elevations and smooths the gaps between groupings of
@@ -193,3 +229,14 @@ def calculate_point_difficulty(slope):
         difficulty.append((abs(point)/90)*.9)
     difficulty[0] = 0
     return difficulty
+
+# Parameters:
+# coordinates: list/series of coordinates
+#   type-list/series of tuples
+#
+# Returns: trail length
+#   type-float
+
+def get_trail_length(coordinates):
+    distances = calculate_dist(coordinates)
+    return(sum(distances[1:]))

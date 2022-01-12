@@ -2,6 +2,7 @@ import pandas as pd
 from os.path import exists
 from ast import literal_eval
 import matplotlib.pyplot as plt
+from pandas.core import api
 
 import helper
 import saveData
@@ -46,20 +47,7 @@ def runGPX(filename):
     df['elevation_change'] = helper.calulate_elevation_change(df['elevation'])
     df['slope'] = helper.calculate_slope(df['elevation_change'], df['distance'])
     df['difficulty'] = helper.calculate_point_difficulty(df['slope'].to_list())
-    rating = helper.rate_trail(df['difficulty'])
-    color = helper.set_color(rating)
-    print(rating)
-    print(color)
-
-    plt.plot(df.lon, df.lat, c=color, alpha=.25)
-    plt.scatter(df.lon, df.lat, s=8, c=abs(
-        df.slope), cmap='gist_rainbow', alpha=1)
-    plt.colorbar(label='Degrees', orientation='horizontal')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
+    saveData.create_gpx_map(df)
 
 # accepts a osm filename and returns a list of tuples.
 # Each tuple contains a dataframe with
@@ -173,7 +161,7 @@ def load_osm(filename, cached=False, cached_filename=''):
         elevation_df = elevation_df[['coordinates', 'elevation']]
     for column in way_df:
         trail_num += 1
-        if trail_num % 10 == 1:
+        if trail_num % 10 == 1 or trail_num == total_trail_count:
             print('Processing trail {}/{}'.format(trail_num, total_trail_count))
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
@@ -182,37 +170,12 @@ def load_osm(filename, cached=False, cached_filename=''):
         for row in useful_info_list:
             if column == row[0]:
                 difficulty_modifier = row[1]
-                if row[2] == True:
+                if row[2] == True and helper.get_trail_length(temp_df['coordinates']) < 2000:
                     temp_df = helper.area_to_line(temp_df)
-        piped_coords = ''
         if not cached:
-            point_count = 0
-            elevations = []
-            for coordinate in temp_df['coordinates']:
-                if piped_coords == '':
-                    piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
-                    continue
-                piped_coords = piped_coords + \
-                    '|{},{}'.format(coordinate[0], coordinate[1])
-                point_count += 1
-                if point_count >= 99:
-                    temp_elevations = helper.get_elevation(
-                        piped_coords, column)
-                    api_requests += 1
-                    if temp_elevations == -1:
-                        return -1
-                    piped_coords = ''
-                    point_count = 0
-                    for point in temp_elevations:
-                        elevations.append(point)
-            if piped_coords != '':
-                temp_elevations = helper.get_elevation(piped_coords, column)
-                api_requests += 1
-                if temp_elevations == -1:
-                    return -1
-                for point in temp_elevations:
-                    elevations.append(point)
-            temp_df['elevation'] = pd.Series(elevations)
+            result = helper.get_elevation(temp_df['coordinates'], column, api_requests)
+            temp_df['elevation'] = result[0]
+            api_requests = result[1]
         else:
             row_count = temp_df.shape[0]
             temp_df = pd.merge(temp_df, elevation_df, on='coordinates')
@@ -238,6 +201,9 @@ def load_osm(filename, cached=False, cached_filename=''):
 #   type-bool
 #   note-not recommended to be set to 'True' if more than one cardinal_direction 
 #   is chosen
+#
+# Return: the relative difficultly and ease of the difficult and beginner terrain
+#   type-tuple(tuple,tuple)
 
 
 def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map=False):
@@ -249,7 +215,7 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
     for entry in trail_list:
         trail = entry[0]
         trail['elevation'] = helper.smooth_elevations(
-            trail['elevation'].to_list(), 1)
+            trail['elevation'].to_list(), 0)
         trail['distance'] = helper.calculate_dist(trail['coordinates'])
         trail['elevation_change'] = helper.calulate_elevation_change(
             trail['elevation'])
@@ -258,22 +224,19 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
     if 'w' in cardinal_direction or 'W' in cardinal_direction:
-        saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
                             difficulty_modifiers, 1, -1, False, save_map)
         # ^^west facing
-        # okemo, killington, stowe, bristol
     if 'e' in cardinal_direction or 'E' in cardinal_direction:
-        saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
                             difficulty_modifiers, -1, 1, False, save_map)
         # ^^east facing
     if 's' in cardinal_direction or 'S' in cardinal_direction:
-        saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
                             difficulty_modifiers, 1, 1, True, save_map)
         # ^^south facing
-        # bromley
     if 'n' in cardinal_direction or 'N' in cardinal_direction:
-        saveData.create_map(finished_trail_list, mountain,
+        mtn_difficulty = saveData.create_map(finished_trail_list, mountain,
                             difficulty_modifiers, -1, -1, True, save_map)
         # ^^north facing
-        # cannon, holiday_valley, sunday_river, purgatory, pat's_peak, 
-        # jay_peak, crested_butte
+    return mtn_difficulty
