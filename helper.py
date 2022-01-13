@@ -258,46 +258,46 @@ def get_trail_length(coordinates):
 def get_label_placement(df, length, flip_lat_lon):
     point_count = len(df.coordinates)
     point_gap = sum(calculate_dist(df.coordinates)[1:])/point_count
-    letter_size = 12 / point_gap
+    letter_size = 10 / point_gap
     label_length = point_gap * length * letter_size
     label_length_in_points = int(label_length / point_gap)
-    if label_length > get_trail_length(df.coordinates):
-        point = int(len(df.coordinates)/2)
-    else:
-        angle_list = []
-        valid_list = []
-        lat = df.lat.to_list()
-        lon = df.lon.to_list()
-        for i, _ in enumerate(df.coordinates):
-            valid = False
-            if get_trail_length(df.coordinates[0:i]) > label_length / 2:
-                if get_trail_length(df.coordinates[i:-1]) > label_length / 2:
-                    valid = True
-            if i == 0:
-                ang = 0
-            else:
-                dx = (df.lat[i])-(df.lat[i-1])
-                dy = (df.lon[i])-(df.lon[i-1])
-                ang = degrees(atan2(dx, dy))
-            angle_list.append(ang)
-            valid_list.append(valid)
-        rmse_min = (1, 10000000)
-        for i, angle in enumerate(angle_list):
-            if valid_list[i]:
-                slice = angle_list[i-label_length_in_points:i+label_length_in_points]
-                if len(slice) == 0:
-                    continue
-                expected = sum(slice) / len(slice)
-                if rmse(expected, slice) < rmse_min[1]:
-                    rmse_min = (i, rmse(expected, slice))
+    point = int(len(df.coordinates)/2)
+    angle_list = []
+    valid_list = []
+    for i, _ in enumerate(df.coordinates):
+        valid = False
+        if get_trail_length(df.coordinates[0:i]) > label_length / 2:
+            if get_trail_length(df.coordinates[i:-1]) > label_length / 2:
+                valid = True
+        if i == 0:
+            ang = 0
+        else:
+            dx = (df.lat[i])-(df.lat[i-1])
+            dy = (df.lon[i])-(df.lon[i-1])
+            ang = degrees(atan2(dx, dy))
+        angle_list.append(ang)
+        valid_list.append(valid)
+    rmse_min = (1, 10000000)
+    for i, _ in enumerate(angle_list):
+        if valid_list[i]:
+            slice = angle_list[i-label_length_in_points:i+label_length_in_points]
+            if len(slice) == 0:
+                continue
+            expected = sum(slice) / len(slice)
+            if rmse(expected, slice) < rmse_min[1]:
+                rmse_min = (i, rmse(expected, slice))
+        
+    if rmse_min[1] != 10000000:
         point = rmse_min[0]
-
-    if point <= 2:
+    if point == 0:
         dx = 0
         dy = 0
-    if point > 2:    
-        dx = (df.lat[point])-(df.lat[point+2])
-        dy = (df.lon[point])-(df.lon[point+2])
+    else:   
+        dx = (df.lat[point])-(df.lat[point-1])
+        dy = (df.lon[point])-(df.lon[point-1])
+        if point > 1 and dx == 0 and dy == 0:
+            dx = (df.lat[point])-(df.lat[point-2])
+            dy = (df.lon[point])-(df.lon[point-2])
     ang = degrees(atan2(dx, dy))
     if flip_lat_lon:
         if ang < -90:

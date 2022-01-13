@@ -1,4 +1,4 @@
-from math import atan2, degrees
+from math import atan2, degrees, sqrt
 import matplotlib.pyplot as plt
 import pandas as pd
 from os.path import exists
@@ -115,6 +115,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
 
         trail_name = '{} {}{}'.format(trail_name, rating, u'\N{DEGREE SIGN}')
         midpoint, ang = helper.get_label_placement(entry[0][['lat', 'lon', 'coordinates']], len(trail_name), flip_lat_lon)
+        print((trail_name, midpoint, ang))
         if not flip_lat_lon:
             if entry[2] == 0:
                 plt.plot(entry[0].lat * lat_mirror,
@@ -168,19 +169,22 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
     if save:
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
         print('SVG saved')
-    top5_median = pd.Series(rating_list).sort_values(ascending=False).head().median()
-    top20_median = pd.Series(rating_list).sort_values(ascending=False).head(20).median()
-    mountain_difficulty_rating = (top5_median + top20_median) / 2
-    mountain_difficulty_rating = (mountain_difficulty_rating, helper.set_color(mountain_difficulty_rating/100))
+    rating_list = [x**2 for x in rating_list]
+    rating_list.sort(reverse=True)
+    hard_list = [rating_list[0:15], rating_list[0:5]]
+    mountain_difficulty_rating = (sqrt(sum(hard_list[0])/15) + sqrt(sum(hard_list[1])/5) + sqrt(hard_list[0][0])) / 3
+    mountain_difficulty_rating = (round(mountain_difficulty_rating, 1), helper.set_color(mountain_difficulty_rating/100))
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
-    bottom5_median = pd.Series(rating_list).sort_values().head().median()
-    bottom20_median = pd.Series(rating_list).sort_values().head(20).median()
-    mountain_ease_rating = (bottom5_median + bottom20_median) / 2
-    mountain_ease_rating = (mountain_ease_rating, helper.set_color(mountain_ease_rating/100))
+    rating_list.sort()
+    easy_list = [rating_list[0:15], rating_list[0:5]]
+    mountain_ease_rating = (sqrt(sum(easy_list[0])/15) + sqrt(sum(easy_list[1])/5) + sqrt(easy_list[0][0])) / 3
+    mountain_ease_rating = (round(mountain_ease_rating, 1), helper.set_color(mountain_ease_rating/100))
+
     print('Beginner Friendliness Rating:')
     print(mountain_ease_rating)
     plt.show()
+    print()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
 # Parameters:
