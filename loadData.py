@@ -57,6 +57,9 @@ def runGPX(filename):
 
 
 def load_osm(filename, cached=False, cached_filename=''):
+    if not exists('osm/{}'.format(filename)):
+        print('OSM file missing')
+        return (-1, -1)
     file = open('osm/{}'.format(filename), 'r')
     print('Opening File')
     raw_table = file.readlines()
@@ -181,6 +184,7 @@ def load_osm(filename, cached=False, cached_filename=''):
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']
+        del temp_df[column]
         temp_df = helper.fill_in_point_gaps(temp_df, 15)
         for row in useful_info_list:
             if column == row[0]:
@@ -202,8 +206,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     lift_list = []
     for column in lift_df:
         temp_df = pd.merge(lift_df[column], node_df, left_on=column, right_on='id')
-        del temp_df['id']
-        del temp_df[column]
+        temp_df = helper.fill_in_point_gaps(temp_df, 50)
         lift_list.append((temp_df, column))
     if total_trail_count == 0:
         print('No trails found.')

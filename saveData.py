@@ -33,7 +33,7 @@ def cache_elevation(filename, list_dfs):
     for entry in list_dfs:
         trail = entry[0][['coordinates', 'elevation']]
         output_df = output_df.append(trail)
-    output_df.to_csv('cached/{}'.format(filename))
+    output_df.to_csv('cached/{}'.format(filename), index=False)
 
 # accepts a list of trail tuples, the name of the ski area, a boolean for
 # whether to use difficulty modifiers, and a pair of ints (plus a bool) to
@@ -75,51 +75,35 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
     print((n_s_length, e_w_length))
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
-    rating_list = []
     for entry in lifts:
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        midpoint = int(len(entry[0].lat.to_list())/2)
-        if midpoint <= 2:
-            dx = 0
-            dy = 0
-        if midpoint > 2:    
-            dx = (entry[0].lat.to_list()[midpoint]) - \
-                (entry[0].lat.to_list()[midpoint+2])
-            dy = (entry[0].lon.to_list()[midpoint])- \
-                (entry[0].lon.to_list()[midpoint+2])
+        midpoint, ang = helper.get_label_placement(entry[0][['lat','lon','coordinates']], len(lift_name), flip_lat_lon)
         if not flip_lat_lon:
-            ang = degrees(atan2(dx, dy)) - 90
-            if ang < -90:
-                ang += 180
             plt.plot(entry[0].lat * lat_mirror,
                     entry[0].lon * lon_mirror, c='grey')
             if helper.get_trail_length(entry[0].coordinates) > 200:
                 plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
                         (entry[0].lon.to_list()[midpoint]) * lon_mirror, lift_name, 
                         {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
-                        backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                        backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
                         fc='white', ec='none'))
         if flip_lat_lon:
-            ang = degrees(atan2(dx, dy))
-            if ang < -90:
-                ang -= 180
-            if ang > 90:
-                ang -= 180
             plt.plot(entry[0].lon * lon_mirror,
                     entry[0].lat * lat_mirror, c='grey')
             if helper.get_trail_length(entry[0].coordinates) > 200:
                 plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
                         (entry[0].lat.to_list()[midpoint]) * lat_mirror, lift_name, 
                         {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
-                        backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                        backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
                         fc='white', ec='none'))
             
-        
+    rating_list = []    
     for entry in trails:
         rating = helper.rate_trail(entry[0]['difficulty'])
-        rating_list.append(round((rating * 100), 0))
+        if helper.get_trail_length(entry[0].coordinates) > 200:
+            rating_list.append(round((rating * 100), 0))
         if difficulty_modifiers:
             color = helper.set_color(rating, entry[2])
         else:
@@ -130,19 +114,8 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
             trail_name = trail_name.split('_')[0]
 
         trail_name = '{} {}{}'.format(trail_name, rating, u'\N{DEGREE SIGN}')
-        midpoint = int(len(entry[0].lat.to_list())/2)
-        if midpoint <= 2:
-            dx = 0
-            dy = 0
-        if midpoint > 2:    
-            dx = (entry[0].lat.to_list()[midpoint]) - \
-                (entry[0].lat.to_list()[midpoint+2])
-            dy = (entry[0].lon.to_list()[midpoint])- \
-                (entry[0].lon.to_list()[midpoint+2])
+        midpoint, ang = helper.get_label_placement(entry[0][['lat', 'lon', 'coordinates']], len(trail_name), flip_lat_lon)
         if not flip_lat_lon:
-            ang = degrees(atan2(dx, dy)) - 90
-            if ang < -90:
-                ang += 180
             if entry[2] == 0:
                 plt.plot(entry[0].lat * lat_mirror,
                          entry[0].lon * lon_mirror, c=color)
@@ -153,14 +126,9 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
                 plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
                      (entry[0].lon.to_list()[midpoint]) * lon_mirror, trail_name, 
                      {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
-                     backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                     backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
                      fc='white', ec='none'))
         if flip_lat_lon:
-            ang = degrees(atan2(dx, dy))
-            if ang < -90:
-                ang -= 180
-            if ang > 90:
-                ang -= 180
             if entry[2] == 0:
                 plt.plot(entry[0].lon * lon_mirror,
                          entry[0].lat * lat_mirror, c=color)
@@ -171,7 +139,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
                 plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
                      (entry[0].lat.to_list()[midpoint]) * lat_mirror, trail_name, 
                      {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
-                     backgroundcolor='white', bbox=dict(boxstyle='square,pad=0.01', 
+                     backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
                      fc='white', ec='none'))
     plt.xticks([])
     plt.yticks([])
@@ -237,7 +205,7 @@ def create_difficulty_barplot(df_difficulty, df_ease, save=False):
     if save:
         plt.savefig('maps/comparative_difficulty.svg', format='svg')
         print('SVG saved')
-        df_difficulty.to_csv('cached/mountain_difficulty')
+        df_difficulty.to_csv('cached/mountain_difficulty', index=False)
     plt.show()
     plt.barh(df_ease['mountain'], df_ease['rating'], color=df_ease['color'])
     plt.title('Beginner Friendliness')
@@ -249,5 +217,5 @@ def create_difficulty_barplot(df_difficulty, df_ease, save=False):
         plt.savefig('maps/beginner_friendliness.svg', format='svg')
         print('SVG saved')
         df_ease['rating'] = 20 - df_ease['rating']
-        df_ease.to_csv('cached/mountain_ease')
+        df_ease.to_csv('cached/mountain_ease', index=False)
     plt.show()

@@ -12,10 +12,10 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "cannon"
+    mountain = "mount_rose"
     cardinal_direction = 'n'
     difficulty_modifiers = True
-    save_map = False
+    save_map = True
     
     loadData.runOSM(mountain, difficulty_modifiers, cardinal_direction, save_map)
 
@@ -60,6 +60,6 @@ def osm_standalone_barplot(save):
     df_ease = pd.read_csv('cached/mountain_ease')
     saveData.create_difficulty_barplot(df_difficulty, df_ease, save)
 
-#bulk_osm('mountain_list.csv', True, True)
+bulk_osm('mountain_list.csv', True, True)
 #osm_standalone_barplot(True)
 #osm()

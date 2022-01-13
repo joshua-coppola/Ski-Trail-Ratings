@@ -1,10 +1,15 @@
 import time
 import json
-import requests
 import pandas as pd
 from numpy import NAN
 import haversine as hs
-from math import degrees, atan
+from math import degrees, atan, atan2
+from requests.api import get
+import numpy as np
+
+def rmse(actual, pred): 
+    actual, pred = np.array(actual), np.array(pred)
+    return np.sqrt(np.square(np.subtract(actual,pred)).mean())
 
 # accepts a string with coords separated by a | and returns a list of elevations
 
@@ -13,7 +18,7 @@ def elevation_api(piped_coords, trailname=''):
     # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
     time.sleep(1)
-    response = requests.get(url.format(piped_coords))
+    response = get(url.format(piped_coords))
     if response.status_code == 200:
         elevation = []
         for result in json.loads(response.content)['results']:
@@ -159,13 +164,13 @@ def set_color(rating, difficultly_modifier=0):
     # 0-17 degrees: green
     if rating < .17:
         return 'green'
-    # 17-22 degrees: blue
-    if rating < .24:
+    # 17-24 degrees: blue
+    if rating < .242:
         return 'royalblue'
-    # 24-32 degrees: black
-    if rating < .32:
+    # 24-30 degrees: black
+    if rating < .30:
         return 'black'
-    # 32-45 degrees: red
+    # 30-45 degrees: red
     elif rating < .45:
         return 'red'
     # >45 degrees: yellow
@@ -240,3 +245,67 @@ def calculate_point_difficulty(slope):
 def get_trail_length(coordinates):
     distances = calculate_dist(coordinates)
     return(sum(distances[1:]))
+
+# Parameters:
+# df: dataframe with columns for lat, lon, and coordinates
+#   type-df(float, float, tuple)
+# length: number of characters in label
+#   type-int
+#
+# Returns: tuple with point number and angle
+#   type-tuple(float, float)
+
+def get_label_placement(df, length, flip_lat_lon):
+    point_count = len(df.coordinates)
+    point_gap = sum(calculate_dist(df.coordinates)[1:])/point_count
+    letter_size = 12 / point_gap
+    label_length = point_gap * length * letter_size
+    label_length_in_points = int(label_length / point_gap)
+    if label_length > get_trail_length(df.coordinates):
+        point = int(len(df.coordinates)/2)
+    else:
+        angle_list = []
+        valid_list = []
+        lat = df.lat.to_list()
+        lon = df.lon.to_list()
+        for i, _ in enumerate(df.coordinates):
+            valid = False
+            if get_trail_length(df.coordinates[0:i]) > label_length / 2:
+                if get_trail_length(df.coordinates[i:-1]) > label_length / 2:
+                    valid = True
+            if i == 0:
+                ang = 0
+            else:
+                dx = (df.lat[i])-(df.lat[i-1])
+                dy = (df.lon[i])-(df.lon[i-1])
+                ang = degrees(atan2(dx, dy))
+            angle_list.append(ang)
+            valid_list.append(valid)
+        rmse_min = (1, 10000000)
+        for i, angle in enumerate(angle_list):
+            if valid_list[i]:
+                slice = angle_list[i-label_length_in_points:i+label_length_in_points]
+                if len(slice) == 0:
+                    continue
+                expected = sum(slice) / len(slice)
+                if rmse(expected, slice) < rmse_min[1]:
+                    rmse_min = (i, rmse(expected, slice))
+        point = rmse_min[0]
+
+    if point <= 2:
+        dx = 0
+        dy = 0
+    if point > 2:    
+        dx = (df.lat[point])-(df.lat[point+2])
+        dy = (df.lon[point])-(df.lon[point+2])
+    ang = degrees(atan2(dx, dy))
+    if flip_lat_lon:
+        if ang < -90:
+            ang -= 180
+        if ang > 90:
+            ang -= 180
+        return(point, ang)
+    ang -= 90
+    if ang < -90:
+        ang += 180
+    return(point, ang)
