@@ -95,7 +95,7 @@ def fill_in_point_gaps(df, max_gap=20, filetype='osm'):
         distances = calculate_dist(coordinates)
         not_changed = 0
         for index, point in enumerate(distances):
-            if point > max_gap:
+            if point > max_gap and index > 0:
                 new_lat = (lat[index]+lat[index-1])/2
                 new_lon = (lon[index]+lon[index-1])/2
                 lat.insert(index, new_lat)

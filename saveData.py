@@ -25,6 +25,7 @@ def create_gpx_map(df):
 
 def cache_elevation(filename, list_dfs):
     output_df = pd.DataFrame(columns=['coordinates', 'elevation'])
+    output_df.drop_duplicates(inplace=True)
     for entry in list_dfs:
         trail = entry[0][['coordinates', 'elevation']]
         output_df = output_df.append(trail)
@@ -67,7 +68,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
         temp = n_s_length
         n_s_length = e_w_length
         e_w_length = temp
-    print((n_s_length, e_w_length))
+    #print((n_s_length, e_w_length))
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
     for entry in lifts:
@@ -178,7 +179,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
 
     print('Beginner Friendliness Rating:')
     print(mountain_ease_rating)
-    plt.show()
+    plt.draw()
     print()
     return((mountain_difficulty_rating, mountain_ease_rating))
 

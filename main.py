@@ -1,6 +1,7 @@
 import csv
 from genericpath import exists
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import loadData
 import saveData
@@ -15,9 +16,10 @@ def osm():
     mountain = "alta_&_snowbird"
     cardinal_direction = 'n'
     difficulty_modifiers = True
-    save_map = True
+    save_map = False
     
     loadData.runOSM(mountain, difficulty_modifiers, cardinal_direction, save_map)
+    plt.show()
 
 def bulk_osm(input_csv, difficulty_modifiers = True, save_map = False):
     mountain = []

@@ -1,6 +1,7 @@
 import pandas as pd
 from os.path import exists
 from ast import literal_eval
+import time
 
 import helper
 import saveData
@@ -163,10 +164,6 @@ def load_osm(filename, cached=False, cached_filename=''):
                 if 'lon=' in word:
                     lon.append(float(split_row[i+1]))
             coordinates.append((lat[-1], lon[-1]))
-            #id.append(split_row[1])
-            #lat.append(float(split_row[15]))
-            #lon.append(float(split_row[17]))
-            #coordinates.append((float(split_row[15]), float(split_row[17])))
     node_df['id'] = id
     node_df['lat'] = lat
     node_df['lon'] = lon
@@ -183,9 +180,14 @@ def load_osm(filename, cached=False, cached_filename=''):
         elevation_df = pd.read_csv('cached/{}'.format(cached_filename), converters={
                                    'coordinates': literal_eval})
         elevation_df = elevation_df[['coordinates', 'elevation']]
+        elevation_df.drop_duplicates(inplace=True)
+    if cached:
+        print_frequency = 20
+    if not cached:
+        print_frequency = 10
     for column in way_df:
         trail_num += 1
-        if trail_num % 10 == 1 or trail_num == total_trail_count:
+        if trail_num % print_frequency == 1 or trail_num == total_trail_count:
             print('Processing trail {}/{}'.format(trail_num, total_trail_count))
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
@@ -210,7 +212,6 @@ def load_osm(filename, cached=False, cached_filename=''):
                 temp_df['elevation'] = result[0]
                 api_requests = result[1]
             else: temp_df = temp_df_2
-        trail_list.append((temp_df, column, difficulty_modifier))
     lift_list = []
     for column in lift_df:
         temp_df = pd.merge(lift_df[column], node_df, left_on=column, right_on='id')
@@ -242,11 +243,14 @@ def load_osm(filename, cached=False, cached_filename=''):
 
 
 def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map=False):
+    start_time = time.time()
     trail_list, lift_list = load_osm(mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return -1
     finished_trail_list = []
     saveData.cache_elevation(mountain + '.csv', trail_list)
+    print('Time spent loading trails: {}'.format(time.time()-start_time))
+    start_time = time.time()
     for entry in trail_list:
         trail = entry[0]
         trail['elevation'] = helper.smooth_elevations(
@@ -258,6 +262,8 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
+    print('Time spent processing trails: {}'.format(time.time()-start_time))
+    start_time = time.time()
     if 'w' in cardinal_direction or 'W' in cardinal_direction:
         mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, 1, -1, False, save_map)
@@ -274,4 +280,5 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
         mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
                             difficulty_modifiers, -1, -1, True, save_map)
         # ^^north facing
+    print('Time spent making map: {}'.format(time.time()-start_time))
     return mtn_difficulty
