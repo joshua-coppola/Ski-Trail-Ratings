@@ -1,6 +1,6 @@
 # Ski-Trail-Ratings
 
-This program accepts a OSM or GPX file of a ski trail (OSM or GPX) or ski area (OSM only) and creates a map using a universal difficulty. For larger imports of OSM files, there is a bulk ingest function that accepts a csv file with the names of the OSM files and the orientation of the resort. 
+This program accepts a OSM or GPX file of a ski trail (OSM or GPX) or ski area (OSM only) and creates a map using a universal difficulty. For larger imports of OSM files, there is a bulk ingest function that accepts a csv file with the names of the OSM files and the orientation of the resort. One current limitation to note is this only works on ski areas in the United States. The elevation data I am currently using only contains points within the US.
 
 The ratings are created by evaluating the average of the steepest 60 meter stretch on the trail in degrees. If the trail is gladed, it will then have a modifier applied that adds 7 degrees to approximate the difficulty increase of glades compared to an open ski slope of the same pitch. The table of ratings can be seen below.
 
@@ -33,3 +33,5 @@ Should the bulk import function be used, a bar graph for each of these metrics w
 Trail name placement is working well most of the time, but there is room for improvement.
 
 Areas are converted into a line with mixed results. Additional logic would probably improve results.
+
+Add support for international ski areas by adding logic to switch to alternative elevation sources when outside the US.

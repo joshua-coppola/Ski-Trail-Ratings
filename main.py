@@ -12,8 +12,8 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "bromley"
-    cardinal_direction = 's'
+    mountain = "alta_&_snowbird"
+    cardinal_direction = 'n'
     difficulty_modifiers = True
     save_map = True
     
@@ -37,7 +37,7 @@ def bulk_osm(input_csv, difficulty_modifiers = True, save_map = False):
             mountain_name = ''
             for word in mountain_list:
                 mountain_name = mountain_name + ('{} '.format(word.capitalize()))
-            mountain.append(mountain_name)
+            mountain.append(mountain_name.strip())
             mountain_difficulty.append(diff_tuple[0][0])
             mountain_difficulty_color.append(diff_tuple[0][1])
             mountain_ease.append(diff_tuple[1][0])

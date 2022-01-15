@@ -1,9 +1,6 @@
-from math import atan2, degrees, sqrt
+from math import sqrt
 import matplotlib.pyplot as plt
 import pandas as pd
-from os.path import exists
-from decimal import Decimal
-
 import helper
 
 def create_gpx_map(df):
@@ -27,8 +24,6 @@ def create_gpx_map(df):
 
 
 def cache_elevation(filename, list_dfs):
-    if exists('cached/{}'.format(filename)):
-        return
     output_df = pd.DataFrame(columns=['coordinates', 'elevation'])
     for entry in list_dfs:
         trail = entry[0][['coordinates', 'elevation']]
@@ -108,14 +103,13 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
             color = helper.set_color(rating, entry[2])
         else:
             color = helper.set_color(rating)
-        rating = round(Decimal(rating) * 100, 1)
+        rating = round(rating * 100, 1)
         trail_name = entry[1]
         if '_' in trail_name:
             trail_name = trail_name.split('_')[0]
 
-        trail_name = '{} {}{}'.format(trail_name, rating, u'\N{DEGREE SIGN}')
+        trail_name = '{} {}{}'.format(trail_name.split(), rating, u'\N{DEGREE SIGN}')
         midpoint, ang = helper.get_label_placement(entry[0][['lat', 'lon', 'coordinates']], len(trail_name), flip_lat_lon)
-        print((trail_name, midpoint, ang))
         if not flip_lat_lon:
             if entry[2] == 0:
                 plt.plot(entry[0].lat * lat_mirror,
@@ -149,6 +143,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
         mountain = ''
         for word in mountain_list:
             mountain = mountain + ('{} '.format(word.capitalize()))
+        mountain = mountain.strip()
         size = int(e_w_length*10)
         if size > 25:
             size = 25

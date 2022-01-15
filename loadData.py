@@ -1,8 +1,6 @@
 import pandas as pd
 from os.path import exists
 from ast import literal_eval
-import matplotlib.pyplot as plt
-from pandas.core import api
 
 import helper
 import saveData
@@ -157,10 +155,18 @@ def load_osm(filename, cached=False, cached_filename=''):
         # handling nodes
         if '<node' in row:
             split_row = row.split('"')
-            id.append(split_row[1])
-            lat.append(float(split_row[15]))
-            lon.append(float(split_row[17]))
-            coordinates.append((float(split_row[15]), float(split_row[17])))
+            for i, word in enumerate(split_row):
+                if ' id=' in word:
+                    id.append(split_row[i+1])
+                if 'lat=' in word:
+                    lat.append(float(split_row[i+1]))
+                if 'lon=' in word:
+                    lon.append(float(split_row[i+1]))
+            coordinates.append((lat[-1], lon[-1]))
+            #id.append(split_row[1])
+            #lat.append(float(split_row[15]))
+            #lon.append(float(split_row[17]))
+            #coordinates.append((float(split_row[15]), float(split_row[17])))
     node_df['id'] = id
     node_df['lat'] = lat
     node_df['lon'] = lon
@@ -197,11 +203,13 @@ def load_osm(filename, cached=False, cached_filename=''):
             api_requests = result[1]
         else:
             row_count = temp_df.shape[0]
-            temp_df = pd.merge(temp_df, elevation_df, on='coordinates')
-            if temp_df.shape[0] < row_count:
-                print(
-                    '{} has missing elevation data. It will be skipped.'.format(column))
-                continue
+            temp_df_2 = pd.merge(temp_df, elevation_df, on='coordinates')
+            # if cache is missing data
+            if temp_df_2.shape[0] < row_count:
+                result = helper.get_elevation(temp_df['coordinates'], column, api_requests)
+                temp_df['elevation'] = result[0]
+                api_requests = result[1]
+            else: temp_df = temp_df_2
         trail_list.append((temp_df, column, difficulty_modifier))
     lift_list = []
     for column in lift_df:
