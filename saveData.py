@@ -69,6 +69,7 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
         n_s_length = e_w_length
         e_w_length = temp
     #print((n_s_length, e_w_length))
+    print('Creating Map')
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
     for entry in lifts:

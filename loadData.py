@@ -212,6 +212,7 @@ def load_osm(filename, cached=False, cached_filename=''):
                 temp_df['elevation'] = result[0]
                 api_requests = result[1]
             else: temp_df = temp_df_2
+        trail_list.append((temp_df, column, difficulty_modifier))
     lift_list = []
     for column in lift_df:
         temp_df = pd.merge(lift_df[column], node_df, left_on=column, right_on='id')
