@@ -38,13 +38,15 @@ def load_gpx(filename):
 #
 # Return Type: none
 
+
 def runGPX(filename):
     df = load_gpx(filename)
     df = helper.fill_in_point_gaps(df, 15, 'gpx')
     df['elevation'] = helper.smooth_elevations(df['elevation'].to_list())
     df['distance'] = helper.calculate_dist(df['coordinates'])
     df['elevation_change'] = helper.calulate_elevation_change(df['elevation'])
-    df['slope'] = helper.calculate_slope(df['elevation_change'], df['distance'])
+    df['slope'] = helper.calculate_slope(
+        df['elevation_change'], df['distance'])
     df['difficulty'] = helper.calculate_point_difficulty(df['slope'].to_list())
     saveData.create_gpx_map(df)
 
@@ -200,7 +202,8 @@ def load_osm(filename, cached=False, cached_filename=''):
                 if row[2] == True and helper.get_trail_length(temp_df['coordinates']) < 2000:
                     temp_df = helper.area_to_line(temp_df)
         if not cached:
-            result = helper.get_elevation(temp_df['coordinates'], column, api_requests)
+            result = helper.get_elevation(
+                temp_df['coordinates'], column, api_requests)
             temp_df['elevation'] = result[0]
             api_requests = result[1]
         else:
@@ -208,14 +211,17 @@ def load_osm(filename, cached=False, cached_filename=''):
             temp_df_2 = pd.merge(temp_df, elevation_df, on='coordinates')
             # if cache is missing data
             if temp_df_2.shape[0] < row_count:
-                result = helper.get_elevation(temp_df['coordinates'], column, api_requests)
+                result = helper.get_elevation(
+                    temp_df['coordinates'], column, api_requests)
                 temp_df['elevation'] = result[0]
                 api_requests = result[1]
-            else: temp_df = temp_df_2
+            else:
+                temp_df = temp_df_2
         trail_list.append((temp_df, column, difficulty_modifier))
     lift_list = []
     for column in lift_df:
-        temp_df = pd.merge(lift_df[column], node_df, left_on=column, right_on='id')
+        temp_df = pd.merge(lift_df[column], node_df,
+                           left_on=column, right_on='id')
         temp_df = helper.fill_in_point_gaps(temp_df, 50)
         lift_list.append((temp_df, column))
     if total_trail_count == 0:
@@ -236,22 +242,23 @@ def load_osm(filename, cached=False, cached_filename=''):
 #   valid options-'n','s','e','w' or some combination of the 4
 # save_map: whethere to save the output to an svg file
 #   type-bool
-#   note-not recommended to be set to 'True' if more than one cardinal_direction 
+#   note-not recommended to be set to 'True' if more than one cardinal_direction
 #   is chosen
 #
 # Return: the relative difficultly and ease of the difficult and beginner terrain
 #   type-tuple(tuple,tuple)
 
 
-def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map=False):
+def runOSM(mountain, cardinal_direction, save_map=False):
     start_time = time.time()
-    trail_list, lift_list = load_osm(mountain + '.osm', True, mountain + '.csv')
+    trail_list, lift_list = load_osm(
+        mountain + '.osm', True, mountain + '.csv')
     if trail_list == -1:
         return -1
-    finished_trail_list = []
-    saveData.cache_elevation(mountain + '.csv', trail_list)
     print('Time spent loading trails: {}'.format(time.time()-start_time))
+
     start_time = time.time()
+    finished_trail_list = []
     for entry in trail_list:
         trail = entry[0]
         trail['elevation'] = helper.smooth_elevations(
@@ -264,22 +271,10 @@ def runOSM(mountain, difficulty_modifiers=True, cardinal_direction='n', save_map
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
         finished_trail_list.append((trail, entry[1], entry[2]))
     print('Time spent processing trails: {}'.format(time.time()-start_time))
+
     start_time = time.time()
-    if 'w' in cardinal_direction or 'W' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
-                            difficulty_modifiers, 1, -1, False, save_map)
-        # ^^west facing
-    if 'e' in cardinal_direction or 'E' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
-                            difficulty_modifiers, -1, 1, False, save_map)
-        # ^^east facing
-    if 's' in cardinal_direction or 'S' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
-                            difficulty_modifiers, 1, 1, True, save_map)
-        # ^^south facing
-    if 'n' in cardinal_direction or 'N' in cardinal_direction:
-        mtn_difficulty = saveData.create_map(finished_trail_list, lift_list, mountain,
-                            difficulty_modifiers, -1, -1, True, save_map)
-        # ^^north facing
+    mtn_difficulty = saveData.create_map(
+        finished_trail_list, lift_list, mountain, cardinal_direction, save_map)
     print('Time spent making map: {}'.format(time.time()-start_time))
+    saveData.cache_elevation(mountain + '.csv', trail_list)
     return mtn_difficulty

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import helper
 
+
 def create_gpx_map(df):
     rating = helper.rate_trail(df['difficulty'])
     color = helper.set_color(rating)
@@ -36,12 +37,12 @@ def cache_elevation(filename, list_dfs):
 # rotate the map. Their values should be -1 or 1 and T/F for the bool. The
 # last param is a bool for whether to save the map.
 #
-# Return: the relative difficulty of hard terrain and the relative ease 
+# Return: the relative difficulty of hard terrain and the relative ease
 # for beginner terrain
 #   type-tuple of tuples
 
 
-def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_mirror=1, flip_lat_lon=False, save=False):
+def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     mountain_max_lat = 0
     mountain_min_lat = 90
     mountain_max_lon = 0
@@ -63,8 +64,9 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
     bottom_corner = (mountain_min_lat, mountain_max_lon)
     bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
     n_s_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
-    e_w_length = helper.calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
-    if flip_lat_lon:
+    e_w_length = helper.calculate_dist(
+        [bottom_corner, bottom_corner_alt])[1] / 1000
+    if 's' in cardinal_direction or 'n' in cardinal_direction:
         temp = n_s_length
         n_s_length = e_w_length
         e_w_length = temp
@@ -76,68 +78,23 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        midpoint, ang = helper.get_label_placement(entry[0][['lat','lon','coordinates']], len(lift_name), flip_lat_lon)
-        if not flip_lat_lon:
-            plt.plot(entry[0].lat * lat_mirror,
-                    entry[0].lon * lon_mirror, c='grey')
-            if helper.get_trail_length(entry[0].coordinates) > 200:
-                plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
-                        (entry[0].lon.to_list()[midpoint]) * lon_mirror, lift_name, 
-                        {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
-                        backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
-                        fc='white', ec='none'))
-        if flip_lat_lon:
-            plt.plot(entry[0].lon * lon_mirror,
-                    entry[0].lat * lat_mirror, c='grey')
-            if helper.get_trail_length(entry[0].coordinates) > 200:
-                plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
-                        (entry[0].lat.to_list()[midpoint]) * lat_mirror, lift_name, 
-                        {'color': 'grey', 'size': 2, 'rotation': ang}, ha='center', 
-                        backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
-                        fc='white', ec='none'))
-            
-    rating_list = []    
+        helper.place_object((entry[0], lift_name, 0), cardinal_direction, 'grey')
+
+    rating_list = []
     for entry in trails:
         rating = helper.rate_trail(entry[0]['difficulty'])
         if helper.get_trail_length(entry[0].coordinates) > 200:
             rating_list.append(round((rating * 100), 0))
-        if difficulty_modifiers:
-            color = helper.set_color(rating, entry[2])
-        else:
-            color = helper.set_color(rating)
+        color = helper.set_color(rating, entry[2])
         rating = round(rating * 100, 1)
         trail_name = entry[1]
         if '_' in trail_name:
             trail_name = trail_name.split('_')[0]
 
-        trail_name = '{} {}{}'.format(trail_name.split(), rating, u'\N{DEGREE SIGN}')
-        midpoint, ang = helper.get_label_placement(entry[0][['lat', 'lon', 'coordinates']], len(trail_name), flip_lat_lon)
-        if not flip_lat_lon:
-            if entry[2] == 0:
-                plt.plot(entry[0].lat * lat_mirror,
-                         entry[0].lon * lon_mirror, c=color)
-            if entry[2] > 0:
-                plt.plot(entry[0].lat * lat_mirror, entry[0].lon *
-                         lon_mirror, c=color, linestyle='dashed')
-            if helper.get_trail_length(entry[0].coordinates) > 200:
-                plt.text((entry[0].lat.to_list()[midpoint]) * lat_mirror,
-                     (entry[0].lon.to_list()[midpoint]) * lon_mirror, trail_name, 
-                     {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
-                     backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
-                     fc='white', ec='none'))
-        if flip_lat_lon:
-            if entry[2] == 0:
-                plt.plot(entry[0].lon * lon_mirror,
-                         entry[0].lat * lat_mirror, c=color)
-            if entry[2] > 0:
-                plt.plot(entry[0].lon * lon_mirror, entry[0].lat *
-                         lat_mirror, c=color, linestyle='dashed')
-            if helper.get_trail_length(entry[0].coordinates) > 200:
-                plt.text((entry[0].lon.to_list()[midpoint]) * lon_mirror,
-                     (entry[0].lat.to_list()[midpoint]) * lat_mirror, trail_name, 
-                     {'color': color, 'size': 2, 'rotation': ang}, ha='center', 
-                     backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
-                     fc='white', ec='none'))
+        trail_name = '{} {}{}'.format(
+            trail_name.strip(), rating, u'\N{DEGREE SIGN}')
+        helper.place_object((entry[0], trail_name,entry[2]), cardinal_direction, color)
+        
     plt.xticks([])
     plt.yticks([])
     if mountain != '':
@@ -169,14 +126,18 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
     rating_list = [x**2 for x in rating_list]
     rating_list.sort(reverse=True)
     hard_list = [rating_list[0:15], rating_list[0:5]]
-    mountain_difficulty_rating = (sqrt(sum(hard_list[0])/15) + sqrt(sum(hard_list[1])/5) + sqrt(hard_list[0][0])) / 3
-    mountain_difficulty_rating = (round(mountain_difficulty_rating, 1), helper.set_color(mountain_difficulty_rating/100))
+    mountain_difficulty_rating = (sqrt(
+        sum(hard_list[0])/15) + sqrt(sum(hard_list[1])/5) + sqrt(hard_list[0][0])) / 3
+    mountain_difficulty_rating = (round(
+        mountain_difficulty_rating, 1), helper.set_color(mountain_difficulty_rating/100))
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
     rating_list.sort()
     easy_list = [rating_list[0:15], rating_list[0:5]]
-    mountain_ease_rating = (sqrt(sum(easy_list[0])/15) + sqrt(sum(easy_list[1])/5) + sqrt(easy_list[0][0])) / 3
-    mountain_ease_rating = (round(mountain_ease_rating, 1), helper.set_color(mountain_ease_rating/100))
+    mountain_ease_rating = (sqrt(
+        sum(easy_list[0])/15) + sqrt(sum(easy_list[1])/5) + sqrt(easy_list[0][0])) / 3
+    mountain_ease_rating = (round(mountain_ease_rating, 1),
+                            helper.set_color(mountain_ease_rating/100))
 
     print('Beginner Friendliness Rating:')
     print(mountain_ease_rating)
@@ -193,30 +154,32 @@ def create_map(trails, lifts, mountain, difficulty_modifiers, lat_mirror=1, lon_
 #   type-bool
 # Return: none
 
+
 def create_difficulty_barplot(df_difficulty, df_ease, save=False):
     df_difficulty = df_difficulty.sort_values(by='rating', ascending=False)
-    df_ease['rating'] = 20 - df_ease['rating'] 
+    df_ease['rating'] = 20 - df_ease['rating']
     df_ease = df_ease.sort_values(by='rating', ascending=True)
-    plt.barh(df_difficulty['mountain'], df_difficulty['rating'], color=df_difficulty['color'])
+    plt.barh(df_difficulty['mountain'],
+             df_difficulty['rating'], color=df_difficulty['color'])
     plt.title('Difficulty Comparison')
     plt.xlabel('Longer bar = more expert friendly')
     plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                            top=.9, wspace=0, hspace=0)
+                        top=.9, wspace=0, hspace=0)
     plt.grid(axis='x')
     if save:
         plt.savefig('maps/comparative_difficulty.svg', format='svg')
         print('SVG saved')
-        df_difficulty.to_csv('cached/mountain_difficulty', index=False)
+        df_difficulty.to_csv('cached/mountain_difficulty.csv', index=False)
     plt.show()
     plt.barh(df_ease['mountain'], df_ease['rating'], color=df_ease['color'])
     plt.title('Beginner Friendliness')
     plt.xlabel('Longer bar = more beginner friendly')
     plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                            top=.9, wspace=0, hspace=0)
+                        top=.9, wspace=0, hspace=0)
     plt.grid(axis='x')
     if save:
         plt.savefig('maps/beginner_friendliness.svg', format='svg')
         print('SVG saved')
         df_ease['rating'] = 20 - df_ease['rating']
-        df_ease.to_csv('cached/mountain_ease', index=False)
+        df_ease.to_csv('cached/mountain_ease.csv', index=False)
     plt.show()

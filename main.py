@@ -13,15 +13,14 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "alta_&_snowbird"
+    mountain = "palisades_tahoe_alpine"
     cardinal_direction = 'n'
-    difficulty_modifiers = True
-    save_map = False
+    save_map = True
     
-    loadData.runOSM(mountain, difficulty_modifiers, cardinal_direction, save_map)
+    loadData.runOSM(mountain, cardinal_direction, save_map)
     plt.show()
 
-def bulk_osm(input_csv, difficulty_modifiers = True, save_map = False):
+def bulk_osm(input_csv, save_map = False):
     mountain = []
     mountain_difficulty = []
     mountain_difficulty_color = []
@@ -32,7 +31,7 @@ def bulk_osm(input_csv, difficulty_modifiers = True, save_map = False):
         next(csv_file)
         for line in csv_file:
             print('\nProcessing {}'.format(line[0]))
-            diff_tuple = loadData.runOSM(line[0], difficulty_modifiers, line[1], save_map)
+            diff_tuple = loadData.runOSM(line[0], line[1], save_map)
             if diff_tuple == -1:
                 continue
             mountain_list = line[0].split('_')
@@ -58,8 +57,8 @@ def osm_standalone_barplot(save):
     if not exists('cached/mountain_difficulty') or not exists('cached/mountain_ease'):
         print('Missing cache files, please run bulk_osm with save=True to create them.')
         return
-    df_difficulty = pd.read_csv('cached/mountain_difficulty')
-    df_ease = pd.read_csv('cached/mountain_ease')
+    df_difficulty = pd.read_csv('cached/mountain_difficulty.csv')
+    df_ease = pd.read_csv('cached/mountain_ease.csv')
     saveData.create_difficulty_barplot(df_difficulty, df_ease, save)
 
 #bulk_osm('mountain_list.csv', True, True)

@@ -6,10 +6,12 @@ import haversine as hs
 from math import degrees, atan, atan2
 from requests.api import get
 import numpy as np
+import matplotlib.pyplot as plt
 
-def rmse(actual, pred): 
+
+def rmse(actual, pred):
     actual, pred = np.array(actual), np.array(pred)
-    return np.sqrt(np.square(np.subtract(actual,pred)).mean())
+    return np.sqrt(np.square(np.subtract(actual, pred)).mean())
 
 # accepts a string with coords separated by a | and returns a list of elevations
 
@@ -41,6 +43,7 @@ def elevation_api(piped_coords, trailname=''):
 # Returns: tuple containing series of coordinates and api_requests
 #   type-tuple(series of tuples, int)
 
+
 def get_elevation(coordinates, trail_name='', api_requests=0):
     piped_coords = ''
     point_count = 0
@@ -49,7 +52,8 @@ def get_elevation(coordinates, trail_name='', api_requests=0):
         if piped_coords == '':
             piped_coords = '{},{}'.format(coordinate[0], coordinate[1])
             continue
-        piped_coords = piped_coords + '|{},{}'.format(coordinate[0], coordinate[1])
+        piped_coords = piped_coords + \
+            '|{},{}'.format(coordinate[0], coordinate[1])
         point_count += 1
         if point_count >= 99:
             temp_elevations = elevation_api(piped_coords, trail_name)
@@ -220,7 +224,7 @@ def calculate_slope(elevation_change, distance):
         else:
             slope.append(0)
     slope[0] = 0
-    #for i, point in enumerate(slope):
+    # for i, point in enumerate(slope):
     #    if point > 0:
     #        slope[i] = 0
     return slope
@@ -242,6 +246,7 @@ def calculate_point_difficulty(slope):
 # Returns: trail length
 #   type-float
 
+
 def get_trail_length(coordinates):
     distances = calculate_dist(coordinates)
     return(sum(distances[1:]))
@@ -254,6 +259,7 @@ def get_trail_length(coordinates):
 #
 # Returns: tuple with point number and angle
 #   type-tuple(float, float)
+
 
 def get_label_placement(df, length, flip_lat_lon):
     point_count = len(df.coordinates)
@@ -280,19 +286,20 @@ def get_label_placement(df, length, flip_lat_lon):
     rmse_min = (1, 10000000)
     for i, _ in enumerate(angle_list):
         if valid_list[i]:
-            slice = angle_list[i-label_length_in_points:i+label_length_in_points]
+            slice = angle_list[i-label_length_in_points:i +
+                               label_length_in_points]
             if len(slice) == 0:
                 continue
             expected = sum(slice) / len(slice)
             if rmse(expected, slice) < rmse_min[1]:
                 rmse_min = (i, rmse(expected, slice))
-        
+
     if rmse_min[1] != 10000000:
         point = rmse_min[0]
     if point == 0:
         dx = 0
         dy = 0
-    else:   
+    else:
         dx = (df.lat[point])-(df.lat[point-1])
         dy = (df.lon[point])-(df.lon[point-1])
         if point > 1 and dx == 0 and dy == 0:
@@ -309,3 +316,45 @@ def get_label_placement(df, length, flip_lat_lon):
     if ang < -90:
         ang += 180
     return(point, ang)
+
+
+def place_object(object_tuple, direction, color):
+    lat_mirror = 1
+    lon_mirror = -1
+    flip_lat_lon = False
+    if 'e' in direction or 'E' in direction:
+        lat_mirror = -1
+    if 's' in direction or 'S' in direction:
+        lon_mirror = 1
+        flip_lat_lon = True
+    if 'n' in direction or 'N' in direction:
+        lat_mirror = -1
+        flip_lat_lon = True
+
+    point, ang = get_label_placement(
+        object_tuple[0][['lat', 'lon', 'coordinates']], len(object_tuple[1]), flip_lat_lon)
+
+    if not flip_lat_lon:
+            if object_tuple[2] == 0:
+                plt.plot(object_tuple[0].lat * lat_mirror,
+                         object_tuple[0].lon * lon_mirror, c=color)
+            if object_tuple[2] > 0:
+                plt.plot(object_tuple[0].lat * lat_mirror, object_tuple[0].lon *
+                         lon_mirror, c=color, linestyle='dashed')
+            if color == 'gold':
+                color = 'black'
+            if get_trail_length(object_tuple[0].coordinates) > 200:
+                plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
+                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+    if flip_lat_lon:
+            if object_tuple[2] == 0:
+                plt.plot(object_tuple[0].lon * lon_mirror,
+                         object_tuple[0].lat * lat_mirror, c=color)
+            if object_tuple[2] > 0:
+                plt.plot(object_tuple[0].lon * lon_mirror, object_tuple[0].lat *
+                         lat_mirror, c=color, linestyle='dashed')
+            if color == 'gold':
+                color = 'black'
+            if get_trail_length(object_tuple[0].coordinates) > 200:
+                plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
+                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
