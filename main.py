@@ -13,7 +13,7 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "palisades_tahoe_alpine"
+    mountain = "attitash"
     cardinal_direction = 'n'
     save_map = True
     

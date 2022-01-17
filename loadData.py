@@ -118,6 +118,9 @@ def load_osm(filename, cached=False, cached_filename=''):
                 is_glade = True
             if '<tag k="aerialway"' in row:
                 is_lift = True
+            if 'Tree Skiing' in row:
+                difficulty_modifier += 1
+                is_glade = True
 
             if '</way>' in row:
                 if is_trail and not is_backcountry:
