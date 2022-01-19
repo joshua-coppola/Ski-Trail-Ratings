@@ -13,7 +13,7 @@ def gpx():
     loadData.runGPX(filename)
 
 def osm():
-    mountain = "attitash"
+    mountain = "mount_sunapee"
     cardinal_direction = 'n'
     save_map = True
     

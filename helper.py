@@ -291,8 +291,9 @@ def get_label_placement(df, length, flip_lat_lon):
             if len(slice) == 0:
                 continue
             expected = sum(slice) / len(slice)
-            if rmse(expected, slice) < rmse_min[1]:
-                rmse_min = (i, rmse(expected, slice))
+            rmse_current = rmse(expected, slice)
+            if rmse_current < rmse_min[1]:
+                rmse_min = (i, rmse_current)
 
     if rmse_min[1] != 10000000:
         point = rmse_min[0]
@@ -317,6 +318,16 @@ def get_label_placement(df, length, flip_lat_lon):
         ang += 180
     return(point, ang)
 
+# Parameters:
+# object_tuple: trail/lift tuple
+#   type-tuple(df(float, float, tuple), string, int)
+# direction: map direction
+#   type-char
+# color: color of object
+#   type-string
+#
+# Returns: none
+
 
 def place_object(object_tuple, direction, color):
     lat_mirror = 1
@@ -324,6 +335,7 @@ def place_object(object_tuple, direction, color):
     flip_lat_lon = False
     if 'e' in direction or 'E' in direction:
         lat_mirror = -1
+        lon_mirror = 1
     if 's' in direction or 'S' in direction:
         lon_mirror = 1
         flip_lat_lon = True
