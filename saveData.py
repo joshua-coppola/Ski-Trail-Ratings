@@ -32,14 +32,13 @@ def cache_elevation(filename, list_dfs):
         output_df = output_df.append(trail)
     output_df.to_csv('cached/{}'.format(filename), index=False)
 
-# accepts a list of trail tuples, the name of the ski area, a boolean for
-# whether to use difficulty modifiers, and a pair of ints (plus a bool) to
-# rotate the map. Their values should be -1 or 1 and T/F for the bool. The
-# last param is a bool for whether to save the map.
+# accepts a list of trail tuples, a list of lift tuples, the name of the ski area,
+# and the direction the map should face. The last param is a bool for whether to
+# save the map.
 #
 # Return: the relative difficulty of hard terrain and the relative ease
 # for beginner terrain
-#   type-tuple of tuples
+#   type-tuple(float,float)
 
 
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
@@ -98,11 +97,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     plt.xticks([])
     plt.yticks([])
     if mountain != '':
-        mountain_list = mountain.split('_')
-        mountain = ''
-        for word in mountain_list:
-            mountain = mountain + ('{} '.format(word.capitalize()))
-        mountain = mountain.strip()
+        mountain = helper.format_name(mountain)
         size = int(e_w_length*10)
         if size > 25:
             size = 25
@@ -128,16 +123,14 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     hard_list = [rating_list[0:15], rating_list[0:5]]
     mountain_difficulty_rating = (sqrt(
         sum(hard_list[0])/15) + sqrt(sum(hard_list[1])/5) + sqrt(hard_list[0][0])) / 3
-    mountain_difficulty_rating = (round(
-        mountain_difficulty_rating, 1), helper.set_color(mountain_difficulty_rating/100))
+    mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
     rating_list.sort()
     easy_list = [rating_list[0:15], rating_list[0:5]]
     mountain_ease_rating = (sqrt(
         sum(easy_list[0])/15) + sqrt(sum(easy_list[1])/5) + sqrt(easy_list[0][0])) / 3
-    mountain_ease_rating = (round(mountain_ease_rating, 1),
-                            helper.set_color(mountain_ease_rating/100))
+    mountain_ease_rating = round(mountain_ease_rating, 1)
 
     print('Beginner Friendliness Rating:')
     print(mountain_ease_rating)
@@ -155,12 +148,12 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 # Return: none
 
 
-def create_difficulty_barplot(df_difficulty, df_ease, save=False):
-    df_difficulty = df_difficulty.sort_values(by='rating', ascending=False)
-    df_ease['rating'] = 20 - df_ease['rating']
-    df_ease = df_ease.sort_values(by='rating', ascending=True)
-    plt.barh(df_difficulty['mountain'],
-             df_difficulty['rating'], color=df_difficulty['color'])
+def create_difficulty_barplot(df, save=False):
+    df['mountain'] = [helper.format_name(x) for x in df['mountain']]
+    df = df.sort_values(by='difficulty', ascending=False)
+    df['diff_color'] = [helper.set_color(x/100) for x in df['difficulty']]
+    plt.figure(figsize=(8,len(df['difficulty'])*.2))
+    plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
     plt.title('Difficulty Comparison')
     plt.xlabel('Longer bar = more expert friendly')
     plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
@@ -169,9 +162,12 @@ def create_difficulty_barplot(df_difficulty, df_ease, save=False):
     if save:
         plt.savefig('maps/comparative_difficulty.svg', format='svg')
         print('SVG saved')
-        df_difficulty.to_csv('cached/mountain_difficulty.csv', index=False)
-    plt.show()
-    plt.barh(df_ease['mountain'], df_ease['rating'], color=df_ease['color'])
+    plt.draw()
+    df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
+    df['ease'] = 20 - df['ease']
+    df = df.sort_values(by='ease', ascending=True)
+    plt.figure(figsize=(8,len(df['ease'])*.2))
+    plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
     plt.title('Beginner Friendliness')
     plt.xlabel('Longer bar = more beginner friendly')
     plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
@@ -180,6 +176,5 @@ def create_difficulty_barplot(df_difficulty, df_ease, save=False):
     if save:
         plt.savefig('maps/beginner_friendliness.svg', format='svg')
         print('SVG saved')
-        df_ease['rating'] = 20 - df_ease['rating']
-        df_ease.to_csv('cached/mountain_ease.csv', index=False)
+    plt.draw()
     plt.show()
