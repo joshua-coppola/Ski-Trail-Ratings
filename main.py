@@ -13,13 +13,13 @@ def gpx(filename):
     #filename = 'gpx/tuckered-out.gpx'
     loadData.runGPX(filename)
 
-def osm(mountain='', direction='n', save_map=False):
+def osm(mountain='', direction='n', save_map=False, blacklist=''):
     print('\nProcessing {}'.format(mountain))
-    diff_tuple = loadData.runOSM(mountain, direction, save_map)
+    diff_tuple = loadData.runOSM(mountain, direction, save_map, blacklist)
     if diff_tuple == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
-        row = [[mountain, direction, diff_tuple[0], diff_tuple[1]]]
+        row = [[mountain, direction, diff_tuple[0], diff_tuple[1], blacklist]]
         mountains = pd.read_csv('mountain_list.csv')
         if mountain in mountains.mountain.to_list():
             mountains.loc[mountains.mountain == mountain] = row
@@ -57,17 +57,28 @@ def main(argv):
     gpx_flag = False
     bar_flag = False
     direction = ''
+    blacklist = ''
     try:
-        opts, args = getopt.getopt(argv,"hbso:g:c:d:",["osm=","gpx=","csv=", "direction="])
+        opts, args = getopt.getopt(argv,"hbso:g:c:d:i:",["osm=","gpx=","csv=", "direction=", "ignore="])
     except getopt.GetoptError:
-        print('main.py -[o,g,c] <inputfile> -s')
-        print('main.py -[o,g,c] <inputfile>')
+        print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -s')
+        print('main.py -o <inputfile> -d <direction> -s')
+        print('main.py -o <inputfile> -d <direction>')
+        print('main.py -g <inputfile>')
+        print('main.py -c <inputfile> -s')
+        print('main.py -c <inputfile>')
         print('main.py -b -s')
+        print('main.py -b')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('main.py -[o,g,c] <inputfile> -s')
-            print('main.py -[o,g,c] <inputfile>')
+            print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -s')
+            print('main.py -o <inputfile> -d <direction> -s')
+            print('main.py -o <inputfile> -d <direction>')
+            print('main.py -g <inputfile>')
+            print('main.py -c <inputfile> -s')
+            print('main.py -c <inputfile>')
+            print('main.py -b -s')
             print('main.py -b')
             sys.exit()
         elif opt in ("-o", "--osm"):
@@ -82,6 +93,8 @@ def main(argv):
             csv_flag = True
         elif opt in ("-d", "--direction"):
             direction = arg
+        elif opt in ("-i", "--ignore"):
+            blacklist = arg
         elif opt in ("-b"):
             bar_flag = True
         elif opt in ("-s"):
@@ -90,7 +103,7 @@ def main(argv):
     if csv_flag:
         bulk_osm(file, save_flag)
     elif osm_flag:
-        osm(file, direction, save_flag)
+        osm(file, direction, save_flag, blacklist)
     elif gpx_flag:
         gpx(file)
     if bar_flag:

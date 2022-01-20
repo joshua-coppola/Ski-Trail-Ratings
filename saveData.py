@@ -30,7 +30,24 @@ def cache_elevation(filename, list_dfs):
     for entry in list_dfs:
         trail = entry[0][['coordinates', 'elevation']]
         output_df = output_df.append(trail)
-    output_df.to_csv('cached/{}'.format(filename), index=False)
+    output_df.to_csv('cached/elevation/{}'.format(filename), index=False)
+
+# Parameters:
+# tuple_list: list of trail names and osm ids
+#   type-list of tuples
+# mountain_name: name of ski area
+#   type-string
+# 
+# Return: none
+
+def save_trail_ids(tuple_list, mountain_name):
+    name_list = [x[0] for x in tuple_list]
+    id_list = [x[1] for x in tuple_list]
+    export_df = pd.DataFrame()
+    export_df['name'] = name_list
+    export_df['id'] = id_list
+    export_df.to_csv('cached/osm_ids/{}'.format(mountain_name), index=False)
+
 
 # accepts a list of trail tuples, a list of lift tuples, the name of the ski area,
 # and the direction the map should face. The last param is a bool for whether to

@@ -355,7 +355,7 @@ def place_object(object_tuple, direction, color):
                          lon_mirror, c=color, linestyle='dashed')
             if color == 'gold':
                 color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
+            if get_trail_length(object_tuple[0].coordinates) > 7:
                 plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
                          'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
     if flip_lat_lon:
@@ -367,7 +367,7 @@ def place_object(object_tuple, direction, color):
                          lat_mirror, c=color, linestyle='dashed')
             if color == 'gold':
                 color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
+            if get_trail_length(object_tuple[0].coordinates) > 7:
                 plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
                          'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
 

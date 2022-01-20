@@ -57,10 +57,16 @@ def runGPX(filename):
 # and an int (0-1) to denote if the trail is gladed
 
 
-def load_osm(filename, cached=False, cached_filename=''):
+def load_osm(mountain, cached=True, blacklist=''):
+    DEBUG_TRAILS = False
+    filename = mountain + '.osm'
+    if cached:
+        cached_filename = mountain + '.csv'
     if not exists('osm/{}'.format(filename)):
         print('OSM file missing')
         return (-1, -1)
+    if not exists('cached/osm_ids/{}'.format(blacklist)) and blacklist != '':
+        print('Blacklist file missing')
     file = open('osm/{}'.format(filename), 'r')
     print('Opening File')
     raw_table = file.readlines()
@@ -83,6 +89,12 @@ def load_osm(filename, cached=False, cached_filename=''):
     difficulty_modifier = 0
     useful_info_list = []
     total_trail_count = 0
+    trail_and_id_list = []
+    blacklist_ids = []
+
+    if blacklist != '':
+        blacklist_ids = (pd.read_csv('cached/osm_ids/{}'.format(blacklist)))['id'].to_list()
+        blacklist_ids = [str(x) for x in blacklist_ids]
     print('Preforming initial pre-processing')
     for row in raw_table:
         row = str(row)
@@ -98,7 +110,7 @@ def load_osm(filename, cached=False, cached_filename=''):
                 is_trail = True
             if '<tag k="piste:type" v="backcountry"/>' in row:
                 is_backcountry = True
-            if '<tag k="piste:type" v="nordic"/>' in row:
+            if '<tag k="piste:type"' in row and 'nordic' in row:
                 is_backcountry = True
             if '<tag k="gladed" v="yes"/>' in row and not is_glade:
                 difficulty_modifier += 1
@@ -125,6 +137,9 @@ def load_osm(filename, cached=False, cached_filename=''):
             if '</way>' in row:
                 if is_trail and not is_backcountry:
                     total_trail_count += 1
+                    trail_and_id_list.append((way_name, way_id))
+                    if DEBUG_TRAILS:
+                        way_name = way_id
                     if way_name == '':
                         way_name = ' _' + str(blank_name_count)
                         blank_name_count += 1
@@ -137,6 +152,7 @@ def load_osm(filename, cached=False, cached_filename=''):
                     useful_info_list.append(
                         (way_name, difficulty_modifier, is_area))
                 if is_lift:
+                    trail_and_id_list.append((way_name, way_id))
                     if way_name == '':
                         way_name = ' _' + str(blank_name_count)
                         blank_name_count += 1
@@ -158,6 +174,9 @@ def load_osm(filename, cached=False, cached_filename=''):
             is_area = False
             is_lift = False
             difficulty_modifier = 0
+            way_id = row.split('"')[1]
+            if str(way_id) in blacklist_ids:
+                in_way = False
         # handling nodes
         if '<node' in row:
             split_row = row.split('"')
@@ -174,7 +193,9 @@ def load_osm(filename, cached=False, cached_filename=''):
     node_df['lon'] = lon
     node_df['coordinates'] = coordinates
 
-    if not exists('cached/{}'.format(cached_filename)) and cached:
+    saveData.save_trail_ids(trail_and_id_list, mountain)
+
+    if not exists('cached/elevation/{}'.format(cached_filename)) and cached:
         cached = False
         print('Disabling cache loading: no cache file found.')
 
@@ -182,7 +203,7 @@ def load_osm(filename, cached=False, cached_filename=''):
     trail_num = 0
     api_requests = 0
     if cached:
-        elevation_df = pd.read_csv('cached/{}'.format(cached_filename), converters={
+        elevation_df = pd.read_csv('cached/elevation/{}'.format(cached_filename), converters={
                                    'coordinates': literal_eval})
         elevation_df = elevation_df[['coordinates', 'elevation']]
         elevation_df.drop_duplicates(inplace=True)
@@ -194,6 +215,8 @@ def load_osm(filename, cached=False, cached_filename=''):
         trail_num += 1
         if trail_num % print_frequency == 1 or trail_num == total_trail_count:
             print('Processing trail {}/{}'.format(trail_num, total_trail_count))
+            if not cached:
+                print('Estimated time remaining: {} minutes'.format(((total_trail_count-trail_num)*3)/60))
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']
@@ -252,10 +275,9 @@ def load_osm(filename, cached=False, cached_filename=''):
 #   type-tuple(tuple,tuple)
 
 
-def runOSM(mountain, cardinal_direction, save_map=False):
+def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
     start_time = time.time()
-    trail_list, lift_list = load_osm(
-        mountain + '.osm', True, mountain + '.csv')
+    trail_list, lift_list = load_osm(mountain, True, blacklist)
     if trail_list == -1:
         return -1
     print('Time spent loading trails: {}'.format(time.time()-start_time))
