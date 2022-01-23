@@ -62,37 +62,8 @@ def save_trail_ids(tuple_list, mountain_name):
 
 
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
-    mountain_max_lat = 0
-    mountain_min_lat = 90
-    mountain_max_lon = 0
-    mountain_min_lon = 180
-    for entry in trails:
-        trail_max_lat = abs(entry[0]['lat']).max()
-        trail_min_lat = abs(entry[0]['lat']).min()
-        if trail_max_lat > mountain_max_lat:
-            mountain_max_lat = trail_max_lat
-        if trail_min_lat < mountain_min_lat:
-            mountain_min_lat = trail_min_lat
-        trail_max_lon = abs(entry[0]['lon']).max()
-        trail_min_lon = abs(entry[0]['lon']).min()
-        if trail_max_lon > mountain_max_lon:
-            mountain_max_lon = trail_max_lon
-        if trail_min_lon < mountain_min_lon:
-            mountain_min_lon = trail_min_lon
-    top_corner = (mountain_max_lat, mountain_max_lon)
-    bottom_corner = (mountain_min_lat, mountain_max_lon)
-    bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
-    n_s_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
-    e_w_length = helper.calculate_dist(
-        [bottom_corner, bottom_corner_alt])[1] / 1000
-    if 's' in cardinal_direction or 'n' in cardinal_direction:
-        temp = n_s_length
-        n_s_length = e_w_length
-        e_w_length = temp
-    #print((n_s_length, e_w_length))
     print('Creating Map')
-
-    plt.figure(figsize=(n_s_length*2, e_w_length*2))
+    helper.format_map_template(trails, mountain, cardinal_direction)
     for i in tqdm (range (len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
         entry = lifts[i]
         lift_name = entry[1]
@@ -122,33 +93,13 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
         
     plt.xticks([])
     plt.yticks([])
-    if mountain != '':
-        mountain = helper.format_name(mountain)
-        size = int(e_w_length*10)
-        if size > 25:
-            size = 25
-        if size < 5:
-            size = 5
-        plt.title(mountain, fontsize=size)
-        if e_w_length < 1.5:
-            top = .88
-        if e_w_length >= 1.5:
-            top = .92
-        if e_w_length < 1:
-            top = .80
-        plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
-                            top=top, wspace=0, hspace=0)
-    else:
-        plt.subplots_adjust(left=0, bottom=0, right=1,
-                            top=1, wspace=0, hspace=0)
     if save:
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
         print('SVG saved')
-    #rating_list = [x**2 for x in rating_list]
     rating_list.sort(reverse=True)
     long_list = 30
     if len(rating_list) < 30:
-        long_list = 30
+        long_list = len(rating_list)
     hard_list = [rating_list[0:long_list], rating_list[0:5]]
     mountain_difficulty_rating = (sum(hard_list[0])/long_list + sum(hard_list[1])/5 + hard_list[0][0]) / 3
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
@@ -171,6 +122,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 #   type-df(string, float, string)
 # save: bool for whether to save the output to an svg
 #   type-bool
+#
 # Return: none
 
 

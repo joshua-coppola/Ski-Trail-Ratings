@@ -13,6 +13,126 @@ def rmse(actual, pred):
     actual, pred = np.array(actual), np.array(pred)
     return np.sqrt(np.square(np.subtract(actual, pred)).mean())
 
+def process_osm(table, blacklist):
+    DEBUG_TRAILS = False
+
+    way_df = pd.DataFrame()
+    lift_df = pd.DataFrame()
+    id = [] # for node_df
+    lat = [] # for node_df
+    lon = [] # for node_df
+    coordinates = [] # for node_df
+    in_way_ids = [] # all OSM ids for a way, used for way_df
+    useful_info_list = [] # list((way_name, difficulty_modifier, is_area))
+    trail_and_id_list = [] # list((trail_name, OSM id))
+    blank_name_count = 0
+    total_trail_count = 0
+
+    in_way = False
+
+    for row in table:
+        row = str(row)
+        way_name = ''
+        # handling when inside a way
+        if in_way:
+            if '<nd' in row:
+                split_row = row.split('"')
+                in_way_ids.append(split_row[1])
+            if '<tag k="name"' in row:
+                split_row = row.split('"')
+                way_name = split_row[3]
+            if '<tag k="piste:difficulty"' in row:
+                is_trail = True
+            if '<tag k="piste:type"' in row and 'backcountry' in row:
+                is_backcountry = True
+            if '<tag k="piste:type"' in row and 'nordic' in row:
+                is_backcountry = True
+            if '<tag k="piste:type"' in row and 'skitour' in row:
+                is_backcountry = True
+            if '<tag k="gladed" v="yes"/>' in row and not is_glade:
+                difficulty_modifier += 1
+                is_glade = True
+            if '<tag k="leaf_type"' in row and not is_glade:
+                difficulty_modifier += 1
+                is_glade = True
+            if '<tag k="leaf_type"' in row or '<tag k="area" v="yes"/>' in row:
+                is_area = True
+            if '<tag k="natural" v="wood"/>' in row:
+                is_area = True
+            if 'glade' in row and not is_glade:
+                difficulty_modifier += 1
+                is_glade = True
+            if 'Glade' in row and not is_glade:
+                difficulty_modifier += 1
+                is_glade = True
+            if '<tag k="aerialway"' in row:
+                is_lift = True
+            if 'Tree Skiing' in row:
+                difficulty_modifier += 1
+                is_glade = True
+
+            if '</way>' in row:
+                if is_trail and not is_backcountry:
+                    total_trail_count += 1
+                    trail_and_id_list.append((way_name, way_id))
+                    if DEBUG_TRAILS:
+                        way_name = way_id
+                    if way_name == '':
+                        way_name = ' _' + str(blank_name_count)
+                        blank_name_count += 1
+                    if way_name in way_df.columns:
+                        way_name = way_name + '_' + str(blank_name_count)
+                        blank_name_count += 1
+                    temp_df = pd.DataFrame()
+                    temp_df[way_name] = in_way_ids
+                    way_df = pd.concat([way_df, temp_df], axis=1)
+                    useful_info_list.append(
+                        (way_name, difficulty_modifier, is_area))
+                if is_lift:
+                    trail_and_id_list.append((way_name, way_id))
+                    if way_name == '':
+                        way_name = ' _' + str(blank_name_count)
+                        blank_name_count += 1
+                    if way_name in lift_df.columns:
+                        way_name = way_name + '_' + str(blank_name_count)
+                        blank_name_count += 1
+                    temp_df = pd.DataFrame()
+                    temp_df[way_name] = in_way_ids
+                    lift_df = pd.concat([lift_df, temp_df], axis=1)
+                in_way_ids = []
+                in_way = False
+                way_name = ''
+        # start of a way
+        if '<way' in row:
+            in_way = True
+            is_trail = False
+            is_glade = False
+            is_backcountry = False
+            is_area = False
+            is_lift = False
+            difficulty_modifier = 0
+            way_id = row.split('"')[1]
+            if str(way_id) in blacklist:
+                in_way = False
+        # handling nodes
+        if '<node' in row:
+            split_row = row.split('"')
+            for i, word in enumerate(split_row):
+                if ' id=' in word:
+                    id.append(split_row[i+1])
+                if 'lat=' in word:
+                    lat.append(float(split_row[i+1]))
+                if 'lon=' in word:
+                    lon.append(float(split_row[i+1]))
+            coordinates.append((lat[-1], lon[-1]))
+    node_df = pd.DataFrame()
+    node_df['id'] = id
+    node_df['lat'] = lat
+    node_df['lon'] = lon
+    node_df['coordinates'] = coordinates
+
+    return (node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list)
+
 # accepts a string with coords separated by a | and returns a list of elevations
 
 
@@ -359,64 +479,34 @@ def place_object(object_tuple, direction, color):
     point, ang = get_label_placement(
         object_tuple[0][['lat', 'lon', 'coordinates']], len(object_tuple[1]), flip_lat_lon)
     area = object_tuple[3]
+    if not flip_lat_lon:
+        X = object_tuple[0].lat
+        Y = object_tuple[0].lon
+    if flip_lat_lon:
+        X = object_tuple[0].lon
+        Y = object_tuple[0].lat
+        temp = lat_mirror
+        lat_mirror = lon_mirror
+        lon_mirror = temp
     if not area:
-        if not flip_lat_lon:
-            if object_tuple[2] == 0:
-                plt.plot(object_tuple[0].lat * lat_mirror,
-                         object_tuple[0].lon * lon_mirror, c=color)
-            if object_tuple[2] > 0:
-                plt.plot(object_tuple[0].lat * lat_mirror, object_tuple[0].lon *
-                         lon_mirror, c=color, linestyle='dashed')
-            if color == 'gold':
-                color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
-                plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
-                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
-        if flip_lat_lon:
-            if object_tuple[2] == 0:
-                plt.plot(object_tuple[0].lon * lon_mirror,
-                         object_tuple[0].lat * lat_mirror, c=color)
-            if object_tuple[2] > 0:
-                plt.plot(object_tuple[0].lon * lon_mirror, object_tuple[0].lat *
-                         lat_mirror, c=color, linestyle='dashed')
-            if color == 'gold':
-                color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
-                plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
-                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+        if object_tuple[2] == 0:
+            plt.plot(X * lat_mirror, Y * lon_mirror, c=color)
+        if object_tuple[2] > 0:
+            plt.plot(X * lat_mirror, Y * lon_mirror, c=color, linestyle='dashed')
     if area:
-        if not flip_lat_lon:
-            if object_tuple[2] == 0:
-                plt.fill(object_tuple[0].lat * lat_mirror,
-                         object_tuple[0].lon * lon_mirror, alpha=.1, fc=color)
-                plt.fill(object_tuple[0].lat * lat_mirror,
-                         object_tuple[0].lon * lon_mirror, ec=color, fc='none')
-            if object_tuple[2] > 0:
-                plt.fill(object_tuple[0].lat * lat_mirror, 
-                         object_tuple[0].lon * lon_mirror, alpha=.1, fc=color)
-                plt.fill(object_tuple[0].lat * lat_mirror, 
-                         object_tuple[0].lon * lon_mirror, ec=color, fc='none', linestyle='dashed')
-            if color == 'gold':
-                color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
-                plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
-                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
-        if flip_lat_lon:
-            if object_tuple[2] == 0:
-                plt.fill(object_tuple[0].lon * lon_mirror,
-                         object_tuple[0].lat * lat_mirror, alpha=.1, fc=color)
-                plt.fill(object_tuple[0].lon * lon_mirror,
-                         object_tuple[0].lat * lat_mirror, ec=color, fc='none')
-            if object_tuple[2] > 0:
-                plt.fill(object_tuple[0].lon * lon_mirror, 
-                         object_tuple[0].lat * lat_mirror, alpha=.1, fc=color, linestyle='dashed')
-                plt.fill(object_tuple[0].lon * lon_mirror, 
-                         object_tuple[0].lat * lat_mirror, ec=color, fc='none', linestyle='dashed')
-            if color == 'gold':
-                color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 200:
-                plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
-                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+        if object_tuple[2] == 0:
+            plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
+            plt.fill(X * lat_mirror, Y * lon_mirror, ec=color, fc='none')
+        if object_tuple[2] > 0:
+            plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
+            plt.fill(X * lat_mirror, Y * lon_mirror, ec=color, fc='none', linestyle='dashed')
+    if color == 'gold':
+        color = 'black'
+    if get_trail_length(object_tuple[0].coordinates) > 200:
+        plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_tuple[1], {
+                    'color': color, 'size': 2, 'rotation': ang}, ha='center', 
+                    backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
+                    fc='white', ec='none'))
 
 
 # Parameters:
@@ -432,3 +522,63 @@ def format_name(name):
     for word in name_list:
         name = '{}{} '.format(name, word.capitalize())
     return name.strip()
+
+
+# Parameters:
+# trails: list of trail tuples
+#   type-list of tuples
+# mountain: name of ski area
+#   type-string
+# cardinal_direction: direction for map to face
+#   type-char
+#
+# Return: none
+
+def format_map_template(trails, mountain, cardinal_direction):
+    mountain_max_lat = 0
+    mountain_min_lat = 90
+    mountain_max_lon = 0
+    mountain_min_lon = 180
+    for entry in trails:
+        trail_max_lat = abs(entry[0]['lat']).max()
+        trail_min_lat = abs(entry[0]['lat']).min()
+        if trail_max_lat > mountain_max_lat:
+            mountain_max_lat = trail_max_lat
+        if trail_min_lat < mountain_min_lat:
+            mountain_min_lat = trail_min_lat
+        trail_max_lon = abs(entry[0]['lon']).max()
+        trail_min_lon = abs(entry[0]['lon']).min()
+        if trail_max_lon > mountain_max_lon:
+            mountain_max_lon = trail_max_lon
+        if trail_min_lon < mountain_min_lon:
+            mountain_min_lon = trail_min_lon
+    top_corner = (mountain_max_lat, mountain_max_lon)
+    bottom_corner = (mountain_min_lat, mountain_max_lon)
+    bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
+    n_s_length = calculate_dist([top_corner, bottom_corner])[1] / 1000
+    e_w_length = calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
+    if 's' in cardinal_direction or 'n' in cardinal_direction:
+        temp = n_s_length
+        n_s_length = e_w_length
+        e_w_length = temp
+    plt.figure(figsize=(n_s_length*2, e_w_length*2))
+
+    if mountain != '':
+        mountain = format_name(mountain)
+        size = int(e_w_length*10)
+        if size > 25:
+            size = 25
+        if size < 5:
+            size = 5
+        plt.title(mountain, fontsize=size)
+        if e_w_length < 1.5:
+            top = .88
+        if e_w_length >= 1.5:
+            top = .92
+        if e_w_length < 1:
+            top = .80
+        plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
+                            top=top, wspace=0, hspace=0)
+    else:
+        plt.subplots_adjust(left=0, bottom=0, right=1,
+                            top=1, wspace=0, hspace=0)

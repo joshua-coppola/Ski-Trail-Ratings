@@ -61,7 +61,6 @@ def runGPX(filename):
 
 
 def load_osm(mountain, cached=True, blacklist=''):
-    DEBUG_TRAILS = False
     filename = mountain + '.osm'
     if cached:
         cached_filename = mountain + '.csv'
@@ -70,132 +69,18 @@ def load_osm(mountain, cached=True, blacklist=''):
         return (-1, -1)
     if not exists('cached/osm_ids/{}'.format(blacklist)) and blacklist != '':
         print('Blacklist file missing')
+
     file = open('osm/{}'.format(filename), 'r')
     raw_table = file.readlines()
-    node_df = pd.DataFrame()
-    way_df = pd.DataFrame()
-    lift_df = pd.DataFrame()
-    id = []
-    lat = []
-    lon = []
-    coordinates = []
-    in_way = False
-    in_way_ids = []
-    way_name = ''
-    is_trail = False
-    is_glade = False
-    is_backcountry = False
-    is_area = False
-    is_lift = False
-    blank_name_count = 0
-    difficulty_modifier = 0
-    useful_info_list = []
-    total_trail_count = 0
-    trail_and_id_list = []
-    blacklist_ids = []
 
     if blacklist != '':
         blacklist_ids = (pd.read_csv('cached/osm_ids/{}'.format(blacklist)))['id'].to_list()
         blacklist_ids = [str(x) for x in blacklist_ids]
-    for row in raw_table:
-        row = str(row)
-        # handling when inside a way
-        if in_way:
-            if '<nd' in row:
-                split_row = row.split('"')
-                in_way_ids.append(split_row[1])
-            if '<tag k="name"' in row:
-                split_row = row.split('"')
-                way_name = split_row[3]
-            if '<tag k="piste:difficulty"' in row:
-                is_trail = True
-            if '<tag k="piste:type"' in row and 'backcountry' in row:
-                is_backcountry = True
-            if '<tag k="piste:type"' in row and 'nordic' in row:
-                is_backcountry = True
-            if '<tag k="piste:type"' in row and 'skitour' in row:
-                is_backcountry = True
-            if '<tag k="gladed" v="yes"/>' in row and not is_glade:
-                difficulty_modifier += 1
-                is_glade = True
-            if '<tag k="leaf_type"' in row and not is_glade:
-                difficulty_modifier += 1
-                is_glade = True
-            if '<tag k="leaf_type"' in row or '<tag k="area" v="yes"/>' in row:
-                is_area = True
-            if '<tag k="natural" v="wood"/>' in row:
-                is_area = True
-            if 'glade' in row and not is_glade:
-                difficulty_modifier += 1
-                is_glade = True
-            if 'Glade' in row and not is_glade:
-                difficulty_modifier += 1
-                is_glade = True
-            if '<tag k="aerialway"' in row:
-                is_lift = True
-            if 'Tree Skiing' in row:
-                difficulty_modifier += 1
-                is_glade = True
-
-            if '</way>' in row:
-                if is_trail and not is_backcountry:
-                    total_trail_count += 1
-                    trail_and_id_list.append((way_name, way_id))
-                    if DEBUG_TRAILS:
-                        way_name = way_id
-                    if way_name == '':
-                        way_name = ' _' + str(blank_name_count)
-                        blank_name_count += 1
-                    if way_name in way_df.columns:
-                        way_name = way_name + '_' + str(blank_name_count)
-                        blank_name_count += 1
-                    temp_df = pd.DataFrame()
-                    temp_df[way_name] = in_way_ids
-                    way_df = pd.concat([way_df, temp_df], axis=1)
-                    useful_info_list.append(
-                        (way_name, difficulty_modifier, is_area))
-                if is_lift:
-                    trail_and_id_list.append((way_name, way_id))
-                    if way_name == '':
-                        way_name = ' _' + str(blank_name_count)
-                        blank_name_count += 1
-                    if way_name in lift_df.columns:
-                        way_name = way_name + '_' + str(blank_name_count)
-                        blank_name_count += 1
-                    temp_df = pd.DataFrame()
-                    temp_df[way_name] = in_way_ids
-                    lift_df = pd.concat([lift_df, temp_df], axis=1)
-                in_way_ids = []
-                in_way = False
-                way_name = ''
-        # start of a way
-        if '<way' in row:
-            in_way = True
-            is_trail = False
-            is_glade = False
-            is_backcountry = False
-            is_area = False
-            is_lift = False
-            difficulty_modifier = 0
-            way_id = row.split('"')[1]
-            if str(way_id) in blacklist_ids:
-                in_way = False
-        # handling nodes
-        if '<node' in row:
-            split_row = row.split('"')
-            for i, word in enumerate(split_row):
-                if ' id=' in word:
-                    id.append(split_row[i+1])
-                if 'lat=' in word:
-                    lat.append(float(split_row[i+1]))
-                if 'lon=' in word:
-                    lon.append(float(split_row[i+1]))
-            coordinates.append((lat[-1], lon[-1]))
-    node_df['id'] = id
-    node_df['lat'] = lat
-    node_df['lon'] = lon
-    node_df['coordinates'] = coordinates
-
+    else:
+        blacklist_ids = []
+    
+    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = helper.process_osm(raw_table, blacklist_ids)
+    
     saveData.save_trail_ids(trail_and_id_list, mountain)
 
     if not exists('cached/elevation/{}'.format(cached_filename)) and cached:
