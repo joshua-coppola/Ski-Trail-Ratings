@@ -31,15 +31,16 @@ def osm(mountain='', direction='n', save_map=False, blacklist=''):
         output.to_csv('mountain_list.csv', index=False)
     else:
         print('Mountain data not saved. If this is unexpected, please make sure you have a file called mountain_list.csv')
-    plt.show()
 
 def bulk_osm(input_csv, save_map = False):
+    if input_csv[:-4] != '.csv':
+        input_csv = input_csv + '.csv'
     with open(input_csv, mode='r') as file:
         csv_file = csv.reader(file)
         next(csv_file)
         for line in csv_file:
-            osm(line[0], line[1], save_map)
-            
+            osm(line[0], line[1], save_map, line[4])
+
 
 def barplot(save):
     if not exists('mountain_list.csv'):
@@ -99,7 +100,7 @@ def main(argv):
             bar_flag = True
         elif opt in ("-s"):
             save_flag = True
-    
+
     if csv_flag:
         bulk_osm(file, save_flag)
     elif osm_flag:
@@ -111,3 +112,5 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+    plt.show()
+    

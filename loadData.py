@@ -108,9 +108,11 @@ def load_osm(mountain, cached=True, blacklist=''):
                 way_name = split_row[3]
             if '<tag k="piste:difficulty"' in row:
                 is_trail = True
-            if '<tag k="piste:type" v="backcountry"/>' in row:
+            if '<tag k="piste:type"' in row and 'backcountry' in row:
                 is_backcountry = True
             if '<tag k="piste:type"' in row and 'nordic' in row:
+                is_backcountry = True
+            if '<tag k="piste:type"' in row and 'skitour' in row:
                 is_backcountry = True
             if '<tag k="gladed" v="yes"/>' in row and not is_glade:
                 difficulty_modifier += 1
@@ -225,8 +227,7 @@ def load_osm(mountain, cached=True, blacklist=''):
         for row in useful_info_list:
             if column == row[0]:
                 difficulty_modifier = row[1]
-                if row[2] == True and helper.get_trail_length(temp_df['coordinates']) < 2000:
-                    temp_df = helper.area_to_line(temp_df)
+                area_flag = row[2]
         if not cached:
             result = helper.get_elevation(
                 temp_df['coordinates'], column, api_requests)
@@ -243,7 +244,26 @@ def load_osm(mountain, cached=True, blacklist=''):
                 api_requests = result[1]
             else:
                 temp_df = temp_df_2
-        trail_list.append((temp_df, column, difficulty_modifier))
+        temp_area_line_df = pd.DataFrame()
+        if area_flag:
+            temp_area_line_df = helper.area_to_line(temp_df)
+            if not cached:
+                result = helper.get_elevation(
+                    temp_area_line_df['coordinates'], column, api_requests)
+                temp_area_line_df['elevation'] = result[0]
+                api_requests = result[1]
+            else:
+                row_count = temp_area_line_df.shape[0]
+                temp_area_line_df_2 = pd.merge(temp_area_line_df, elevation_df, on='coordinates')
+                # if cache is missing data
+                if temp_area_line_df_2.shape[0] < row_count:
+                    result = helper.get_elevation(
+                        temp_area_line_df['coordinates'], column, api_requests)
+                    temp_area_line_df['elevation'] = result[0]
+                    api_requests = result[1]
+                else:
+                    temp_area_line_df = temp_area_line_df_2
+        trail_list.append((temp_df, column, difficulty_modifier, area_flag, temp_area_line_df))
     lift_list = []
     for column in lift_df:
         temp_df = pd.merge(lift_df[column], node_df,
@@ -285,7 +305,10 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
     start_time = time.time()
     finished_trail_list = []
     for entry in trail_list:
-        trail = entry[0]
+        if not entry[3]:
+            trail = entry[0]
+        else:
+            trail = entry[4]
         trail['elevation'] = helper.smooth_elevations(
             trail['elevation'].to_list(), 0)
         trail['distance'] = helper.calculate_dist(trail['coordinates'])
@@ -294,7 +317,10 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
         trail['slope'] = helper.calculate_slope(
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
-        finished_trail_list.append((trail, entry[1], entry[2]))
+        if not entry[3]:
+            finished_trail_list.append((trail, entry[1], entry[2], entry[3], entry[4]))
+        else:
+            finished_trail_list.append((entry[0], entry[1], entry[2], entry[3], trail))
     print('Time spent processing trails: {}'.format(time.time()-start_time))
 
     start_time = time.time()

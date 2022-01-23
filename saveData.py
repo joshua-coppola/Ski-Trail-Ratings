@@ -30,6 +30,9 @@ def cache_elevation(filename, list_dfs):
     for entry in list_dfs:
         trail = entry[0][['coordinates', 'elevation']]
         output_df = output_df.append(trail)
+        if entry[3]:
+            trail = entry[4][['coordinates', 'elevation']]
+            output_df = output_df.append(trail)
     output_df.to_csv('cached/elevation/{}'.format(filename), index=False)
 
 # Parameters:
@@ -94,12 +97,16 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        helper.place_object((entry[0], lift_name, 0), cardinal_direction, 'grey')
+        helper.place_object((entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
 
     rating_list = []
     for entry in trails:
-        rating = helper.rate_trail(entry[0]['difficulty'])
-        if helper.get_trail_length(entry[0].coordinates) > 200:
+        if not entry[3]:
+            index = 0
+        else:
+            index = 4
+        rating = helper.rate_trail(entry[index]['difficulty'])
+        if helper.get_trail_length(entry[index].coordinates) > 100:
             rating_list.append(round((rating * 100), 0))
         color = helper.set_color(rating, entry[2])
         rating = round(rating * 100, 1)
@@ -109,7 +116,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        helper.place_object((entry[0], trail_name,entry[2]), cardinal_direction, color)
+        helper.place_object((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
         
     plt.xticks([])
     plt.yticks([])
@@ -135,24 +142,24 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     if save:
         plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
         print('SVG saved')
-    rating_list = [x**2 for x in rating_list]
+    #rating_list = [x**2 for x in rating_list]
     rating_list.sort(reverse=True)
-    hard_list = [rating_list[0:15], rating_list[0:5]]
-    mountain_difficulty_rating = (sqrt(
-        sum(hard_list[0])/15) + sqrt(sum(hard_list[1])/5) + sqrt(hard_list[0][0])) / 3
+    long_list = 30
+    if len(rating_list) < 30:
+        long_list = 30
+    hard_list = [rating_list[0:long_list], rating_list[0:5]]
+    mountain_difficulty_rating = (sum(hard_list[0])/long_list + sum(hard_list[1])/5 + hard_list[0][0]) / 3
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
     rating_list.sort()
-    easy_list = [rating_list[0:15], rating_list[0:5]]
-    mountain_ease_rating = (sqrt(
-        sum(easy_list[0])/15) + sqrt(sum(easy_list[1])/5) + sqrt(easy_list[0][0])) / 3
+    easy_list = [rating_list[0:long_list], rating_list[0:5]]
+    mountain_ease_rating = (sum(easy_list[0])/long_list + sum(easy_list[1])/5 + easy_list[0][0]) / 3
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
     print('Beginner Friendliness Rating:')
     print(mountain_ease_rating)
     plt.draw()
-    print()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
 # Parameters:

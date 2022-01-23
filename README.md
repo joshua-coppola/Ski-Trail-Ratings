@@ -8,8 +8,8 @@ Pitch (in degrees) | Difficulty | Color on Map
 --- | --- | ---
 0-17 | beginner | green
 17-24 | intermeidate | blue
-24-32 | advanced | black
-32-45 | expert | red
+24-30 | advanced | black
+30-45 | expert | red
 45+ | extreme terrain | yellow
 
 ### GPX files

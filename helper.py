@@ -129,19 +129,30 @@ def area_to_line(df):
     new_lat = []
     new_lon = []
     new_coords = []
-    midpoint = int(len(coordinates)/2)
-    for i, _ in enumerate(coordinates):
-        if i > midpoint:
-            break
-        new_lat_point = (coordinates[i][0] + coordinates[-i][0]) / 2
-        new_lon_point = (coordinates[i][1] + coordinates[-i][1]) / 2
-        new_lat.append(new_lat_point)
-        new_lon.append(new_lon_point)
-        new_coords.append((new_lat_point, new_lon_point))
+    max_ele = (0, 0)
+    min_ele = (10000, 0)
+    for i, point in enumerate(df.elevation):
+        if point > max_ele[0]:
+            max_ele = (point, i)
+        if point < min_ele[0]:
+            min_ele = (point, i)
+    center_lat = df.lat.mean()
+    center_lon = df.lon.mean()
+    new_lat.append(df.lat[max_ele[1]])
+    new_lon.append(df.lon[max_ele[1]])
+    new_lat.append(center_lat)
+    new_lon.append(center_lon)
+    new_lat.append(df.lat[min_ele[1]])
+    new_lon.append(df.lon[min_ele[1]])
+    new_lat.append(coordinates[min_ele[1]][0])
+    new_lon.append(coordinates[min_ele[1]][1])
+    new_coords = [(x[0], x[1]) for x in zip(new_lat, new_lon)]
     new_df = pd.DataFrame()
     new_df['lat'] = new_lat
     new_df['lon'] = new_lon
     new_df['coordinates'] = new_coords
+
+    new_df = fill_in_point_gaps(new_df, 15)
     return new_df
 
 # accepts a series of difficulties and returns an overall trail rating (0-.9 scale) as a float
@@ -345,8 +356,9 @@ def place_object(object_tuple, direction, color):
 
     point, ang = get_label_placement(
         object_tuple[0][['lat', 'lon', 'coordinates']], len(object_tuple[1]), flip_lat_lon)
-
-    if not flip_lat_lon:
+    area = object_tuple[3]
+    if not area:
+        if not flip_lat_lon:
             if object_tuple[2] == 0:
                 plt.plot(object_tuple[0].lat * lat_mirror,
                          object_tuple[0].lon * lon_mirror, c=color)
@@ -355,10 +367,10 @@ def place_object(object_tuple, direction, color):
                          lon_mirror, c=color, linestyle='dashed')
             if color == 'gold':
                 color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 7:
+            if get_trail_length(object_tuple[0].coordinates) > 200:
                 plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
                          'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
-    if flip_lat_lon:
+        if flip_lat_lon:
             if object_tuple[2] == 0:
                 plt.plot(object_tuple[0].lon * lon_mirror,
                          object_tuple[0].lat * lat_mirror, c=color)
@@ -367,9 +379,43 @@ def place_object(object_tuple, direction, color):
                          lat_mirror, c=color, linestyle='dashed')
             if color == 'gold':
                 color = 'black'
-            if get_trail_length(object_tuple[0].coordinates) > 7:
+            if get_trail_length(object_tuple[0].coordinates) > 200:
                 plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
                          'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+    if area:
+        if not flip_lat_lon:
+            if object_tuple[2] == 0:
+                plt.fill(object_tuple[0].lat * lat_mirror,
+                         object_tuple[0].lon * lon_mirror, alpha=.1, fc=color)
+                plt.fill(object_tuple[0].lat * lat_mirror,
+                         object_tuple[0].lon * lon_mirror, ec=color, fc='none')
+            if object_tuple[2] > 0:
+                plt.fill(object_tuple[0].lat * lat_mirror, 
+                         object_tuple[0].lon * lon_mirror, alpha=.1, fc=color)
+                plt.fill(object_tuple[0].lat * lat_mirror, 
+                         object_tuple[0].lon * lon_mirror, ec=color, fc='none', linestyle='dashed')
+            if color == 'gold':
+                color = 'black'
+            if get_trail_length(object_tuple[0].coordinates) > 200:
+                plt.text((object_tuple[0].lat[point]) * lat_mirror, (object_tuple[0].lon[point]) * lon_mirror, object_tuple[1], {
+                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+        if flip_lat_lon:
+            if object_tuple[2] == 0:
+                plt.fill(object_tuple[0].lon * lon_mirror,
+                         object_tuple[0].lat * lat_mirror, alpha=.1, fc=color)
+                plt.fill(object_tuple[0].lon * lon_mirror,
+                         object_tuple[0].lat * lat_mirror, ec=color, fc='none')
+            if object_tuple[2] > 0:
+                plt.fill(object_tuple[0].lon * lon_mirror, 
+                         object_tuple[0].lat * lat_mirror, alpha=.1, fc=color, linestyle='dashed')
+                plt.fill(object_tuple[0].lon * lon_mirror, 
+                         object_tuple[0].lat * lat_mirror, ec=color, fc='none', linestyle='dashed')
+            if color == 'gold':
+                color = 'black'
+            if get_trail_length(object_tuple[0].coordinates) > 200:
+                plt.text((object_tuple[0].lon[point]) * lon_mirror, (object_tuple[0].lat[point]) * lat_mirror, object_tuple[1], {
+                         'color': color, 'size': 2, 'rotation': ang}, ha='center', backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', fc='white', ec='none'))
+
 
 # Parameters:
 # name: name of an object
