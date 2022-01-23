@@ -21,13 +21,39 @@ The background line color will be set according to the chart above.
 
 It will take an osm file, and output a map of all ski trails with a difficultly assigned based on the steepest pitch. There are still some quirks with the slopes that are calculated because of assumptions made about the elevation data, but overall the osm files are now working well.
 
-For each mountain, an overall difficulty rating is created. This metric takes the median rating for the top 5 hardest trails and the top 20, then averages the two together. In short, this metric indicates how hard the most difficult trails are at a particular area.
+For each mountain, an overall difficulty rating is created. This metric takes the mean of the hardest 30, 5 and 1 trails, then averages them together. In short, this metric indicates how hard the most difficult trails are at a particular area.
 
 There is also a metric produced using the same methods but reversed. This indicates how challenging the easiest terrain is, and indicates how difficult the easiest terrain may be for a beginner skier.
 
 ### Bulk OSM
 
-Should the bulk import function be used, a bar graph for each of these metrics will be created to rank the relative difficulty of all resorts inputted.
+A CSV file may be provided where each line contains the necessary information to run the program on an OSM file. This provides the same functionality as running a single OSM file, but with added speed for processing many mountains in one batch.
+
+## CLI Useage and Arguments
+
+```
+python3 main.py <ARGS>
+```
+
+Arguments | Function | Can be used with
+--- | --- | ---
+-h | help page | none
+-s | save figures | -[o,c,i,d]
+-o, --osm | create map from OSM file | -[s,i,d]
+-c, --csv | create many maps from a csv file where each line refers to an osm file, direction, and mountains to ignore | -s
+-g, --gpx | create map from GPX file | none
+-d, --direction | specifies which way a map should face | -[s,o,i]
+-i, --ignore | specify a mountain that has been run previously to prevent overlap | -[s,o,d]
+-b | create barplot comparing difficulty between mountains | -s
+
+All filename arguments should not contain the file extension.
+
+Example:
+```
+python3 main.py -s -o deer_valley -d n -i park_city
+python3 main.py -s -c mountain_list
+python3 main.py -s -b
+```
 
 ## What's next?
 Trail name placement is working well most of the time, but there is room for improvement.

@@ -1,7 +1,7 @@
-from math import sqrt
 import matplotlib.pyplot as plt
 import pandas as pd
 import helper
+from tqdm import tqdm
 
 
 def create_gpx_map(df):
@@ -93,14 +93,16 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     print('Creating Map')
 
     plt.figure(figsize=(n_s_length*2, e_w_length*2))
-    for entry in lifts:
+    for i in tqdm (range (len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
+        entry = lifts[i]
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
         helper.place_object((entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
 
     rating_list = []
-    for entry in trails:
+    for i in tqdm (range (len(trails)), desc="Placing Trails…", ascii=False, ncols=75):
+        entry = trails[i]
         if not entry[3]:
             index = 0
         else:

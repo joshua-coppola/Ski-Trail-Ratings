@@ -16,10 +16,12 @@ def rmse(actual, pred):
 # accepts a string with coords separated by a | and returns a list of elevations
 
 
-def elevation_api(piped_coords, trailname=''):
+def elevation_api(piped_coords, last_called, trailname=''):
     # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
-    time.sleep(1)
+    if time.time() - last_called < 1:
+        time.sleep(1 - (time.time() - last_called))
+    last_called = time.time()
     response = get(url.format(piped_coords))
     if response.status_code == 200:
         elevation = []
@@ -30,7 +32,7 @@ def elevation_api(piped_coords, trailname=''):
         print(response.status_code)
         print(response.content)
         return -1
-    return elevation
+    return (elevation, last_called)
 
 # Parameters:
 # coordinates: list/series of latitude and longitude tuples
@@ -44,7 +46,7 @@ def elevation_api(piped_coords, trailname=''):
 #   type-tuple(series of tuples, int)
 
 
-def get_elevation(coordinates, trail_name='', api_requests=0):
+def get_elevation(coordinates, last_called, trail_name='', api_requests=0):
     piped_coords = ''
     point_count = 0
     elevations = []
@@ -56,7 +58,7 @@ def get_elevation(coordinates, trail_name='', api_requests=0):
             '|{},{}'.format(coordinate[0], coordinate[1])
         point_count += 1
         if point_count >= 99:
-            temp_elevations = elevation_api(piped_coords, trail_name)
+            temp_elevations, last_called = elevation_api(piped_coords, last_called,trail_name)
             api_requests += 1
             if temp_elevations == -1:
                 return -1
@@ -65,13 +67,13 @@ def get_elevation(coordinates, trail_name='', api_requests=0):
             for point in temp_elevations:
                 elevations.append(point)
     if piped_coords != '':
-        temp_elevations = elevation_api(piped_coords, trail_name)
+        temp_elevations, last_called = elevation_api(piped_coords, last_called,trail_name)
         api_requests += 1
         if temp_elevations == -1:
             return -1
         for point in temp_elevations:
             elevations.append(point)
-    return (pd.Series(elevations), api_requests)
+    return (pd.Series(elevations), api_requests, last_called)
 
 # accepts a list of lat/lon pairs and returns a list of distances (in meters)
 

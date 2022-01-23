@@ -85,7 +85,6 @@ def main(argv):
         elif opt in ("-o", "--osm"):
             file = arg
             osm_flag = True
-            print()
         elif opt in ("-g", "--gpx"):
             file = arg
             gpx_flag = True
@@ -113,4 +112,3 @@ def main(argv):
 if __name__ == "__main__":
     main(sys.argv[1:])
     plt.show()
-    

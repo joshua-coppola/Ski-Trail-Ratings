@@ -1,7 +1,10 @@
+import imp
+import re
 import pandas as pd
 from os.path import exists
 from ast import literal_eval
 import time
+from tqdm import tqdm
 
 import helper
 import saveData
@@ -68,7 +71,6 @@ def load_osm(mountain, cached=True, blacklist=''):
     if not exists('cached/osm_ids/{}'.format(blacklist)) and blacklist != '':
         print('Blacklist file missing')
     file = open('osm/{}'.format(filename), 'r')
-    print('Opening File')
     raw_table = file.readlines()
     node_df = pd.DataFrame()
     way_df = pd.DataFrame()
@@ -83,8 +85,8 @@ def load_osm(mountain, cached=True, blacklist=''):
     is_trail = False
     is_glade = False
     is_backcountry = False
-    is_area = True
-    is_lift = True
+    is_area = False
+    is_lift = False
     blank_name_count = 0
     difficulty_modifier = 0
     useful_info_list = []
@@ -95,7 +97,6 @@ def load_osm(mountain, cached=True, blacklist=''):
     if blacklist != '':
         blacklist_ids = (pd.read_csv('cached/osm_ids/{}'.format(blacklist)))['id'].to_list()
         blacklist_ids = [str(x) for x in blacklist_ids]
-    print('Preforming initial pre-processing')
     for row in raw_table:
         row = str(row)
         # handling when inside a way
@@ -209,16 +210,9 @@ def load_osm(mountain, cached=True, blacklist=''):
                                    'coordinates': literal_eval})
         elevation_df = elevation_df[['coordinates', 'elevation']]
         elevation_df.drop_duplicates(inplace=True)
-    if cached:
-        print_frequency = 20
-    if not cached:
-        print_frequency = 10
-    for column in way_df:
+    last_called = time.time()
+    for column, _ in zip(way_df, tqdm (range(total_trail_count-1), desc="Loading Trails…", ascii=False, ncols=75)):
         trail_num += 1
-        if trail_num % print_frequency == 1 or trail_num == total_trail_count:
-            print('Processing trail {}/{}'.format(trail_num, total_trail_count))
-            if not cached:
-                print('Estimated time remaining: {} minutes'.format(((total_trail_count-trail_num)*3)/60))
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']
@@ -230,18 +224,20 @@ def load_osm(mountain, cached=True, blacklist=''):
                 area_flag = row[2]
         if not cached:
             result = helper.get_elevation(
-                temp_df['coordinates'], column, api_requests)
+                temp_df['coordinates'], last_called, column, api_requests)
             temp_df['elevation'] = result[0]
             api_requests = result[1]
+            last_called = result[2]
         else:
             row_count = temp_df.shape[0]
             temp_df_2 = pd.merge(temp_df, elevation_df, on='coordinates')
             # if cache is missing data
             if temp_df_2.shape[0] < row_count:
                 result = helper.get_elevation(
-                    temp_df['coordinates'], column, api_requests)
+                    temp_df['coordinates'], last_called, column, api_requests)
                 temp_df['elevation'] = result[0]
                 api_requests = result[1]
+                last_called = result[2]
             else:
                 temp_df = temp_df_2
         temp_area_line_df = pd.DataFrame()
@@ -249,18 +245,20 @@ def load_osm(mountain, cached=True, blacklist=''):
             temp_area_line_df = helper.area_to_line(temp_df)
             if not cached:
                 result = helper.get_elevation(
-                    temp_area_line_df['coordinates'], column, api_requests)
+                    temp_area_line_df['coordinates'], last_called, column, api_requests)
                 temp_area_line_df['elevation'] = result[0]
                 api_requests = result[1]
+                last_called = result[2]
             else:
                 row_count = temp_area_line_df.shape[0]
                 temp_area_line_df_2 = pd.merge(temp_area_line_df, elevation_df, on='coordinates')
                 # if cache is missing data
                 if temp_area_line_df_2.shape[0] < row_count:
                     result = helper.get_elevation(
-                        temp_area_line_df['coordinates'], column, api_requests)
+                        temp_area_line_df['coordinates'], last_called, column, api_requests)
                     temp_area_line_df['elevation'] = result[0]
                     api_requests = result[1]
+                    last_called= result[2]
                 else:
                     temp_area_line_df = temp_area_line_df_2
         trail_list.append((temp_df, column, difficulty_modifier, area_flag, temp_area_line_df))
@@ -273,7 +271,6 @@ def load_osm(mountain, cached=True, blacklist=''):
     if total_trail_count == 0:
         print('No trails found.')
         return (-1, -1)
-    print('All trails sucessfully loaded')
     print('{} API requests made'.format(api_requests))
 
     return (trail_list, lift_list)
@@ -302,7 +299,6 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
         return -1
     print('Time spent loading trails: {}'.format(time.time()-start_time))
 
-    start_time = time.time()
     finished_trail_list = []
     for entry in trail_list:
         if not entry[3]:
@@ -321,7 +317,6 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
             finished_trail_list.append((trail, entry[1], entry[2], entry[3], entry[4]))
         else:
             finished_trail_list.append((entry[0], entry[1], entry[2], entry[3], trail))
-    print('Time spent processing trails: {}'.format(time.time()-start_time))
 
     start_time = time.time()
     mtn_difficulty = saveData.create_map(
