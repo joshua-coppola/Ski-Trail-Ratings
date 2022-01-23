@@ -1,5 +1,3 @@
-import imp
-import re
 import pandas as pd
 from os.path import exists
 from ast import literal_eval

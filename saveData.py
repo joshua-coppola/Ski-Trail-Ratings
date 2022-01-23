@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-import helper
 from tqdm import tqdm
+
+import helper
+import mapHelper
 
 
 def create_gpx_map(df):
@@ -63,13 +65,13 @@ def save_trail_ids(tuple_list, mountain_name):
 
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     print('Creating Map')
-    helper.format_map_template(trails, mountain, cardinal_direction)
+    mapHelper.format_map_template(trails, mountain, cardinal_direction)
     for i in tqdm (range (len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
         entry = lifts[i]
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        helper.place_object((entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
+        mapHelper.place_object((entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
 
     rating_list = []
     for i in tqdm (range (len(trails)), desc="Placing Trails…", ascii=False, ncols=75):
@@ -89,7 +91,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        helper.place_object((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
+        mapHelper.place_object((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
         
     plt.xticks([])
     plt.yticks([])
