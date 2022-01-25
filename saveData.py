@@ -1,3 +1,4 @@
+from decimal import Decimal
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
@@ -35,6 +36,8 @@ def cache_elevation(filename, list_dfs):
         if entry[3]:
             trail = entry[4][['coordinates', 'elevation']]
             output_df = output_df.append(trail)
+    output_df['elevation'] = [round(Decimal(x), 2) for x in output_df.elevation]
+    output_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in output_df.coordinates]
     output_df.to_csv('cached/elevation/{}'.format(filename), index=False)
 
 # Parameters:
@@ -103,13 +106,13 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     if len(rating_list) < 30:
         long_list = len(rating_list)
     hard_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_difficulty_rating = (sum(hard_list[0])/long_list + sum(hard_list[1])/5 + hard_list[0][0]) / 3
+    mountain_difficulty_rating = (sum(hard_list[0])/long_list + sum(hard_list[1])/5) / 2
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
     rating_list.sort()
     easy_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_ease_rating = (sum(easy_list[0])/long_list + sum(easy_list[1])/5 + easy_list[0][0]) / 3
+    mountain_ease_rating = (sum(easy_list[0])/long_list + sum(easy_list[1])/5) / 2
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
     print('Beginner Friendliness Rating:')

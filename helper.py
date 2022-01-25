@@ -66,7 +66,7 @@ def process_osm(table, blacklist):
                 is_glade = True
             if '<tag k="aerialway"' in row:
                 is_lift = True
-            if 'Tree Skiing' in row:
+            if 'Tree Skiing' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
 
@@ -406,3 +406,13 @@ def calculate_mtn_vert(object):
         if trail[0].elevation.min() < min_ele:
             min_ele = trail[0].elevation.min()
     return(max_ele-min_ele)
+
+# Parameters:
+# elevation: a series of elevations
+#   type-series
+#
+# Returns: the vertical drop of the trail
+#   type-float
+
+def calculate_trail_vert(elevation):
+    return elevation.max() - elevation.min()

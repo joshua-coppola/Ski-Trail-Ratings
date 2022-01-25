@@ -40,7 +40,9 @@ def bulk_osm(input_csv, save_map = False):
         csv_file = csv.reader(file)
         next(csv_file)
         for line in csv_file:
-            osm(line[0], line[1], save_map, line[4])
+            if line[0][0] == '#':
+                continue
+            osm(line[0], line[1], save_map, line[5])
 
 
 def barplot(save):

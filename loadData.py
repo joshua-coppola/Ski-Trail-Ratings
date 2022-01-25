@@ -92,6 +92,7 @@ def load_osm(mountain, cached=True, blacklist=''):
         elevation_df = pd.read_csv('cached/elevation/{}'.format(cached_filename), converters={
                                    'coordinates': literal_eval})
         elevation_df = elevation_df[['coordinates', 'elevation']]
+        elevation_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in elevation_df.coordinates]
         elevation_df.drop_duplicates(inplace=True)
     last_called = time.time()
     for column, _ in zip(way_df, tqdm (range(total_trail_count-1), desc="Loading Trails…", ascii=False, ncols=75)):
@@ -101,6 +102,7 @@ def load_osm(mountain, cached=True, blacklist=''):
         del temp_df['id']
         del temp_df[column]
         temp_df = helper.fill_in_point_gaps(temp_df, 15)
+        temp_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in temp_df.coordinates]
         for row in useful_info_list:
             if column == row[0]:
                 difficulty_modifier = row[1]
@@ -126,6 +128,7 @@ def load_osm(mountain, cached=True, blacklist=''):
         temp_area_line_df = pd.DataFrame()
         if area_flag:
             temp_area_line_df = helper.area_to_line(temp_df)
+            temp_area_line_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in temp_area_line_df.coordinates]
             if not cached:
                 result = helper.get_elevation(
                     temp_area_line_df['coordinates'], last_called, column, api_requests)
