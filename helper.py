@@ -28,10 +28,10 @@ def process_osm(table, blacklist):
     total_trail_count = 0
 
     in_way = False
+    way_name = ''
 
     for row in table:
         row = str(row)
-        way_name = ''
         # handling when inside a way
         if in_way:
             if '<nd' in row:
