@@ -161,26 +161,22 @@ def load_osm(mountain, cached=True, blacklist=''):
 # Parameters:
 # mountain: name of ski area
 #   type-string
-# difficulty_modifiers: run with or without increased difficulty for tree trails
-#   type-bool
 # cardinal_direction: which way does the ski area face
 #   type-string
 #   valid options-'n','s','e','w' or some combination of the 4
 # save_map: whethere to save the output to an svg file
 #   type-bool
-#   note-not recommended to be set to 'True' if more than one cardinal_direction
-#   is chosen
+# blacklist: name of nearby ski area to ignore trails and lifts from
+#   type-string
 #
 # Return: the relative difficultly and ease of the difficult and beginner terrain
-#   type-tuple(tuple,tuple)
+#   type-tuple(float,float)
 
 
 def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
-    start_time = time.time()
     trail_list, lift_list = load_osm(mountain, True, blacklist)
     if trail_list == -1:
         return -1
-    print('Time spent loading trails: {}'.format(time.time()-start_time))
 
     finished_trail_list = []
     for entry in trail_list:
@@ -201,9 +197,11 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
         else:
             finished_trail_list.append((entry[0], entry[1], entry[2], entry[3], trail))
 
-    start_time = time.time()
     mtn_difficulty = saveData.create_map(
         finished_trail_list, lift_list, mountain, cardinal_direction, save_map)
-    print('Time spent making map: {}'.format(time.time()-start_time))
+    if mtn_difficulty == -1:
+        return -1
+    vert = helper.calculate_mtn_vert(finished_trail_list)
     saveData.cache_elevation(mountain + '.csv', trail_list)
-    return mtn_difficulty
+    output = (mtn_difficulty[0], mtn_difficulty[1], round(vert))
+    return output

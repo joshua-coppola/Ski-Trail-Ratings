@@ -6,6 +6,7 @@ import sys, getopt
 
 import loadData
 import saveData
+import helper
 
 def gpx(filename):
     #filename = 'gpx/big-bang-409529.gpx'
@@ -14,12 +15,12 @@ def gpx(filename):
     loadData.runGPX(filename)
 
 def osm(mountain='', direction='n', save_map=False, blacklist=''):
-    print('\nProcessing {}'.format(mountain))
+    print('\nProcessing {}'.format(helper.format_name(mountain)))
     diff_tuple = loadData.runOSM(mountain, direction, save_map, blacklist)
     if diff_tuple == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
-        row = [[mountain, direction, diff_tuple[0], diff_tuple[1], blacklist]]
+        row = [[mountain, direction, diff_tuple[0], diff_tuple[1], diff_tuple[2], blacklist]]
         mountains = pd.read_csv('mountain_list.csv')
         if mountain in mountains.mountain.to_list():
             mountains.loc[mountains.mountain == mountain] = row

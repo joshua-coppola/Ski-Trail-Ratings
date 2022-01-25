@@ -96,7 +96,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     plt.xticks([])
     plt.yticks([])
     if save:
-        plt.savefig('maps/{}.svg'.format(mountain.strip()), format='svg')
+        plt.savefig('maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
         print('SVG saved')
     rating_list.sort(reverse=True)
     long_list = 30

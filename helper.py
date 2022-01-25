@@ -396,3 +396,13 @@ def format_name(name):
     for word in name_list:
         name = '{}{} '.format(name, word.capitalize())
     return name.strip()
+
+def calculate_mtn_vert(object):
+    min_ele = 10000
+    max_ele = 0
+    for trail in object:
+        if trail[0].elevation.max() > max_ele:
+            max_ele = trail[0].elevation.max()
+        if trail[0].elevation.min() < min_ele:
+            min_ele = trail[0].elevation.min()
+    return(max_ele-min_ele)
