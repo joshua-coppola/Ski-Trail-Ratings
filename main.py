@@ -40,6 +40,8 @@ def bulk_osm(input_csv, save_map = False):
         csv_file = csv.reader(file)
         next(csv_file)
         for line in csv_file:
+            if len(line) == 0:
+                break
             if line[0][0] == '#':
                 continue
             osm(line[0], line[1], save_map, line[5])
@@ -103,15 +105,19 @@ def main(argv):
         elif opt in ("-s"):
             save_flag = True
 
+    show_map = True
     if csv_flag:
         bulk_osm(file, save_flag)
+        show_map = False
     elif osm_flag:
         osm(file, direction, save_flag, blacklist)
     elif gpx_flag:
         gpx(file)
     if bar_flag:
         barplot(save_flag)
+    return show_map
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
-    plt.show()
+    show_map = main(sys.argv[1:])
+    if show_map:
+        plt.show()

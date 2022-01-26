@@ -86,7 +86,7 @@ def process_osm(table, blacklist):
                     temp_df[way_name] = in_way_ids
                     way_df = pd.concat([way_df, temp_df], axis=1)
                     useful_info_list.append(
-                        (way_name, difficulty_modifier, is_area))
+                        (way_name, difficulty_modifier, is_area, way_id))
                 if is_lift:
                     trail_and_id_list.append((way_name, way_id))
                     if way_name == '':
@@ -285,7 +285,7 @@ def rate_trail(difficulty):
     previous_2 = 0
     for point in difficulty:
         nearby_avg = (point + previous + previous_2) / 3
-        if nearby_avg > max_difficulty:
+        if nearby_avg > max_difficulty and nearby_avg < .60:
             max_difficulty = nearby_avg
         previous_2 = previous
         previous = point

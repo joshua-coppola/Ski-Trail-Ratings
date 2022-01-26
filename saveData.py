@@ -23,22 +23,45 @@ def create_gpx_map(df):
     plt.yticks([])
     plt.show()
 
-# accepts a list of trails and saves the latitude, longitude, and elevation
-# to a csv as a cache
+# Parameters:
+# filename: name of csv to save data to
+#   type-string
+# list_df: list of trails
+#   type-list of tuples
+# 
+# Return: none
 
 
-def cache_elevation(filename, list_dfs):
-    output_df = pd.DataFrame(columns=['coordinates', 'elevation'])
-    output_df.drop_duplicates(inplace=True)
+def cache_trail_points(filename, list_dfs):
+    output_df = pd.DataFrame(columns=['trail_id','for_display','lat','lon','elevation'])
     for entry in list_dfs:
-        trail = entry[0][['coordinates', 'elevation']]
+        trail = pd.DataFrame()
+        trail['trail_id'] = entry[5]
+        trail['for_display'] = True
+        trail['lat'] = entry[0].lat
+        trail['lon'] = entry[0].lon
+        trail['elevation'] = entry[0]['elevation']
+        trail['slope'] = entry[0].slope
+        trail['trail_id'] = entry[5]
+        trail['for_display'] = True
         output_df = output_df.append(trail)
         if entry[3]:
-            trail = entry[4][['coordinates', 'elevation']]
+            trail = pd.DataFrame()
+            trail['trail_id'] = entry[5]
+            trail['for_display'] = False
+            trail['lat'] = entry[4].lat
+            trail['lon'] = entry[4].lon
+            trail['elevation'] = entry[4]['elevation']
+            trail['slope'] = entry[4].slope
+            trail['trail_id'] = entry[5]
+            trail['for_display'] = True
             output_df = output_df.append(trail)
+    output_df['lat'] = [round(x, 8) for x in output_df.lat]
+    output_df['lon'] = [round(x, 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2) for x in output_df.elevation]
-    output_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in output_df.coordinates]
-    output_df.to_csv('cached/elevation/{}'.format(filename), index=False)
+    output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
+    output_df.drop_duplicates(inplace=True)
+    output_df.to_csv('cached/trail_points/{}'.format(filename))
 
 # Parameters:
 # tuple_list: list of trail names and osm ids
