@@ -97,7 +97,7 @@ def load_osm(mountain, cached=True, blacklist=''):
         del elevation_df['lon']
         elevation_df.drop_duplicates(inplace=True)
     last_called = time.time()
-    for column, _ in zip(way_df, tqdm (range(total_trail_count-1), desc="Loading Trails…", ascii=False, ncols=75)):
+    for column, _ in zip(way_df, tqdm (range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
         trail_num += 1
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')

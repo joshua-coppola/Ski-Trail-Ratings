@@ -35,20 +35,24 @@ def get_label_placement(df, length, flip_lat_lon):
             ang = degrees(atan2(dx, dy))
         angle_list.append(ang)
         valid_list.append(valid)
-    rmse_min = (1, 10000000)
+    frac_correct = (1, 0, 0)
     for i, _ in enumerate(angle_list):
         if valid_list[i]:
-            slice = angle_list[i-label_length_in_points:i +
-                               label_length_in_points]
+            slice = angle_list[i-int(label_length_in_points / 2):i +
+                               int(label_length_in_points / 2)]
             if len(slice) == 0:
                 continue
             expected = sum(slice) / len(slice)
-            rmse_current = helper.rmse(expected, slice)
-            if rmse_current < rmse_min[1]:
-                rmse_min = (i, rmse_current)
-
-    if rmse_min[1] != 10000000:
-        point = rmse_min[0]
+            frac_correct_current = 0
+            correct = 0
+            for value in slice:
+                if abs(value-expected) < 5:
+                    correct += 1
+            frac_correct_current = correct / len(slice)
+            if frac_correct_current > frac_correct[1]:
+                frac_correct = (i, frac_correct_current, 0)
+    if frac_correct[1] != 0:
+        point = frac_correct[0]
     if point == 0:
         dx = 0
         dy = 0

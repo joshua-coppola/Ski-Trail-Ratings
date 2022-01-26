@@ -15087,29 +15087,6 @@
   <tag k="aerialway" v="t-bar"/>
   <tag k="name" v="Valar"/>
  </way>
- <way id="776607937" visible="true" version="1" changeset="81520604" timestamp="2020-02-26T20:37:47Z" user="mblaz95" uid="1901922">
-  <nd ref="7246057978"/>
-  <nd ref="7246057979"/>
-  <nd ref="4726946344"/>
-  <nd ref="7246057980"/>
-  <nd ref="7246057981"/>
-  <nd ref="4726948403"/>
-  <nd ref="4726948404"/>
-  <nd ref="4726948405"/>
-  <nd ref="7246057982"/>
-  <nd ref="4726946342"/>
-  <nd ref="4726948456"/>
-  <nd ref="7246057983"/>
-  <nd ref="7246057984"/>
-  <nd ref="7246113288"/>
-  <nd ref="7246113285"/>
-  <nd ref="7246113286"/>
-  <nd ref="7246057977"/>
-  <nd ref="7246057978"/>
-  <tag k="area" v="yes"/>
-  <tag k="piste:difficulty" v="advanced"/>
-  <tag k="piste:type" v="downhill"/>
- </way>
  <way id="776607938" visible="true" version="1" changeset="81520604" timestamp="2020-02-26T20:37:47Z" user="mblaz95" uid="1901922">
   <nd ref="7246113287"/>
   <nd ref="4584435793"/>

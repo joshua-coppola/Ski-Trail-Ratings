@@ -5,12 +5,6 @@ from numpy import NAN
 import haversine as hs
 from math import degrees, atan
 from requests.api import get
-import numpy as np
-
-
-def rmse(actual, pred):
-    actual, pred = np.array(actual), np.array(pred)
-    return np.sqrt(np.square(np.subtract(actual, pred)).mean())
 
 def process_osm(table, blacklist):
     DEBUG_TRAILS = False

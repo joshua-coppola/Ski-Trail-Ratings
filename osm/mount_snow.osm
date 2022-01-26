@@ -7687,21 +7687,6 @@
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:type" v="downhill"/>
  </way>
- <way id="263975289" visible="true" version="1" changeset="20848020" timestamp="2014-03-01T16:38:47Z" user="mblaz95" uid="1901922">
-  <nd ref="2696517688"/>
-  <nd ref="2696560390"/>
-  <nd ref="2696560398"/>
-  <nd ref="2696560441"/>
-  <nd ref="2696560400"/>
-  <nd ref="2696560454"/>
-  <nd ref="2696560330"/>
-  <nd ref="2696560296"/>
-  <nd ref="2696560391"/>
-  <tag k="gladed" v="yes"/>
-  <tag k="name" v="Dark Side of the Moon"/>
-  <tag k="piste:difficulty" v="advanced"/>
-  <tag k="piste:type" v="downhill"/>
- </way>
  <way id="263975292" visible="true" version="2" changeset="97258801" timestamp="2021-01-10T18:08:23Z" user="Ski Lift Dude" uid="7643027">
   <nd ref="2696560421"/>
   <nd ref="2696560437"/>
