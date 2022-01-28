@@ -77,7 +77,10 @@ def load_osm(mountain, cached=True, blacklist=''):
     else:
         blacklist_ids = []
     
-    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = helper.process_osm(raw_table, blacklist_ids)
+    whitelist_mode = False
+    if blacklist == mountain:
+        whitelist_mode = True
+    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = helper.process_osm(raw_table, blacklist_ids, whitelist_mode)
     
     saveData.save_trail_ids(trail_and_id_list, mountain)
 

@@ -48,6 +48,8 @@ Arguments | Function | Can be used with
 
 All filename arguments should not contain the file extension.
 
+If `-i` is used with the same mountain name as specified with `-o`, it will enable a whitelist mode. Only trails that are at that resort based on the trail list created on the previous run of that mountain will be included in the map. This is useful when some trails were manually removed from an osm file and the osm file was updated at a later date.
+
 Example:
 ```
 python3 main.py -s -o deer_valley -d n -i park_city

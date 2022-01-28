@@ -6,7 +6,7 @@ import haversine as hs
 from math import degrees, atan
 from requests.api import get
 
-def process_osm(table, blacklist):
+def process_osm(table, blacklist, whitelist_mode=False):
     DEBUG_TRAILS = False
 
     way_df = pd.DataFrame()
@@ -58,7 +58,7 @@ def process_osm(table, blacklist):
             if 'Glade' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
-            if '<tag k="aerialway"' in row:
+            if '<tag k="aerialway"' in row and not 'v="zip_line"' in row:
                 is_lift = True
             if 'Tree Skiing' in row and not is_glade:
                 difficulty_modifier += 1
@@ -83,6 +83,8 @@ def process_osm(table, blacklist):
                         (way_name, difficulty_modifier, is_area, way_id))
                 if is_lift:
                     trail_and_id_list.append((way_name, way_id))
+                    if DEBUG_TRAILS:
+                        way_name = way_id
                     if way_name == '':
                         way_name = ' _' + str(blank_name_count)
                         blank_name_count += 1
@@ -105,7 +107,9 @@ def process_osm(table, blacklist):
             is_lift = False
             difficulty_modifier = 0
             way_id = row.split('"')[1]
-            if str(way_id) in blacklist:
+            if (str(way_id) not in blacklist) and whitelist_mode:
+                in_way = False
+            if (str(way_id) in blacklist) and not whitelist_mode:
                 in_way = False
         # handling nodes
         if '<node' in row:
@@ -279,7 +283,7 @@ def rate_trail(difficulty):
     previous_2 = 0
     for point in difficulty:
         nearby_avg = (point + previous + previous_2) / 3
-        if nearby_avg > max_difficulty and nearby_avg < .60:
+        if nearby_avg > max_difficulty:
             max_difficulty = nearby_avg
         previous_2 = previous
         previous = point
