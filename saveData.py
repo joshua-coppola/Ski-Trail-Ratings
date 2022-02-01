@@ -71,13 +71,13 @@ def cache_trail_points(filename, list_dfs):
 # 
 # Return: none
 
-def save_trail_ids(tuple_list, mountain_name):
+def save_trail_ids(tuple_list, filename):
     name_list = [x[0] for x in tuple_list]
     id_list = [x[1] for x in tuple_list]
     export_df = pd.DataFrame()
     export_df['name'] = name_list
     export_df['id'] = id_list
-    export_df.to_csv('cached/osm_ids/{}'.format(mountain_name), index=False)
+    export_df.to_csv('cached/osm_ids/{}'.format(filename), index=False)
 
 
 # accepts a list of trail tuples, a list of lift tuples, the name of the ski area,
@@ -129,13 +129,13 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     if len(rating_list) < 30:
         long_list = len(rating_list)
     hard_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_difficulty_rating = (sum(hard_list[0])/long_list + sum(hard_list[1])/5) / 2
+    mountain_difficulty_rating = ((sum(hard_list[0])/long_list) * .2) + ((sum(hard_list[1])/5) * .8)
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
     print('Difficultly Rating:')
     print(mountain_difficulty_rating)
     rating_list.sort()
     easy_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_ease_rating = (sum(easy_list[0])/long_list + sum(easy_list[1])/5) / 2
+    mountain_ease_rating = ((sum(easy_list[0])/long_list) * .2) + ((sum(easy_list[1])/5) * .8)
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
     print('Beginner Friendliness Rating:')
@@ -158,26 +158,26 @@ def create_difficulty_barplot(df, save=False):
     df['mountain'] = [helper.format_name(x) for x in df['mountain']]
     df = df.sort_values(by='difficulty', ascending=False)
     df['diff_color'] = [helper.set_color(x/100) for x in df['difficulty']]
-    plt.figure(figsize=(8,len(df['difficulty'])*.2))
+    plt.figure(figsize=(8,len(df['difficulty'])*.15))
     plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
     plt.title('Difficulty Comparison')
     plt.xlabel('Longer bar = more expert friendly')
-    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                        top=.9, wspace=0, hspace=0)
+    plt.subplots_adjust(left=0.25, bottom=.03, right=.95,
+                        top=.97, wspace=0, hspace=0)
     plt.grid(axis='x')
     if save:
         plt.savefig('maps/comparative_difficulty.svg', format='svg')
         print('SVG saved')
     plt.draw()
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
-    df['ease'] = 20 - df['ease']
+    df['ease'] = 30 - df['ease']
     df = df.sort_values(by='ease', ascending=True)
-    plt.figure(figsize=(8,len(df['ease'])*.2))
+    plt.figure(figsize=(8,len(df['ease'])*.15))
     plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
     plt.title('Beginner Friendliness')
     plt.xlabel('Longer bar = more beginner friendly')
-    plt.subplots_adjust(left=0.25, bottom=.1, right=.95,
-                        top=.9, wspace=0, hspace=0)
+    plt.subplots_adjust(left=0.25, bottom=.03, right=.95,
+                        top=.97, wspace=0, hspace=0)
     plt.grid(axis='x')
     if save:
         plt.savefig('maps/beginner_friendliness.svg', format='svg')

@@ -36,6 +36,8 @@ def process_osm(table, blacklist, whitelist_mode=False):
                 way_name = split_row[3]
             if '<tag k="piste:difficulty"' in row:
                 is_trail = True
+            if '<tag k="piste:type"' in row and 'downhill' in row:
+                is_trail = True
             if '<tag k="piste:type"' in row and 'backcountry' in row:
                 is_backcountry = True
             if '<tag k="piste:type"' in row and 'nordic' in row:
@@ -45,6 +47,8 @@ def process_osm(table, blacklist, whitelist_mode=False):
             if '<tag k="gladed" v="yes"/>' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
+            if '<tag k="gladed" v="no"/>' in row:
+                glade_override = True
             if '<tag k="leaf_type"' in row and not is_glade:
                 difficulty_modifier += 1
                 is_glade = True
@@ -65,6 +69,8 @@ def process_osm(table, blacklist, whitelist_mode=False):
                 is_glade = True
 
             if '</way>' in row:
+                if glade_override and is_glade:
+                    difficulty_modifier -= 1
                 if is_trail and not is_backcountry:
                     total_trail_count += 1
                     trail_and_id_list.append((way_name, way_id))
@@ -105,6 +111,7 @@ def process_osm(table, blacklist, whitelist_mode=False):
             is_backcountry = False
             is_area = False
             is_lift = False
+            glade_override = False
             difficulty_modifier = 0
             way_id = row.split('"')[1]
             if (str(way_id) not in blacklist) and whitelist_mode:
@@ -136,6 +143,7 @@ def process_osm(table, blacklist, whitelist_mode=False):
 def elevation_api(piped_coords, last_called, trailname=''):
     # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
+    # url = 'https://api.opentopodata.org/v1/mapzen?locations={}'
     if time.time() - last_called < 1:
         time.sleep(1 - (time.time() - last_called))
     last_called = time.time()
@@ -392,7 +400,10 @@ def format_name(name):
     name_list = name.split('_')
     name = ''
     for word in name_list:
-        name = '{}{} '.format(name, word.capitalize())
+        if len(word) > 2:
+            name = '{}{} '.format(name, word.capitalize())
+        else:
+            name = '{}{} '.format(name, word)
     return name.strip()
 
 def calculate_mtn_vert(object):
