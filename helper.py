@@ -400,7 +400,7 @@ def format_name(name):
     name_list = name.split('_')
     name = ''
     for word in name_list:
-        if len(word) > 2:
+        if len(word) > 2 or word == 'fe':
             name = '{}{} '.format(name, word.capitalize())
         else:
             name = '{}{} '.format(name, word)

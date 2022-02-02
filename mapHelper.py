@@ -105,33 +105,36 @@ def format_map_template(trails, mountain, cardinal_direction):
     top_corner = (mountain_max_lat, mountain_max_lon)
     bottom_corner = (mountain_min_lat, mountain_max_lon)
     bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
-    n_s_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
-    e_w_length = helper.calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
+    x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
+    y_length = helper.calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
     if 's' in cardinal_direction or 'n' in cardinal_direction:
-        temp = n_s_length
-        n_s_length = e_w_length
-        e_w_length = temp
-    plt.figure(figsize=(n_s_length*2, e_w_length*2))
+        temp = x_length
+        x_length = y_length
+        y_length = temp
+
+    #plt.subplots(facecolor='silver', figsize=(x_length*2, y_length*2))
+    plt.subplots(figsize=(x_length*2, y_length*2))
 
     if mountain != '':
         mountain = helper.format_name(mountain)
-        size = int(e_w_length*10)
+        size = int(x_length*10)
         if size > 25:
             size = 25
         if size < 5:
             size = 5
-        plt.title(mountain, fontsize=size)
-        if e_w_length < 1.5:
+        if y_length < 1.5:
             top = .88
-        if e_w_length >= 1.5:
-            top = .92
-        if e_w_length < 1:
+        if y_length >= 1.5:
+            top = .88
+        if y_length < 1:
             top = .80
+        plt.title(mountain, fontsize=size, y=1, pad = size * .5)
         plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
                             top=top, wspace=0, hspace=0)
     else:
         plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=1, wspace=0, hspace=0)
+    #plt.axis('off')
 
 # Parameters:
 # object_tuple: trail/lift tuple

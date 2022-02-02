@@ -16112,7 +16112,7 @@
   <tag k="name" v="Northway Backcountry"/>
   <tag k="piste:difficulty" v="expert"/>
   <tag k="piste:grooming" v="backcountry"/>
-  <tag k="piste:type" v="downhill"/>
+  <tag k="piste:type" v="backcountry"/>
  </way>
  <way id="391399417" visible="true" version="1" changeset="36573529" timestamp="2016-01-14T16:03:07Z" user="Jacgoat" uid="3456781">
   <nd ref="3921028267"/>

@@ -65,14 +65,14 @@ def load_osm(mountain, cached=True, blacklist=''):
     if not exists('osm/{}'.format(filename)):
         print('OSM file missing')
         return (-1, -1)
-    if not exists('cached/osm_ids/{}'.format(blacklist)) and blacklist != '':
+    if not exists('cached/osm_ids/{}.csv'.format(blacklist)) and blacklist != '':
         print('Blacklist file missing')
 
     file = open('osm/{}'.format(filename), 'r')
     raw_table = file.readlines()
 
     if blacklist != '':
-        blacklist_ids = (pd.read_csv('cached/osm_ids/{}'.format(blacklist)))['id'].to_list()
+        blacklist_ids = (pd.read_csv('cached/osm_ids/{}.csv'.format(blacklist)))['id'].to_list()
         blacklist_ids = [str(x) for x in blacklist_ids]
     else:
         blacklist_ids = []
