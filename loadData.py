@@ -1,6 +1,5 @@
 import pandas as pd
 from os.path import exists
-from ast import literal_eval
 import time
 from tqdm import tqdm
 
@@ -92,13 +91,9 @@ def load_osm(mountain, cached=True, blacklist=''):
     trail_num = 0
     api_requests = 0
     if cached:
-        elevation_df = pd.read_csv('cached/trail_points/{}'.format(cached_filename), converters={
-                                   'coordinates': literal_eval})
-        elevation_df = elevation_df[['lat', 'lon', 'elevation']]
+        elevation_df = pd.read_csv('cached/trail_points/{}'.format(cached_filename))
         elevation_df['coordinates'] = [(x, y) for x, y in zip(elevation_df.lat, elevation_df.lon)]
-        del elevation_df['lat']
-        del elevation_df['lon']
-        elevation_df.drop_duplicates(inplace=True)
+        ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
     last_called = time.time()
     for column, _ in zip(way_df, tqdm (range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
         trail_num += 1
@@ -120,17 +115,14 @@ def load_osm(mountain, cached=True, blacklist=''):
             api_requests = result[1]
             last_called = result[2]
         else:
-            row_count = temp_df.shape[0]
-            temp_df_2 = pd.merge(temp_df, elevation_df, on='coordinates')
-            # if cache is missing data
-            if temp_df_2.shape[0] < row_count:
+            try:
+                temp_df['elevation'] = [ele_dict[x] for x in temp_df.coordinates]
+            except:
                 result = helper.get_elevation(
                     temp_df['coordinates'], last_called, column, api_requests)
                 temp_df['elevation'] = result[0]
                 api_requests = result[1]
                 last_called = result[2]
-            else:
-                temp_df = temp_df_2
         temp_area_line_df = pd.DataFrame()
         if area_flag:
             temp_area_line_df = helper.area_to_line(temp_df)
@@ -142,17 +134,14 @@ def load_osm(mountain, cached=True, blacklist=''):
                 api_requests = result[1]
                 last_called = result[2]
             else:
-                row_count = temp_area_line_df.shape[0]
-                temp_area_line_df_2 = pd.merge(temp_area_line_df, elevation_df, on='coordinates')
-                # if cache is missing data
-                if temp_area_line_df_2.shape[0] < row_count:
+                try:
+                    temp_area_line_df['elevation'] = [ele_dict[x] for x in temp_area_line_df.coordinates]
+                except:
                     result = helper.get_elevation(
                         temp_area_line_df['coordinates'], last_called, column, api_requests)
                     temp_area_line_df['elevation'] = result[0]
                     api_requests = result[1]
-                    last_called= result[2]
-                else:
-                    temp_area_line_df = temp_area_line_df_2
+                    last_called = result[2]
         trail_list.append((temp_df, column, difficulty_modifier, area_flag, temp_area_line_df, way_id))
     lift_list = []
     for column in lift_df:

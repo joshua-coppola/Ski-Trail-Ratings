@@ -54,7 +54,7 @@ def cache_trail_points(filename, list_dfs):
             trail['elevation'] = entry[4]['elevation']
             trail['slope'] = entry[4].slope
             trail['trail_id'] = entry[5]
-            trail['for_display'] = True
+            trail['for_display'] = False
             output_df = output_df.append(trail)
     output_df['lat'] = [round(x, 8) for x in output_df.lat]
     output_df['lon'] = [round(x, 8) for x in output_df.lon]
@@ -131,15 +131,13 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     hard_list = [rating_list[0:long_list], rating_list[0:5]]
     mountain_difficulty_rating = ((sum(hard_list[0])/long_list) * .2) + ((sum(hard_list[1])/5) * .8)
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
-    print('Difficultly Rating:')
-    print(mountain_difficulty_rating)
+    print('Difficultly Rating: {}'.format(mountain_difficulty_rating))
     rating_list.sort()
     easy_list = [rating_list[0:long_list], rating_list[0:5]]
     mountain_ease_rating = ((sum(easy_list[0])/long_list) * .2) + ((sum(easy_list[1])/5) * .8)
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
-    print('Beginner Friendliness Rating:')
-    print(mountain_ease_rating)
+    print('Beginner Friendliness Rating: {}'.format(mountain_ease_rating))
     plt.draw()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
