@@ -39,7 +39,7 @@ def load_gpx(filename):
 # Return Type: none
 
 
-def runGPX(filename):
+def run_gpx(filename):
     df = load_gpx(filename)
     df = helper.fill_in_point_gaps(df, 15, 'gpx')
     df['elevation'] = helper.smooth_elevations(df['elevation'].to_list())
@@ -171,7 +171,7 @@ def load_osm(mountain, cached=True, blacklist=''):
 #   type-tuple(float,float)
 
 
-def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
+def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
     trail_list, lift_list = load_osm(mountain, True, blacklist)
     if trail_list == -1:
         return -1

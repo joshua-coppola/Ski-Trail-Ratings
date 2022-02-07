@@ -12,30 +12,33 @@ def gpx(filename):
     #filename = 'gpx/big-bang-409529.gpx'
     #filename = 'gpx/rimrock-415690.gpx'
     #filename = 'gpx/tuckered-out.gpx'
-    loadData.runGPX(filename)
+    loadData.run_gpx(filename)
 
 def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
     print('\nProcessing {}'.format(helper.format_name(mountain)))
     mountains = pd.read_csv('mountain_list.csv')
-    if direction == '' and mountain in mountains.mountain.to_list():
+    previously_run = False
+    if mountain in mountains.mountain.to_list():
+        previously_run = True
+    if direction == '' and previously_run:
         value = mountains.loc[mountains.mountain == mountain].direction.to_list()[0]
         if str(value) != 'nan':
             direction = value
-    if blacklist == '' and mountain in mountains.mountain.to_list():
+    if blacklist == '' and previously_run:
         value = mountains.loc[mountains.mountain == mountain].blacklist.to_list()[0]
         if str(value) != 'nan':
             blacklist = value
-    if location == '' and mountain in mountains.mountain.to_list():
+    if location == '' and previously_run:
         value = mountains.loc[mountains.mountain == mountain].state.to_list()[0]
         if str(value) != 'nan':
             location = value
-    diff_tuple = loadData.runOSM(mountain, direction, save_map, blacklist)
+    diff_tuple = loadData.run_osm(mountain, direction, save_map, blacklist)
     if diff_tuple == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, difficulty, ease, vert, trail_count, lift_count, blacklist)
         row = [[mountain, direction, location, diff_tuple[0], diff_tuple[1], diff_tuple[2], diff_tuple[3], diff_tuple[4], blacklist]]
-        if mountain in mountains.mountain.to_list():
+        if previously_run:
             mountains.loc[mountains.mountain == mountain] = row
             output = mountains
         else:
