@@ -91,7 +91,7 @@ def save_trail_ids(tuple_list, filename):
 
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     print('Creating Map')
-    mapHelper.format_map_template(trails, mountain, cardinal_direction)
+    mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
     for i in tqdm (range (len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
         entry = lifts[i]
         lift_name = entry[1]

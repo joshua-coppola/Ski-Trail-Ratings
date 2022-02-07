@@ -14,14 +14,27 @@ def gpx(filename):
     #filename = 'gpx/tuckered-out.gpx'
     loadData.runGPX(filename)
 
-def osm(mountain='', direction='n', save_map=False, blacklist=''):
+def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
     print('\nProcessing {}'.format(helper.format_name(mountain)))
+    mountains = pd.read_csv('mountain_list.csv')
+    if direction == '' and mountain in mountains.mountain.to_list():
+        value = mountains.loc[mountains.mountain == mountain].direction.to_list()[0]
+        if str(value) != 'nan':
+            direction = value
+    if blacklist == '' and mountain in mountains.mountain.to_list():
+        value = mountains.loc[mountains.mountain == mountain].blacklist.to_list()[0]
+        if str(value) != 'nan':
+            blacklist = value
+    if location == '' and mountain in mountains.mountain.to_list():
+        value = mountains.loc[mountains.mountain == mountain].state.to_list()[0]
+        if str(value) != 'nan':
+            location = value
     diff_tuple = loadData.runOSM(mountain, direction, save_map, blacklist)
     if diff_tuple == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
-        row = [[mountain, direction, diff_tuple[0], diff_tuple[1], diff_tuple[2], blacklist]]
-        mountains = pd.read_csv('mountain_list.csv')
+        # row = (mountain, direction, state, difficulty, ease, vert, trail_count, lift_count, blacklist)
+        row = [[mountain, direction, location, diff_tuple[0], diff_tuple[1], diff_tuple[2], diff_tuple[3], diff_tuple[4], blacklist]]
         if mountain in mountains.mountain.to_list():
             mountains.loc[mountains.mountain == mountain] = row
             output = mountains
@@ -29,6 +42,8 @@ def osm(mountain='', direction='n', save_map=False, blacklist=''):
             row = pd.Series(row[0], index=mountains.columns)
             output = mountains.append(row, ignore_index=True)
             output.sort_values(by=['mountain'], inplace=True)
+        output['trail_count'] = output['trail_count'].astype(int)
+        output['lift_count'] = output['lift_count'].astype(int)
         output.to_csv('mountain_list.csv', index=False)
     else:
         print('Mountain data not saved. If this is unexpected, please make sure you have a file called mountain_list.csv')
@@ -44,7 +59,7 @@ def bulk_osm(input_csv, save_map = False):
                 break
             if line[0][0] == '#':
                 continue
-            osm(line[0], line[1], save_map, line[5])
+            osm(line[0], line[1], save_map, line[8], line[2])
 
 
 def barplot(save):
@@ -64,28 +79,21 @@ def main(argv):
     bar_flag = False
     direction = ''
     blacklist = ''
+    location = ''
     try:
-        opts, args = getopt.getopt(argv,"hbso:g:c:d:i:",["osm=","gpx=","csv=", "direction=", "ignore="])
+        opts, args = getopt.getopt(argv,"hbso:g:c:d:i:l:",["osm=","gpx=","csv=", "direction=", "ignore=", "location="])
     except getopt.GetoptError:
-        print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -s')
-        print('main.py -o <inputfile> -d <direction> -s')
-        print('main.py -o <inputfile> -d <direction>')
+        print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -l <state> -s')
         print('main.py -g <inputfile>')
         print('main.py -c <inputfile> -s')
-        print('main.py -c <inputfile>')
         print('main.py -b -s')
-        print('main.py -b')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -s')
-            print('main.py -o <inputfile> -d <direction> -s')
-            print('main.py -o <inputfile> -d <direction>')
+            print('main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -l <state> -s')
             print('main.py -g <inputfile>')
             print('main.py -c <inputfile> -s')
-            print('main.py -c <inputfile>')
             print('main.py -b -s')
-            print('main.py -b')
             sys.exit()
         elif opt in ("-o", "--osm"):
             file = arg
@@ -100,6 +108,8 @@ def main(argv):
             direction = arg
         elif opt in ("-i", "--ignore"):
             blacklist = arg
+        elif opt in ("-l", "--location"):
+            location = arg
         elif opt in ("-b"):
             bar_flag = True
         elif opt in ("-s"):
@@ -110,7 +120,7 @@ def main(argv):
         bulk_osm(file, save_flag)
         show_map = False
     elif osm_flag:
-        osm(file, direction, save_flag, blacklist)
+        osm(file, direction, save_flag, blacklist, location)
     elif gpx_flag:
         gpx(file)
     if bar_flag:

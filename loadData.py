@@ -206,5 +206,5 @@ def runOSM(mountain, cardinal_direction, save_map=False, blacklist=''):
         return -1
     vert = helper.calculate_mtn_vert(finished_trail_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
-    output = (mtn_difficulty[0], mtn_difficulty[1], round(vert))
+    output = (mtn_difficulty[0], mtn_difficulty[1], round(vert), len(trail_list), len(lift_list))
     return output

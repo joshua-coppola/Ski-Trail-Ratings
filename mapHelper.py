@@ -1,5 +1,6 @@
 from math import degrees, atan2
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import helper
 
@@ -84,20 +85,43 @@ def get_label_placement(df, length, flip_lat_lon):
 #
 # Return: none
 
-def format_map_template(trails, mountain, cardinal_direction):
-    mountain_max_lat = 0
+def format_map_template(trails, lifts, mountain, direction):
+    lat_mirror = 1
+    lon_mirror = -1
+    if 'e' in direction or 'E' in direction:
+        lat_mirror = -1
+        lon_mirror = 1
+    if 's' in direction or 'S' in direction:
+        lon_mirror = 1
+    if 'n' in direction or 'N' in direction:
+        lat_mirror = -1
+
+    mountain_max_lat = -90
     mountain_min_lat = 90
-    mountain_max_lon = 0
+    mountain_max_lon = -180
     mountain_min_lon = 180
     for entry in trails:
-        trail_max_lat = abs(entry[0]['lat']).max()
-        trail_min_lat = abs(entry[0]['lat']).min()
+        trail_max_lat = entry[0]['lat'].max()
+        trail_min_lat = entry[0]['lat'].min()
         if trail_max_lat > mountain_max_lat:
             mountain_max_lat = trail_max_lat
         if trail_min_lat < mountain_min_lat:
             mountain_min_lat = trail_min_lat
-        trail_max_lon = abs(entry[0]['lon']).max()
-        trail_min_lon = abs(entry[0]['lon']).min()
+        trail_max_lon = entry[0]['lon'].max()
+        trail_min_lon = entry[0]['lon'].min()
+        if trail_max_lon > mountain_max_lon:
+            mountain_max_lon = trail_max_lon
+        if trail_min_lon < mountain_min_lon:
+            mountain_min_lon = trail_min_lon
+    for entry in lifts:
+        trail_max_lat = entry[0]['lat'].max()
+        trail_min_lat = entry[0]['lat'].min()
+        if trail_max_lat > mountain_max_lat:
+            mountain_max_lat = trail_max_lat
+        if trail_min_lat < mountain_min_lat:
+            mountain_min_lat = trail_min_lat
+        trail_max_lon = entry[0]['lon'].max()
+        trail_min_lon = entry[0]['lon'].min()
         if trail_max_lon > mountain_max_lon:
             mountain_max_lon = trail_max_lon
         if trail_min_lon < mountain_min_lon:
@@ -107,13 +131,16 @@ def format_map_template(trails, mountain, cardinal_direction):
     bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
     x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
     y_length = helper.calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
-    if 's' in cardinal_direction or 'n' in cardinal_direction:
+
+    #x_corners = pd.Series([mountain_max_lat, mountain_max_lat, mountain_min_lat, mountain_min_lat])
+    #y_corners = pd.Series([mountain_max_lon, mountain_min_lon, mountain_min_lon, mountain_max_lon])
+    if 's' in direction or 'n' in direction:
         temp = x_length
         x_length = y_length
         y_length = temp
-
-    #plt.subplots(facecolor='silver', figsize=(x_length*2, y_length*2))
-    plt.subplots(figsize=(x_length*2, y_length*2))
+    #    temp = x_corners
+    #    x_corners = y_corners
+    #    y_corners = temp
 
     if mountain != '':
         mountain = helper.format_name(mountain)
@@ -122,19 +149,18 @@ def format_map_template(trails, mountain, cardinal_direction):
             size = 25
         if size < 5:
             size = 5
-        if y_length < 1.5:
-            top = .88
-        if y_length >= 1.5:
-            top = .88
-        if y_length < 1:
-            top = .80
+        plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .05)))
+        top = (y_length*2) / ((y_length*2) + size *.02)
         plt.title(mountain, fontsize=size, y=1, pad = size * .5)
-        plt.subplots_adjust(left=0.05, bottom=.02, right=.95,
+        plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=top, wspace=0, hspace=0)
     else:
+        plt.subplots(figsize=(x_length*2, y_length*2))
         plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=1, wspace=0, hspace=0)
-    #plt.axis('off')
+
+    #plt.fill(x_corners * lat_mirror, y_corners * lon_mirror, fc='white')
+    plt.axis('off')
 
 # Parameters:
 # object_tuple: trail/lift tuple
