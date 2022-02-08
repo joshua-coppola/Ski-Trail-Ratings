@@ -2239,6 +2239,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Nashoba Trail"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
   <tag k="piste:type" v="downhill"/>
@@ -2275,6 +2276,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Indian Run"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2298,6 +2300,7 @@
   <nd ref="2733160884"/>
   <nd ref="2733160878"/>
   <tag k="lit" v="yes"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927774" visible="true" version="4" changeset="21766058" timestamp="2014-04-18T11:39:18Z" user="runaum" uid="1126200">
@@ -2333,6 +2336,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Sundance"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
   <tag k="piste:type" v="downhill"/>
@@ -2355,6 +2359,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Nashoba Glades"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2374,6 +2379,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Snowboard Learning Area"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="no"/>
   <tag k="piste:difficulty" v="novice"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2400,6 +2406,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Nashoba Slope"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2417,6 +2424,7 @@
   <tag k="name" v="Wow"/>
   <tag k="oneway" v="no"/>
   <tag k="piste:difficulty" v="easy"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:grooming" v="classic"/>
   <tag k="piste:type" v="downhill"/>
  </way>
@@ -2431,6 +2439,7 @@
   <tag k="name" v="Pow"/>
   <tag k="oneway" v="no"/>
   <tag k="piste:difficulty" v="easy"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:grooming" v="classic"/>
   <tag k="piste:type" v="downhill"/>
  </way>
@@ -2446,6 +2455,7 @@
   <tag k="oneway" v="no"/>
   <tag k="piste:difficulty" v="novice"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927781" visible="true" version="1" changeset="21238081" timestamp="2014-03-22T04:17:28Z" user="Parcanman" uid="422979">
@@ -2471,6 +2481,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927783" visible="true" version="3" changeset="21766058" timestamp="2014-04-18T11:39:19Z" user="runaum" uid="1126200">
@@ -2491,6 +2502,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927784" visible="true" version="4" changeset="21766058" timestamp="2014-04-18T11:39:16Z" user="runaum" uid="1126200">
@@ -2512,6 +2524,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927785" visible="true" version="4" changeset="21766058" timestamp="2014-04-18T11:39:17Z" user="runaum" uid="1126200">
@@ -2529,6 +2542,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927786" visible="true" version="4" changeset="21766058" timestamp="2014-04-18T11:39:19Z" user="runaum" uid="1126200">
@@ -2553,6 +2567,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
  </way>
  <way id="267927787" visible="true" version="3" changeset="21766058" timestamp="2014-04-18T11:39:16Z" user="runaum" uid="1126200">
@@ -2567,6 +2582,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Big Bow"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2584,6 +2600,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Terrain Glade"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
@@ -2607,6 +2624,7 @@
   <tag k="layer" v="1"/>
   <tag k="lit" v="yes"/>
   <tag k="name" v="Lobo"/>
+  <tag k="area" v="yes"/>
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="advanced"/>
   <tag k="piste:grooming" v="classic"/>
@@ -3052,6 +3070,7 @@
   <tag k="oneway" v="yes"/>
   <tag k="piste:difficulty" v="intermediate"/>
   <tag k="piste:grooming" v="classic"/>
+  <tag k="area" v="yes"/>
   <tag k="piste:type" v="downhill"/>
   <tag k="type" v="multipolygon"/>
  </relation>

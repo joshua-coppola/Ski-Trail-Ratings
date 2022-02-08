@@ -58,7 +58,7 @@ def process_way_tags(line, difficulty_modifier, is_trail, is_lift, is_glade, is_
     if 'Glade' in line and not is_glade:
         difficulty_modifier += 1
         is_glade = True
-    if '<tag k="aerialway"' in line and not 'v="zip_line"' in line:
+    if '<tag k="aerialway"' in line and not 'v="zip_line"' in line and not 'v="station"' in line:
         is_lift = True
     if 'Tree Skiing' in line and not is_glade:
         difficulty_modifier += 1

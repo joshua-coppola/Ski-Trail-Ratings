@@ -272,6 +272,10 @@ def format_name(name):
     name_list = name.split('_')
     name = ''
     for word in name_list:
+        if word[:3] == 'mcc':
+            word = 'McC' + word[3:]
+            name = '{}{} '.format(name, word)
+            continue
         if len(word) > 2 or word == 'fe':
             name = '{}{} '.format(name, word.capitalize())
         else:
