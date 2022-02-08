@@ -6,23 +6,6 @@ from tqdm import tqdm
 import helper
 import mapHelper
 
-
-def create_gpx_map(df):
-    rating = helper.rate_trail(df['difficulty'])
-    color = helper.set_color(rating)
-    print(rating)
-    print(color)
-
-    plt.plot(df.lon, df.lat, c=color, alpha=.25)
-    plt.scatter(df.lon, df.lat, s=8, c=abs(
-        df.slope), cmap='gist_rainbow', alpha=1)
-    plt.colorbar(label='Degrees', orientation='horizontal')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
-
 # Parameters:
 # filename: name of csv to save data to
 #   type-string
