@@ -2,22 +2,22 @@ import pandas as pd
 from os.path import exists
 import time
 from tqdm import tqdm
+import csv
 
 import helper
 import saveData
 import osmHelper
 
-# accepts a osm filename and returns a list of tuples.
+# accepts a osm filename and a blacklist name and returns a list of tuples.
 # Each tuple contains a dataframe with
 # 4 columns: latitude, longitude, lat/lon pairs, and elevation (meters)
 # a string with the trailname,
 # and an int (0-1) to denote if the trail is gladed
 
 
-def load_osm(mountain, cached=True, blacklist=''):
+def generate_trails_and_lifts(mountain, blacklist=''):
     filename = mountain + '.osm'
-    if cached:
-        cached_filename = mountain + '.csv'
+    cached_filename = mountain + '.csv'
     if not exists('osm/{}'.format(filename)):
         print('OSM file missing')
         return (-1, -1)
@@ -42,6 +42,7 @@ def load_osm(mountain, cached=True, blacklist=''):
 
     saveData.save_trail_ids(trail_and_id_list, mountain + '.csv')
 
+    cached = True
     if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
         cached = False
         print('Disabling cache loading: no cache file found.')
@@ -120,8 +121,8 @@ def load_osm(mountain, cached=True, blacklist=''):
 #   type-tuple(float,float)
 
 
-def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
-    trail_list, lift_list = load_osm(mountain, True, blacklist)
+def process_mountain(mountain, cardinal_direction, save_map=False, blacklist=''):
+    trail_list, lift_list = generate_trails_and_lifts(mountain, blacklist)
     if trail_list == -1:
         return -1
 
@@ -163,3 +164,95 @@ def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
     output = (mtn_difficulty[0], mtn_difficulty[1],
               round(vert), len(trail_list), len(lift_list))
     return output
+
+# Parameters:
+# mountain: name of ski area
+#   type-str
+# direction: orientation of map
+#   type-char
+# save_map: whether to save the map
+#   type-bool
+# blacklist: any mountains to exclude trails from
+#   type-str
+# location: state ski area is in
+#   type-str
+#
+# Return: -1 for failure, 0 otherwise
+#   type-int
+
+
+def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
+    print('\nProcessing {}'.format(helper.format_name(mountain)))
+    mountain_df = pd.read_csv('mountain_list.csv')
+    previously_run = False
+    if mountain in mountain_df.mountain.to_list():
+        previously_run = True
+        mountain_row = mountain_df.loc[mountain_df.mountain == mountain]
+    if direction == '' and previously_run:
+        value = mountain_row.direction.to_list()[0]
+        if str(value) != 'nan':
+            direction = value
+    if blacklist == '' and previously_run:
+        value = mountain_row.blacklist.to_list()[0]
+        if str(value) != 'nan':
+            blacklist = value
+    if location == '' and previously_run:
+        value = mountain_row.state.to_list()[0]
+        if str(value) != 'nan':
+            location = value
+    diff_tuple = process_mountain(mountain, direction, save_map, blacklist)
+    if diff_tuple == -1:
+        return -1
+    if save_map and exists('mountain_list.csv'):
+        # row = (mountain, direction, state, difficulty, ease, vert, trail_count, lift_count, blacklist)
+        row = [[mountain, direction, location, diff_tuple[0], diff_tuple[1],
+                diff_tuple[2], diff_tuple[3], diff_tuple[4], blacklist]]
+        if previously_run:
+            mountain_df.loc[mountain_df.mountain == mountain] = row
+            output = mountain_df
+        else:
+            row = pd.Series(row[0], index=mountain_df.columns)
+            output = mountain_df.append(row, ignore_index=True)
+            output.sort_values(by=['mountain'], inplace=True)
+        output['trail_count'] = output['trail_count'].astype(int)
+        output['lift_count'] = output['lift_count'].astype(int)
+        output.to_csv('mountain_list.csv', index=False)
+    else:
+        print('Mountain data not saved. If this is unexpected, please make sure you have a file called mountain_list.csv')
+    return 0
+
+# Parameters:
+# input_csv: name of csv
+#   type-str
+# save_map: whether to save the map
+#   type-bool
+#
+# Return: none
+
+
+def bulk_osm(input_csv, save_map=False):
+    if input_csv[:-4] != '.csv':
+        input_csv = input_csv + '.csv'
+    with open(input_csv, mode='r') as file:
+        csv_file = csv.reader(file)
+        next(csv_file)
+        for line in csv_file:
+            if len(line) == 0:
+                break
+            if line[0][0] == '#':
+                continue
+            osm(line[0], line[1], save_map, line[8], line[2])
+
+# Parameters:
+# save_output: whether to save the map
+#   type-bool
+#
+# Return: none
+
+
+def barplot(save_output=False):
+    if not exists('mountain_list.csv'):
+        print('Missing cache files, please run bulk_osm or osm and set save_map=True.')
+        return
+    df = pd.read_csv('mountain_list.csv')
+    saveData.create_difficulty_barplot(df, save_output)
