@@ -37,19 +37,19 @@ python3 main.py <ARGS>
 
 Arguments | Function | Can be used with
 --- | --- | ---
--h | help page | none
--s | save figures | -[o,c,i,d,l]
--o, --osm | create map from OSM file | -[s,i,d,l]
--c, --csv | create many maps from a csv file where each line refers to an osm file, direction, and mountains to ignore | -s
--g, --gpx | create map from GPX file | none
--d, --direction | specifies which way a map should face | -[s,o,i,l]
--i, --ignore | specify a mountain that has been run previously to prevent overlap | -[s,o,d,l]
--l, --location | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | -[s,o,i,d]
--b | create barplot comparing difficulty between mountains | -s
+`-h` | help page | none
+`-s` | save figures | `-[o,c,i,d,l]`
+`-o`, `--osm` | create map from OSM file | `-[s,i,d,l]`
+`-c`, `--csv` | create many maps from a csv file where each line refers to an osm file, direction, and mountains to ignore | `-s`
+`-g`, `--gpx` | create map from GPX file | none
+`-d`, `--direction` | specifies which way a map should face | `-[s,o,i,l]`
+`-i`, `--ignore` | specify a mountain that has been run previously to prevent overlap | `-[s,o,d,l]`
+`-l`, `--location` | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i,d]`
+`-b` | create barplot comparing difficulty between mountains | `-s`
 
 All filename arguments should not contain the file extension.
 
-Should -[d,i,l] not be provided when run with `-o`, the values from the stored mountain information will be used. 
+Should `-[d,i,l]` not be provided when run with `-o`, the values from the stored mountain information will be used. 
 
 If `-i` is used with the same mountain name as specified with `-o`, it will enable a whitelist mode. Only trails that are at that resort based on the trail list created on the previous run of that mountain will be included in the map. This is useful when some trails were manually removed from an osm file and the osm file was updated at a later date.
 
