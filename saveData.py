@@ -28,12 +28,13 @@ def create_gpx_map(df):
 #   type-string
 # list_df: list of trails
 #   type-list of tuples
-# 
+#
 # Return: none
 
 
 def cache_trail_points(filename, list_dfs):
-    output_df = pd.DataFrame(columns=['trail_id','for_display','lat','lon','elevation'])
+    output_df = pd.DataFrame(
+        columns=['trail_id', 'for_display', 'lat', 'lon', 'elevation'])
     for entry in list_dfs:
         trail = pd.DataFrame()
         trail['trail_id'] = entry[5]
@@ -58,7 +59,8 @@ def cache_trail_points(filename, list_dfs):
             output_df = output_df.append(trail)
     output_df['lat'] = [round(x, 8) for x in output_df.lat]
     output_df['lon'] = [round(x, 8) for x in output_df.lon]
-    output_df['elevation'] = [round(Decimal(x), 2) for x in output_df.elevation]
+    output_df['elevation'] = [round(Decimal(x), 2)
+                              for x in output_df.elevation]
     output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
     output_df.drop_duplicates(inplace=True)
     output_df.to_csv('cached/trail_points/{}'.format(filename))
@@ -68,8 +70,9 @@ def cache_trail_points(filename, list_dfs):
 #   type-list of tuples
 # mountain_name: name of ski area
 #   type-string
-# 
+#
 # Return: none
+
 
 def save_trail_ids(tuple_list, filename):
     name_list = [x[0] for x in tuple_list]
@@ -92,15 +95,16 @@ def save_trail_ids(tuple_list, filename):
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     print('Creating Map')
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
-    for i in tqdm (range (len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
+    for i in tqdm(range(len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
         entry = lifts[i]
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        mapHelper.place_object((entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
+        mapHelper.place_object(
+            (entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
 
     rating_list = []
-    for i in tqdm (range (len(trails)), desc="Placing Trails…", ascii=False, ncols=75):
+    for i in tqdm(range(len(trails)), desc="Placing Trails…", ascii=False, ncols=75):
         entry = trails[i]
         if not entry[3]:
             index = 0
@@ -117,24 +121,28 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        mapHelper.place_object((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
-        
+        mapHelper.place_object(
+            (entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
+
     plt.xticks([])
     plt.yticks([])
     if save:
-        plt.savefig('maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
+        plt.savefig(
+            'maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
         print('SVG saved')
     rating_list.sort(reverse=True)
     long_list = 30
     if len(rating_list) < 30:
         long_list = len(rating_list)
     hard_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_difficulty_rating = ((sum(hard_list[0])/long_list) * .2) + ((sum(hard_list[1])/5) * .8)
+    mountain_difficulty_rating = (
+        (sum(hard_list[0])/long_list) * .2) + ((sum(hard_list[1])/5) * .8)
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
     print('Difficultly Rating: {}'.format(mountain_difficulty_rating))
     rating_list.sort()
     easy_list = [rating_list[0:long_list], rating_list[0:5]]
-    mountain_ease_rating = ((sum(easy_list[0])/long_list) * .2) + ((sum(easy_list[1])/5) * .8)
+    mountain_ease_rating = (
+        (sum(easy_list[0])/long_list) * .2) + ((sum(easy_list[1])/5) * .8)
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
     print('Beginner Friendliness Rating: {}'.format(mountain_ease_rating))
@@ -156,7 +164,7 @@ def create_difficulty_barplot(df, save=False):
     df['mountain'] = [helper.format_name(x) for x in df['mountain']]
     df = df.sort_values(by='difficulty', ascending=False)
     df['diff_color'] = [helper.set_color(x/100) for x in df['difficulty']]
-    plt.figure(figsize=(8,len(df['difficulty'])*.15))
+    plt.figure(figsize=(8, len(df['difficulty'])*.15))
     plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
     plt.title('Difficulty Comparison')
     plt.xlabel('Longer bar = more expert friendly')
@@ -170,7 +178,7 @@ def create_difficulty_barplot(df, save=False):
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
     df['ease'] = 30 - df['ease']
     df = df.sort_values(by='ease', ascending=True)
-    plt.figure(figsize=(8,len(df['ease'])*.15))
+    plt.figure(figsize=(8, len(df['ease'])*.15))
     plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
     plt.title('Beginner Friendliness')
     plt.xlabel('Longer bar = more beginner friendly')

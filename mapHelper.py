@@ -1,6 +1,5 @@
 from math import degrees, atan2
 import matplotlib.pyplot as plt
-import pandas as pd
 
 import helper
 
@@ -78,6 +77,45 @@ def get_label_placement(df, length, flip_lat_lon):
 # Parameters:
 # trails: list of trail tuples
 #   type-list of tuples
+# lifts: list of lifts
+#   type-list of tuples
+#
+# Return: map dimensions
+#   type-tuple(float, float)
+
+
+def find_map_size(trails, lifts):
+    mountain_max_lat = -90
+    mountain_min_lat = 90
+    mountain_max_lon = -180
+    mountain_min_lon = 180
+    for categeory in [trails, lifts]:
+        for entry in categeory:
+            trail_max_lat = entry[0]['lat'].max()
+            trail_min_lat = entry[0]['lat'].min()
+            if trail_max_lat > mountain_max_lat:
+                mountain_max_lat = trail_max_lat
+            if trail_min_lat < mountain_min_lat:
+                mountain_min_lat = trail_min_lat
+            trail_max_lon = entry[0]['lon'].max()
+            trail_min_lon = entry[0]['lon'].min()
+            if trail_max_lon > mountain_max_lon:
+                mountain_max_lon = trail_max_lon
+            if trail_min_lon < mountain_min_lon:
+                mountain_min_lon = trail_min_lon
+    top_corner = (mountain_max_lat, mountain_max_lon)
+    bottom_corner = (mountain_min_lat, mountain_max_lon)
+    bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
+    x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
+    y_length = helper.calculate_dist(
+        [bottom_corner, bottom_corner_alt])[1] / 1000
+    return((x_length, y_length))
+
+# Parameters:
+# trails: list of trail tuples
+#   type-list of tuples
+# lifts: list of lifts
+#   type-list of tuples
 # mountain: name of ski area
 #   type-string
 # cardinal_direction: direction for map to face
@@ -85,62 +123,14 @@ def get_label_placement(df, length, flip_lat_lon):
 #
 # Return: none
 
+
 def format_map_template(trails, lifts, mountain, direction):
-    lat_mirror = 1
-    lon_mirror = -1
-    if 'e' in direction or 'E' in direction:
-        lat_mirror = -1
-        lon_mirror = 1
-    if 's' in direction or 'S' in direction:
-        lon_mirror = 1
-    if 'n' in direction or 'N' in direction:
-        lat_mirror = -1
+    x_length, y_length = find_map_size(trails, lifts)
 
-    mountain_max_lat = -90
-    mountain_min_lat = 90
-    mountain_max_lon = -180
-    mountain_min_lon = 180
-    for entry in trails:
-        trail_max_lat = entry[0]['lat'].max()
-        trail_min_lat = entry[0]['lat'].min()
-        if trail_max_lat > mountain_max_lat:
-            mountain_max_lat = trail_max_lat
-        if trail_min_lat < mountain_min_lat:
-            mountain_min_lat = trail_min_lat
-        trail_max_lon = entry[0]['lon'].max()
-        trail_min_lon = entry[0]['lon'].min()
-        if trail_max_lon > mountain_max_lon:
-            mountain_max_lon = trail_max_lon
-        if trail_min_lon < mountain_min_lon:
-            mountain_min_lon = trail_min_lon
-    for entry in lifts:
-        trail_max_lat = entry[0]['lat'].max()
-        trail_min_lat = entry[0]['lat'].min()
-        if trail_max_lat > mountain_max_lat:
-            mountain_max_lat = trail_max_lat
-        if trail_min_lat < mountain_min_lat:
-            mountain_min_lat = trail_min_lat
-        trail_max_lon = entry[0]['lon'].max()
-        trail_min_lon = entry[0]['lon'].min()
-        if trail_max_lon > mountain_max_lon:
-            mountain_max_lon = trail_max_lon
-        if trail_min_lon < mountain_min_lon:
-            mountain_min_lon = trail_min_lon
-    top_corner = (mountain_max_lat, mountain_max_lon)
-    bottom_corner = (mountain_min_lat, mountain_max_lon)
-    bottom_corner_alt = (mountain_min_lat, mountain_min_lon)
-    x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
-    y_length = helper.calculate_dist([bottom_corner, bottom_corner_alt])[1] / 1000
-
-    #x_corners = pd.Series([mountain_max_lat, mountain_max_lat, mountain_min_lat, mountain_min_lat])
-    #y_corners = pd.Series([mountain_max_lon, mountain_min_lon, mountain_min_lon, mountain_max_lon])
     if 's' in direction or 'n' in direction:
         temp = x_length
         x_length = y_length
         y_length = temp
-    #    temp = x_corners
-    #    x_corners = y_corners
-    #    y_corners = temp
 
     if mountain != '':
         mountain = helper.format_name(mountain)
@@ -150,16 +140,14 @@ def format_map_template(trails, lifts, mountain, direction):
         if size < 5:
             size = 5
         plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .05)))
-        top = (y_length*2) / ((y_length*2) + size *.02)
-        plt.title(mountain, fontsize=size, y=1, pad = size * .5)
+        top = (y_length*2) / ((y_length*2) + size * .02)
+        plt.title(mountain, fontsize=size, y=1, pad=size * .5)
         plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=top, wspace=0, hspace=0)
     else:
         plt.subplots(figsize=(x_length*2, y_length*2))
         plt.subplots_adjust(left=0, bottom=0, right=1,
                             top=1, wspace=0, hspace=0)
-
-    #plt.fill(x_corners * lat_mirror, y_corners * lon_mirror, fc='white')
     plt.axis('off')
 
 # Parameters:
@@ -203,18 +191,20 @@ def place_object(object_tuple, direction, color):
         if object_tuple[2] == 0:
             plt.plot(X * lat_mirror, Y * lon_mirror, c=color)
         if object_tuple[2] > 0:
-            plt.plot(X * lat_mirror, Y * lon_mirror, c=color, linestyle='dashed')
+            plt.plot(X * lat_mirror, Y * lon_mirror,
+                     c=color, linestyle='dashed')
     if area:
         if object_tuple[2] == 0:
             plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
             plt.fill(X * lat_mirror, Y * lon_mirror, ec=color, fc='none')
         if object_tuple[2] > 0:
             plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
-            plt.fill(X * lat_mirror, Y * lon_mirror, ec=color, fc='none', linestyle='dashed')
+            plt.fill(X * lat_mirror, Y * lon_mirror,
+                     ec=color, fc='none', linestyle='dashed')
     if color == 'gold':
         color = 'black'
     if helper.get_trail_length(object_tuple[0].coordinates) > 200:
         plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_tuple[1], {
-                    'color': color, 'size': 2, 'rotation': ang}, ha='center', 
-                    backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01', 
-                    fc='white', ec='none'))
+            'color': color, 'size': 2, 'rotation': ang}, ha='center',
+            backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01',
+                                                            fc='white', ec='none'))

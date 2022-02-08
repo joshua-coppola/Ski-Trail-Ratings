@@ -71,16 +71,18 @@ def load_osm(mountain, cached=True, blacklist=''):
     raw_table = file.readlines()
 
     if blacklist != '':
-        blacklist_ids = (pd.read_csv('cached/osm_ids/{}.csv'.format(blacklist)))['id'].to_list()
+        blacklist_ids = (pd.read_csv(
+            'cached/osm_ids/{}.csv'.format(blacklist)))['id'].to_list()
         blacklist_ids = [str(x) for x in blacklist_ids]
     else:
         blacklist_ids = []
-    
+
     whitelist_mode = False
     if blacklist == mountain:
         whitelist_mode = True
-    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = helper.process_osm(raw_table, blacklist_ids, whitelist_mode)
-    
+    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = helper.process_osm(
+        raw_table, blacklist_ids, whitelist_mode)
+
     saveData.save_trail_ids(trail_and_id_list, mountain + '.csv')
 
     if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
@@ -88,61 +90,51 @@ def load_osm(mountain, cached=True, blacklist=''):
         print('Disabling cache loading: no cache file found.')
 
     trail_list = []
-    trail_num = 0
     api_requests = 0
     if cached:
-        elevation_df = pd.read_csv('cached/trail_points/{}'.format(cached_filename))
-        elevation_df['coordinates'] = [(x, y) for x, y in zip(elevation_df.lat, elevation_df.lon)]
+        elevation_df = pd.read_csv(
+            'cached/trail_points/{}'.format(cached_filename))
+        elevation_df['coordinates'] = [
+            (x, y) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
     last_called = time.time()
-    for column, _ in zip(way_df, tqdm (range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
-        trail_num += 1
+    for column, _ in zip(way_df, tqdm(range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']
         del temp_df[column]
         temp_df = helper.fill_in_point_gaps(temp_df, 15)
-        temp_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in temp_df.coordinates]
+        temp_df['coordinates'] = [(round(x[0], 8), round(x[1], 8))
+                                  for x in temp_df.coordinates]
         for row in useful_info_list:
             if column == row[0]:
                 difficulty_modifier = row[1]
                 area_flag = row[2]
                 way_id = row[3]
-        if not cached:
+        try:
+            temp_df['elevation'] = [ele_dict[x] for x in temp_df.coordinates]
+        except:
             result = helper.get_elevation(
                 temp_df['coordinates'], last_called, column, api_requests)
             temp_df['elevation'] = result[0]
             api_requests = result[1]
             last_called = result[2]
-        else:
-            try:
-                temp_df['elevation'] = [ele_dict[x] for x in temp_df.coordinates]
-            except:
-                result = helper.get_elevation(
-                    temp_df['coordinates'], last_called, column, api_requests)
-                temp_df['elevation'] = result[0]
-                api_requests = result[1]
-                last_called = result[2]
         temp_area_line_df = pd.DataFrame()
         if area_flag:
             temp_area_line_df = helper.area_to_line(temp_df)
-            temp_area_line_df['coordinates'] = [(round(x[0], 8), round(x[1], 8)) for x in temp_area_line_df.coordinates]
-            if not cached:
+            temp_area_line_df['coordinates'] = [
+                (round(x[0], 8), round(x[1], 8)) for x in temp_area_line_df.coordinates]
+            try:
+                temp_area_line_df['elevation'] = [ele_dict[x]
+                                                  for x in temp_area_line_df.coordinates]
+            except:
                 result = helper.get_elevation(
                     temp_area_line_df['coordinates'], last_called, column, api_requests)
                 temp_area_line_df['elevation'] = result[0]
                 api_requests = result[1]
                 last_called = result[2]
-            else:
-                try:
-                    temp_area_line_df['elevation'] = [ele_dict[x] for x in temp_area_line_df.coordinates]
-                except:
-                    result = helper.get_elevation(
-                        temp_area_line_df['coordinates'], last_called, column, api_requests)
-                    temp_area_line_df['elevation'] = result[0]
-                    api_requests = result[1]
-                    last_called = result[2]
-        trail_list.append((temp_df, column, difficulty_modifier, area_flag, temp_area_line_df, way_id))
+        trail_list.append((temp_df, column, difficulty_modifier,
+                          area_flag, temp_area_line_df, way_id))
     lift_list = []
     for column in lift_df:
         temp_df = pd.merge(lift_df[column], node_df,
@@ -183,9 +175,12 @@ def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
         else:
             trail = entry[4]
             perimeter = entry[0]
-            perimeter['distance'] = helper.calculate_dist(perimeter['coordinates'])
-            perimeter['elevation_change'] = helper.calulate_elevation_change(perimeter['elevation'])
-            perimeter['slope'] = helper.calculate_slope(perimeter['elevation_change'], perimeter['distance'])
+            perimeter['distance'] = helper.calculate_dist(
+                perimeter['coordinates'])
+            perimeter['elevation_change'] = helper.calulate_elevation_change(
+                perimeter['elevation'])
+            perimeter['slope'] = helper.calculate_slope(
+                perimeter['elevation_change'], perimeter['distance'])
 
         trail['elevation'] = helper.smooth_elevations(
             trail['elevation'].to_list(), 0)
@@ -196,9 +191,11 @@ def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
             trail['elevation_change'], trail['distance'])
         trail['difficulty'] = helper.calculate_point_difficulty(trail['slope'])
         if not entry[3]:
-            finished_trail_list.append((trail, entry[1], entry[2], entry[3], entry[4], entry[5]))
+            finished_trail_list.append(
+                (trail, entry[1], entry[2], entry[3], entry[4], entry[5]))
         else:
-            finished_trail_list.append((perimeter, entry[1], entry[2], entry[3], trail, entry[5]))
+            finished_trail_list.append(
+                (perimeter, entry[1], entry[2], entry[3], trail, entry[5]))
 
     mtn_difficulty = saveData.create_map(
         finished_trail_list, lift_list, mountain, cardinal_direction, save_map)
@@ -206,5 +203,6 @@ def run_osm(mountain, cardinal_direction, save_map=False, blacklist=''):
         return -1
     vert = helper.calculate_mtn_vert(finished_trail_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
-    output = (mtn_difficulty[0], mtn_difficulty[1], round(vert), len(trail_list), len(lift_list))
+    output = (mtn_difficulty[0], mtn_difficulty[1],
+              round(vert), len(trail_list), len(lift_list))
     return output

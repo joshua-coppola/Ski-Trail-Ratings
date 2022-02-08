@@ -6,18 +6,19 @@ import haversine as hs
 from math import degrees, atan
 from requests.api import get
 
+
 def process_osm(table, blacklist, whitelist_mode=False):
     DEBUG_TRAILS = False
 
     way_df = pd.DataFrame()
     lift_df = pd.DataFrame()
-    id = [] # for node_df
-    lat = [] # for node_df
-    lon = [] # for node_df
-    coordinates = [] # for node_df
-    in_way_ids = [] # all OSM ids for a way, used for way_df
-    useful_info_list = [] # list((way_name, difficulty_modifier, is_area))
-    trail_and_id_list = [] # list((trail_name, OSM id))
+    id = []  # for node_df
+    lat = []  # for node_df
+    lon = []  # for node_df
+    coordinates = []  # for node_df
+    in_way_ids = []  # all OSM ids for a way, used for way_df
+    useful_info_list = []  # list((way_name, difficulty_modifier, is_area))
+    trail_and_id_list = []  # list((trail_name, OSM id))
     blank_name_count = 0
     total_trail_count = 0
 
@@ -183,7 +184,8 @@ def get_elevation(coordinates, last_called, trail_name='', api_requests=0):
             '|{},{}'.format(coordinate[0], coordinate[1])
         point_count += 1
         if point_count >= 99:
-            temp_elevations, last_called = elevation_api(piped_coords, last_called,trail_name)
+            temp_elevations, last_called = elevation_api(
+                piped_coords, last_called, trail_name)
             api_requests += 1
             if temp_elevations == -1:
                 return -1
@@ -192,7 +194,8 @@ def get_elevation(coordinates, last_called, trail_name='', api_requests=0):
             for point in temp_elevations:
                 elevations.append(point)
     if piped_coords != '':
-        temp_elevations, last_called = elevation_api(piped_coords, last_called,trail_name)
+        temp_elevations, last_called = elevation_api(
+            piped_coords, last_called, trail_name)
         api_requests += 1
         if temp_elevations == -1:
             return -1
@@ -396,6 +399,7 @@ def get_trail_length(coordinates):
 # Returns: name, but with spaces replacing the underscores, and each word capitalized
 #   type-string
 
+
 def format_name(name):
     name_list = name.split('_')
     name = ''
@@ -405,6 +409,14 @@ def format_name(name):
         else:
             name = '{}{} '.format(name, word)
     return name.strip()
+
+# Parameters:
+# object: list of trails
+#   type-list of tuples
+#
+# Returns: mountain vertical drop
+#   type-float
+
 
 def calculate_mtn_vert(object):
     min_ele = 10000
@@ -422,6 +434,7 @@ def calculate_mtn_vert(object):
 #
 # Returns: the vertical drop of the trail
 #   type-float
+
 
 def calculate_trail_vert(elevation):
     return elevation.max() - elevation.min()
