@@ -1,3 +1,4 @@
+from cProfile import label
 from math import degrees, atan2
 import matplotlib.pyplot as plt
 
@@ -139,16 +140,20 @@ def format_map_template(trails, lifts, mountain, direction):
             size = 25
         if size < 5:
             size = 5
-        plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .05)))
-        top = (y_length*2) / ((y_length*2) + size * .02)
-        plt.title(mountain, fontsize=size, y=1, pad=size * .5)
-        plt.subplots_adjust(left=0, bottom=0, right=1,
-                            top=top, wspace=0, hspace=0)
     else:
-        plt.subplots(figsize=(x_length*2, y_length*2))
-        plt.subplots_adjust(left=0, bottom=0, right=1,
-                            top=1, wspace=0, hspace=0)
+        size = 0
+    #plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .05)))
+    plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .04)))
+
+    #top_loc = (y_length*2) / ((y_length*2) + size * .02)
+    top_loc = (y_length*2) / ((y_length*2) + size * .02)
+    bottom_loc = 1 - top_loc
+    plt.title(mountain, fontsize=size, y=1, pad=size * .5)
+    
+    plt.subplots_adjust(left=0, bottom=bottom_loc, right=1,
+                        top=top_loc, wspace=0, hspace=0)
     plt.axis('off')
+    add_legend(trails[0], direction, size / 2, bottom_loc)
 
 # Parameters:
 # object_tuple: trail/lift tuple
@@ -208,3 +213,41 @@ def place_object(object_tuple, direction, color):
             'color': color, 'size': 2, 'rotation': ang}, ha='center',
             backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01',
                                                             fc='white', ec='none'))
+
+def add_legend(trail, direction, size, legend_offset):
+    if size > 8:
+        size = 8
+    if size <= 2.5:
+        return
+    lat_mirror = 1
+    lon_mirror = -1
+    flip_lat_lon = False
+    if 'e' in direction or 'E' in direction:
+        lat_mirror = -1
+        lon_mirror = 1
+    if 's' in direction or 'S' in direction:
+        lon_mirror = 1
+        flip_lat_lon = True
+    if 'n' in direction or 'N' in direction:
+        lat_mirror = -1
+        flip_lat_lon = True
+
+    if flip_lat_lon:
+        y = trail[0].lat.to_list()[0]
+        x = trail[0].lon.to_list()[0]
+        temp = lat_mirror
+        lat_mirror = lon_mirror
+        lon_mirror = temp
+    else:
+        x = trail[0].lat.to_list()[0]
+        y = trail[0].lon.to_list()[0]
+
+    x *= lat_mirror
+    y *= lon_mirror
+    plt.plot(x,y, c='green', label='Easy')
+    plt.plot(x,y, c='royalblue', label='Intermediate')
+    plt.plot(x,y, c='black', label='Advanced')
+    plt.plot(x,y, c='red', label='Expert')
+    plt.plot(x,y, c='gold', label='Extreme')
+    plt.plot(x,y, c='black', linestyle='dotted', label='Gladed')
+    plt.legend(fontsize = size, loc='lower center', bbox_to_anchor=(0.5, -legend_offset),frameon=False, ncol=3)
