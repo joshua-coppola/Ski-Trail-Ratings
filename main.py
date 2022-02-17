@@ -63,6 +63,7 @@ def main(argv):
         gpx.gpx(file)
     if bar_flag:
         loadData.barplot(save_flag)
+        show_map = False
     return show_map
 
 

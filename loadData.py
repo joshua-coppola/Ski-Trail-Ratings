@@ -255,4 +255,13 @@ def barplot(save_output=False):
         print('Missing cache files, please run bulk_osm or osm and set save_map=True.')
         return
     df = pd.read_csv('mountain_list.csv')
-    saveData.create_difficulty_barplot(df, save_output)
+    df['mountain'] = [helper.format_name(x) for x in df['mountain']]
+    saveData.create_difficulty_barplot(df, 'USA' ,save_output)
+
+    state_list = df.state.unique()
+    for state in state_list:
+        if len(state.split()) > 1:
+            continue
+        temp_df = df[df['state'].str.contains(state)]
+        saveData.create_difficulty_barplot(temp_df, state, save_output)
+
