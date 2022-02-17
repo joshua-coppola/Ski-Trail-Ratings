@@ -151,11 +151,15 @@ def create_difficulty_barplot(df, save=False):
     plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
     plt.title('Difficulty Comparison')
     plt.xlabel('Longer bar = more expert friendly')
-    plt.subplots_adjust(left=0.25, bottom=.03, right=.95,
+    plt.subplots_adjust(left=0.27, bottom=.03, right=.95,
                         top=.97, wspace=0, hspace=0)
     plt.grid(axis='x')
+    for i, value in enumerate(df.difficulty):
+        plt.text(value+1, i, round(value, 1), ha='center', va='center', size=6)
+        plt.text(0.5, i, i + 1, ha='left', va='center', size = 7, color='white')
+
     if save:
-        plt.savefig('maps/comparative_difficulty.svg', format='svg')
+        plt.savefig('maps/barplots/comparative_difficulty.svg', format='svg')
         print('SVG saved')
     plt.draw()
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
@@ -165,11 +169,16 @@ def create_difficulty_barplot(df, save=False):
     plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
     plt.title('Beginner Friendliness')
     plt.xlabel('Longer bar = more beginner friendly')
-    plt.subplots_adjust(left=0.25, bottom=.03, right=.95,
+    plt.subplots_adjust(left=0.27, bottom=.03, right=.95,
                         top=.97, wspace=0, hspace=0)
     plt.grid(axis='x')
+    row_count = len(df.ease)
+    for i, value in enumerate(df.ease):
+        plt.text(value+.5, i, round(value, 1), ha='center', va='center', size=6)
+        plt.text(0.25, i, row_count - i, ha='left', va='center', size = 7, color='white')
+
     if save:
-        plt.savefig('maps/beginner_friendliness.svg', format='svg')
+        plt.savefig('maps/barplots/beginner_friendliness.svg', format='svg')
         print('SVG saved')
     plt.draw()
     plt.show()

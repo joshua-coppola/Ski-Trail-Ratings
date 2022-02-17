@@ -12,12 +12,12 @@ Pitch (in degrees) | Difficulty | Color on Map
 30-45 | expert | red
 45+ | extreme terrain | yellow
 
-### GPX files
+## GPX files
 
-As the program currently stands, it accepts a gpx file and will output a graph of the gpx track where yellow is the steepest point on the trail and purple is the flattest. 
+As the program currently stands, it accepts a gpx file and will output a graph of the gpx track where yellow is the steepest point on the trail and purple is the flattest.
 The background line color will be set according to the chart above.
 
-### OSM files
+## OSM files
 
 It will take an osm file, and output a map of all ski trails with a difficultly assigned based on the steepest pitch. There are still some quirks with the slopes that are calculated because of assumptions made about the elevation data, but overall the osm files are now working well.
 
@@ -25,13 +25,13 @@ For each mountain, an overall difficulty rating is created. This metric takes th
 
 There is also a metric produced using the same methods but reversed. This indicates how challenging the easiest terrain is, and indicates how difficult the easiest terrain may be for a beginner skier.
 
-### Bulk OSM
+## Bulk OSM
 
 A CSV file may be provided where each line contains the necessary information to run the program on an OSM file. This provides the same functionality as running a single OSM file, but with added speed for processing many mountains in one batch.
 
 ## CLI Useage and Arguments
 
-```
+``` bash
 python3 main.py <ARGS>
 ```
 
@@ -49,18 +49,20 @@ Arguments | Function | Can be used with
 
 All filename arguments should not contain the file extension.
 
-Should `-[d,i,l]` not be provided when run with `-o`, the values from the stored mountain information will be used. 
+Should `-[d,i,l]` not be provided when run with `-o`, the values from the stored mountain information will be used.
 
 If `-i` is used with the same mountain name as specified with `-o`, it will enable a whitelist mode. Only trails that are at that resort based on the trail list created on the previous run of that mountain will be included in the map. This is useful when some trails were manually removed from an osm file and the osm file was updated at a later date.
 
 Example:
-```
+
+``` bash
 python3 main.py -s -o deer_valley -d n -i park_city
 python3 main.py -s -c mountain_list
 python3 main.py -s -b
 ```
 
 ## What's next?
+
 Trail name placement is working well most of the time, but there is room for improvement.
 
 Areas are converted into a line with mixed results. Additional logic would probably improve results.

@@ -40,6 +40,10 @@ def process_way_tags(line, difficulty_modifier, is_trail, is_lift, is_glade, is_
         is_backcountry = True
     if '<tag k="piste:type"' in line and 'skitour' in line:
         is_backcountry = True
+    if '<tag k="landuse" v="grass"/>' in line:
+        is_backcountry = True
+    if '<tag k="natural" v="grassland"/>' in line:
+        is_backcountry = True
     if '<tag k="gladed" v="yes"/>' in line and not is_glade:
         difficulty_modifier += 1
         is_glade = True
