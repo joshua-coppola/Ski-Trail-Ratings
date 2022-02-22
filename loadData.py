@@ -204,8 +204,8 @@ def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
     if diff_tuple == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
-        # row = (mountain, direction, state, difficulty, ease, vert, trail_count, lift_count, blacklist)
-        row = [[mountain, direction, location, diff_tuple[0], diff_tuple[1],
+        # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
+        row = [[mountain, direction, location, helper.assign_region(location), diff_tuple[0], diff_tuple[1],
                 diff_tuple[2], diff_tuple[3], diff_tuple[4], blacklist]]
         if previously_run:
             mountain_df.loc[mountain_df.mountain == mountain] = row
@@ -241,7 +241,7 @@ def bulk_osm(input_csv, save_map=False):
                 break
             if line[0][0] == '#':
                 continue
-            osm(line[0], line[1], save_map, line[8], line[2])
+            osm(line[0], line[1], save_map, line[9], line[2])
 
 # Parameters:
 # save_output: whether to save the map
@@ -263,5 +263,9 @@ def barplot(save_output=False):
         if len(state.split()) > 1:
             continue
         temp_df = df[df['state'].str.contains(state)]
-        saveData.create_difficulty_barplot(temp_df, state, save_output)
+        region = helper.assign_region(state)
+        saveData.create_difficulty_barplot(temp_df, f'{region}/{state}', save_output)
+    for region in ['northeast', 'southeast', 'midwest', 'west']:
+        temp_df = df.loc[df['region'] == region]
+        saveData.create_difficulty_barplot(temp_df, helper.format_name(region), save_output)      
 

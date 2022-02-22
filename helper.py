@@ -1,3 +1,5 @@
+from ast import Param
+from posixpath import split
 import time
 import json
 import pandas as pd
@@ -310,3 +312,31 @@ def calculate_mtn_vert(object):
 
 def calculate_trail_vert(elevation):
     return elevation.max() - elevation.min()
+
+# Parameters:
+# state: 2 letter state code
+#   type-string
+#
+# Returns: the region of the state
+#   type-string
+
+def assign_region(state):
+    northeast = ['ME', 'NH', 'VT', 'NY', 'MA', 'RI', 'CT', 'PA', 'NJ']
+    southeast = ['MD', 'DE', 'VA', 'WV', 'KY', 'TN', 'NC', 'SC', 'GA', 'FL', 'AL', 'MS', 'LA', 'AR']
+    midwest = ['ND', 'SD', 'MN', 'WI', 'MI', 'OH', 'IN', 'IL', 'IA', 'NE', 'KS', 'MO', 'OK', 'TX']
+    west = ['NM', 'AZ', 'CA', 'NV', 'UT', 'CO', 'WY', 'ID', 'OR', 'WA', 'MT', 'AK', 'HI']
+
+    if len(state.split()) > 1:
+        state = state.split()[0]
+    
+    if state in northeast:
+        return 'northeast'
+
+    if state in southeast:
+        return 'southeast'
+    
+    if state in midwest:
+        return 'midwest'
+
+    if state in west:
+        return 'west'

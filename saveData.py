@@ -1,4 +1,5 @@
 from decimal import Decimal
+from posixpath import split
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
@@ -144,11 +145,15 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
 
 def create_difficulty_barplot(df, file_name ,save=False):
+    if len(file_name.split('/')) > 1:
+        name = file_name.split('/')[1]
+    else:
+        name = file_name 
     df = df.sort_values(by='difficulty', ascending=False)
     df['diff_color'] = [helper.set_color(x/100) for x in df['difficulty']]
-    plt.figure(figsize=(8, (len(df['difficulty'])*.14) + 1.5))
+    plt.figure(figsize=(8, (len(df['difficulty'])*.13) + 1.5))
     plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
-    plt.title('{} Difficulty Comparison'.format(file_name), fontsize=20)
+    plt.title('{} Difficulty Comparison'.format(name), fontsize=20)
     plt.xlabel('Longer bar = more expert friendly')
     plt.xlim(0,55)
     plt.tight_layout()
@@ -162,14 +167,13 @@ def create_difficulty_barplot(df, file_name ,save=False):
 
     if save:
         plt.savefig('maps/difficulty_barplots/{}.svg'.format(file_name), format='svg')
-        print('SVG saved')
     plt.draw()
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
     df['ease'] = 30 - df['ease']
     df = df.sort_values(by='ease', ascending=True)
-    plt.figure(figsize=(8, (len(df['ease'])*.14) + 1.5))
+    plt.figure(figsize=(8, (len(df['ease'])*.13) + 1.5))
     plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
-    plt.title('Beginner Friendliness', fontsize=20)
+    plt.title(f'{name} Beginner Friendliness', fontsize=20)
     plt.xlabel('Longer bar = more beginner friendly')
     plt.xlim(0,30)
     plt.tight_layout()
@@ -181,5 +185,5 @@ def create_difficulty_barplot(df, file_name ,save=False):
 
     if save:
         plt.savefig('maps/beginner_friendliness_barplots/{}.svg'.format(file_name), format='svg')
-        print('SVG saved')
+        print(f'{file_name} SVG saved')
     plt.draw()
