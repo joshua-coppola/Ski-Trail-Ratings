@@ -153,7 +153,12 @@ def format_map_template(trails, lifts, mountain, direction):
     plt.subplots_adjust(left=0, bottom=bottom_loc, right=1,
                         top=top_loc, wspace=0, hspace=0)
     plt.axis('off')
+    
+    if size > 16:
+        size = 16
+    plt.gcf().text(0.5, 0, 'Sources: USGS and OpenStreetMaps', fontsize=size/2.3, ha='center', va='bottom')
     add_legend(trails[0], direction, size / 2, bottom_loc)
+
 
 # Parameters:
 # object_tuple: trail/lift tuple
