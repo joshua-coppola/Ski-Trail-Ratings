@@ -1,7 +1,7 @@
 import pandas as pd
 from os.path import exists
 import time
-from tqdm import tqdm
+from pip._vendor.rich.progress import track
 import csv
 from decimal import Decimal
 
@@ -57,7 +57,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
             (round(Decimal(x), 8), round(Decimal(y),8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
     last_called = time.time()
-    for column, _ in zip(way_df, tqdm(range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
+    for column, _ in zip(way_df, track(range(total_trail_count), description="Loading Trails…")):
         temp_df = pd.merge(way_df[column], node_df,
                            left_on=column, right_on='id')
         del temp_df['id']

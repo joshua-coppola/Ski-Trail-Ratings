@@ -1,7 +1,7 @@
 from decimal import Decimal
 import matplotlib.pyplot as plt
 import pandas as pd
-from tqdm import tqdm
+from pip._vendor.rich.progress import track
 
 import helper
 import mapHelper
@@ -104,7 +104,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
         objects.append(((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color))
 
-    for i in tqdm(range(len(objects)), desc="Placing Objects…", ascii=False, ncols=75):
+    for i in track(range(len(objects)), description="Placing Objects…"):
         mapHelper.place_object(objects[i])
     
 
