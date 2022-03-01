@@ -153,6 +153,8 @@ def format_map_template(trails, lifts, mountain, direction):
     plt.subplots_adjust(left=0, bottom=bottom_loc, right=1,
                         top=top_loc, wspace=0, hspace=0)
     plt.axis('off')
+    plt.xticks([])
+    plt.yticks([])
     
     if size > 16:
         size = 16
@@ -171,7 +173,8 @@ def format_map_template(trails, lifts, mountain, direction):
 # Returns: none
 
 
-def place_object(object_tuple, direction, color):
+def place_object(blob):
+    object_tuple, direction, color = blob
     lat_mirror = 1
     lon_mirror = -1
     flip_lat_lon = False

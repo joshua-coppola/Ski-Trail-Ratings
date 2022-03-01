@@ -1,5 +1,4 @@
 from decimal import Decimal
-from posixpath import split
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
@@ -41,8 +40,8 @@ def cache_trail_points(filename, list_dfs):
             trail['trail_id'] = entry[5]
             trail['for_display'] = False
             output_df = output_df.append(trail)
-    output_df['lat'] = [round(x, 8) for x in output_df.lat]
-    output_df['lon'] = [round(x, 8) for x in output_df.lon]
+    output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
+    output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2)
                               for x in output_df.elevation]
     output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
@@ -79,17 +78,15 @@ def save_trail_ids(tuple_list, filename):
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     print('Creating Map')
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
-    for i in tqdm(range(len(lifts)), desc="Placing Lifts …", ascii=False, ncols=75):
-        entry = lifts[i]
+    objects = []
+    for entry in lifts:
         lift_name = entry[1]
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        mapHelper.place_object(
-            (entry[0], lift_name, 0, 0), cardinal_direction, 'grey')
+        objects.append(((entry[0], lift_name, 0, 0), cardinal_direction, 'grey'))
 
     rating_list = []
-    for i in tqdm(range(len(trails)), desc="Placing Trails…", ascii=False, ncols=75):
-        entry = trails[i]
+    for entry in trails:
         if not entry[3]:
             index = 0
         else:
@@ -105,11 +102,12 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        mapHelper.place_object(
-            (entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color)
+        objects.append(((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color))
 
-    plt.xticks([])
-    plt.yticks([])
+    for i in tqdm(range(len(objects)), desc="Placing Objects…", ascii=False, ncols=75):
+        mapHelper.place_object(objects[i])
+    
+
     if save:
         plt.savefig(
             'maps/{}.svg'.format(helper.format_name(mountain)), format='svg')

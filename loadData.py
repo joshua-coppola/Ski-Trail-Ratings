@@ -3,6 +3,7 @@ from os.path import exists
 import time
 from tqdm import tqdm
 import csv
+from decimal import Decimal
 
 import helper
 import saveData
@@ -53,7 +54,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         elevation_df = pd.read_csv(
             'cached/trail_points/{}'.format(cached_filename))
         elevation_df['coordinates'] = [
-            (x, y) for x, y in zip(elevation_df.lat, elevation_df.lon)]
+            (round(Decimal(x), 8), round(Decimal(y),8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
     last_called = time.time()
     for column, _ in zip(way_df, tqdm(range(total_trail_count), desc="Loading Trails…", ascii=False, ncols=75)):
@@ -62,8 +63,9 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         del temp_df['id']
         del temp_df[column]
         temp_df = helper.fill_in_point_gaps(temp_df, 15)
-        temp_df['coordinates'] = [(round(x[0], 8), round(x[1], 8))
+        temp_df['coordinates'] = [(round(Decimal(x[0]), 8), round(Decimal(x[1]), 8))
                                   for x in temp_df.coordinates]
+
         for row in useful_info_list:
             if column == row[0]:
                 difficulty_modifier = row[1]
@@ -81,7 +83,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         if area_flag:
             temp_area_line_df = helper.area_to_line(temp_df)
             temp_area_line_df['coordinates'] = [
-                (round(x[0], 8), round(x[1], 8)) for x in temp_area_line_df.coordinates]
+                (round(Decimal(x[0]), 8), round(Decimal(x[1]), 8)) for x in temp_area_line_df.coordinates]
             try:
                 temp_area_line_df['elevation'] = [ele_dict[x]
                                                   for x in temp_area_line_df.coordinates]
