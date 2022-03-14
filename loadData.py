@@ -17,6 +17,19 @@ import osmHelper
 
 
 def generate_trails_and_lifts(mountain, blacklist=''):
+    """
+    Accepts the name of a mountain and the name of a mountain to blacklist
+    and returns a tuple with a list of trails and a list of lifts
+
+    Arguments: 
+    mountain - name of a ski area / name of an osm file w/o the file extension
+    blacklist - name of a ski area to ignore the trails for
+        - if blacklist == mountain, only trails previously found for the mountain
+        will be processed
+
+    Returns:
+    (list(trail tuple), list(lift tuple))
+    """
     filename = mountain + '.osm'
     cached_filename = mountain + '.csv'
     if not exists('osm/{}'.format(filename)):
@@ -38,10 +51,11 @@ def generate_trails_and_lifts(mountain, blacklist=''):
     whitelist_mode = False
     if blacklist == mountain:
         whitelist_mode = True
-    node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list = osmHelper.process_osm(
+    #node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list
+    parsed_osm = osmHelper.process_osm(
         raw_table, blacklist_ids, whitelist_mode)
 
-    saveData.save_trail_ids(trail_and_id_list, mountain + '.csv')
+    saveData.save_trail_ids(parsed_osm['name_and_id_list'], mountain + '.csv')
 
     cached = True
     if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
@@ -54,11 +68,15 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         elevation_df = pd.read_csv(
             'cached/trail_points/{}'.format(cached_filename))
         elevation_df['coordinates'] = [
-            (round(Decimal(x), 8), round(Decimal(y),8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
+            (round(Decimal(x), 8), round(Decimal(y), 8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
     last_called = time.time()
-    for column, _ in zip(way_df, track(range(total_trail_count), description="Loading Trails…")):
-        temp_df = pd.merge(way_df[column], node_df,
+
+    # insert dummy column so that the progress bar completes properly
+    parsed_osm['way_df'] = pd.concat(
+        [parsed_osm['way_df'], pd.Series(0)], axis=1)
+    for column, _ in zip(parsed_osm['way_df'], track(range(parsed_osm['total_trail_count']), description="Loading Trails…")):
+        temp_df = pd.merge((parsed_osm['way_df'])[column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
         del temp_df['id']
         del temp_df[column]
@@ -66,7 +84,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         temp_df['coordinates'] = [(round(Decimal(x[0]), 8), round(Decimal(x[1]), 8))
                                   for x in temp_df.coordinates]
 
-        for row in useful_info_list:
+        for row in parsed_osm['useful_info_list']:
             if column == row[0]:
                 difficulty_modifier = row[1]
                 area_flag = row[2]
@@ -96,12 +114,12 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         trail_list.append((temp_df, column, difficulty_modifier,
                           area_flag, temp_area_line_df, way_id))
     lift_list = []
-    for column in lift_df:
-        temp_df = pd.merge(lift_df[column], node_df,
+    for column in parsed_osm['lift_df']:
+        temp_df = pd.merge(parsed_osm['lift_df'][column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
         temp_df = helper.fill_in_point_gaps(temp_df, 50)
         lift_list.append((temp_df, column))
-    if total_trail_count == 0:
+    if parsed_osm['total_trail_count'] == 0:
         print('No trails found.')
         return (-1, -1)
     print('{} API requests made'.format(api_requests))
@@ -163,8 +181,14 @@ def process_mountain(mountain, cardinal_direction, save_map=False, blacklist='')
         return -1
     vert = helper.calculate_mtn_vert(finished_trail_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
-    output = (mtn_difficulty[0], mtn_difficulty[1],
-              round(vert), len(trail_list), len(lift_list))
+
+    output = {
+        'difficulty': mtn_difficulty[0],
+        'ease': mtn_difficulty[1],
+        'vertical': round(vert),
+        'trail_count': len(trail_list),
+        'lift_count': len(lift_list)
+    }
     return output
 
 # Parameters:
@@ -202,13 +226,14 @@ def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
         value = mountain_row.state.to_list()[0]
         if str(value) != 'nan':
             location = value
-    diff_tuple = process_mountain(mountain, direction, save_map, blacklist)
-    if diff_tuple == -1:
+    mountain_attributes = process_mountain(
+        mountain, direction, save_map, blacklist)
+    if mountain_attributes == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
-        row = [[mountain, direction, location, helper.assign_region(location), diff_tuple[0], diff_tuple[1],
-                diff_tuple[2], diff_tuple[3], diff_tuple[4], blacklist]]
+        row = [[mountain, direction, location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
+                mountain_attributes['vertical'], mountain_attributes['trail_count'], mountain_attributes['lift_count'], blacklist]]
         if previously_run:
             mountain_df.loc[mountain_df.mountain == mountain] = row
             output = mountain_df
@@ -258,7 +283,7 @@ def barplot(save_output=False):
         return
     df = pd.read_csv('mountain_list.csv')
     df['mountain'] = [helper.format_name(x) for x in df['mountain']]
-    saveData.create_difficulty_barplot(df, 'USA' ,save_output)
+    saveData.create_difficulty_barplot(df, 'USA', save_output)
 
     state_list = df.state.unique()
     for state in state_list:
@@ -266,8 +291,9 @@ def barplot(save_output=False):
             continue
         temp_df = df[df['state'].str.contains(state)]
         region = helper.assign_region(state)
-        saveData.create_difficulty_barplot(temp_df, f'{region}/{state}', save_output)
+        saveData.create_difficulty_barplot(
+            temp_df, f'{region}/{state}', save_output)
     for region in ['northeast', 'southeast', 'midwest', 'west']:
         temp_df = df.loc[df['region'] == region]
-        saveData.create_difficulty_barplot(temp_df, helper.format_name(region), save_output)      
-
+        saveData.create_difficulty_barplot(
+            temp_df, helper.format_name(region), save_output)
