@@ -180,4 +180,4 @@ def process_osm(lines, blacklist, whitelist_mode=False):
         'name_and_id_list' : trail_and_id_list
     }
 
-    return (parsed_osm)
+    return parsed_osm

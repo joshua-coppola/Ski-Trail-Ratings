@@ -20,24 +20,24 @@ def cache_trail_points(filename, list_dfs):
         columns=['trail_id', 'for_display', 'lat', 'lon', 'elevation'])
     for entry in list_dfs:
         trail = pd.DataFrame()
-        trail['trail_id'] = entry[5]
+        trail['trail_id'] = entry['id']
         trail['for_display'] = True
-        trail['lat'] = entry[0].lat
-        trail['lon'] = entry[0].lon
-        trail['elevation'] = entry[0]['elevation']
-        trail['slope'] = entry[0].slope
-        trail['trail_id'] = entry[5]
+        trail['lat'] = entry['points_df'].lat
+        trail['lon'] = entry['points_df'].lon
+        trail['elevation'] = entry['points_df'].elevation
+        trail['slope'] = entry['points_df'].slope
+        trail['trail_id'] = entry['id']
         trail['for_display'] = True
         output_df = output_df.append(trail)
-        if entry[3]:
+        if entry['is_area']:
             trail = pd.DataFrame()
-            trail['trail_id'] = entry[5]
+            trail['trail_id'] = entry['id']
             trail['for_display'] = False
-            trail['lat'] = entry[4].lat
-            trail['lon'] = entry[4].lon
-            trail['elevation'] = entry[4]['elevation']
-            trail['slope'] = entry[4].slope
-            trail['trail_id'] = entry[5]
+            trail['lat'] = entry['area_centerline_df'].lat
+            trail['lon'] = entry['area_centerline_df'].lon
+            trail['elevation'] = entry['area_centerline_df'].elevation
+            trail['slope'] = entry['area_centerline_df'].slope
+            trail['trail_id'] = entry['id']
             trail['for_display'] = False
             output_df = output_df.append(trail)
     output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
@@ -80,29 +80,29 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
     objects = []
     for entry in lifts:
-        lift_name = entry[1]
+        lift_name = entry['name']
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        objects.append(((entry[0], lift_name, 0, 0), cardinal_direction, 'grey'))
+        objects.append(((entry['points_df'], lift_name, 0, 0), cardinal_direction, 'grey'))
 
     rating_list = []
     for entry in trails:
-        if not entry[3]:
-            index = 0
+        if not entry['is_area']:
+            index = 'points_df'
         else:
-            index = 4
+            index = 'area_centerline_df'
         rating = helper.rate_trail(entry[index]['difficulty'])
         if helper.get_trail_length(entry[index].coordinates) > 100:
             rating_list.append(round((rating * 100), 0))
-        color = helper.set_color(rating, entry[2])
+        color = helper.set_color(rating, entry['difficulty_modifier'])
         rating = round(rating * 100, 1)
-        trail_name = entry[1]
+        trail_name = entry['name']
         if '_' in trail_name:
             trail_name = trail_name.split('_')[0]
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        objects.append(((entry[0], trail_name, entry[2], entry[3], entry[4]), cardinal_direction, color))
+        objects.append(((entry['points_df'], trail_name, entry['difficulty_modifier'], entry['is_area'], entry['area_centerline_df']), cardinal_direction, color))
 
     for i in track(range(len(objects)), description="Placing Objects…"):
         mapHelper.place_object(objects[i])

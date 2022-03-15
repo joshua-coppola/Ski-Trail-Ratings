@@ -92,14 +92,14 @@ def find_map_size(trails, lifts):
     mountain_min_lon = 180
     for categeory in [trails, lifts]:
         for entry in categeory:
-            trail_max_lat = entry[0]['lat'].max()
-            trail_min_lat = entry[0]['lat'].min()
+            trail_max_lat = entry['points_df']['lat'].max()
+            trail_min_lat = entry['points_df']['lat'].min()
             if trail_max_lat > mountain_max_lat:
                 mountain_max_lat = trail_max_lat
             if trail_min_lat < mountain_min_lat:
                 mountain_min_lat = trail_min_lat
-            trail_max_lon = entry[0]['lon'].max()
-            trail_min_lon = entry[0]['lon'].min()
+            trail_max_lon = entry['points_df']['lon'].max()
+            trail_min_lon = entry['points_df']['lon'].min()
             if trail_max_lon > mountain_max_lon:
                 mountain_max_lon = trail_max_lon
             if trail_min_lon < mountain_min_lon:
@@ -241,14 +241,14 @@ def add_legend(trail, direction, size, legend_offset):
         flip_lat_lon = True
 
     if flip_lat_lon:
-        y = trail[0].lat.to_list()[0]
-        x = trail[0].lon.to_list()[0]
+        y = trail['points_df'].lat.to_list()[0]
+        x = trail['points_df'].lon.to_list()[0]
         temp = lat_mirror
         lat_mirror = lon_mirror
         lon_mirror = temp
     else:
-        x = trail[0].lat.to_list()[0]
-        y = trail[0].lon.to_list()[0]
+        x = trail['points_df'].lat.to_list()[0]
+        y = trail['points_df'].lon.to_list()[0]
 
     x *= lat_mirror
     y *= lon_mirror

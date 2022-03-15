@@ -292,14 +292,14 @@ def format_name(name):
 #   type-float
 
 
-def calculate_mtn_vert(object):
+def calculate_mtn_vert(trail_list):
     min_ele = 10000
     max_ele = 0
-    for trail in object:
-        if trail[0].elevation.max() > max_ele:
-            max_ele = trail[0].elevation.max()
-        if trail[0].elevation.min() < min_ele:
-            min_ele = trail[0].elevation.min()
+    for trail in trail_list:
+        if trail['points_df'].elevation.max() > max_ele:
+            max_ele = trail['points_df'].elevation.max()
+        if trail['points_df'].elevation.min() < min_ele:
+            min_ele = trail['points_df'].elevation.min()
     return(max_ele-min_ele)
 
 # Parameters:
