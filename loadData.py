@@ -2,7 +2,6 @@ import pandas as pd
 from os.path import exists
 import time
 from pip._vendor.rich.progress import track
-import csv
 from decimal import Decimal
 
 import helper
@@ -14,16 +13,16 @@ def generate_trails_and_lifts(mountain, blacklist=''):
     Accepts the name of a mountain and the name of a mountain to blacklist
     and returns a tuple with a list of trails and a list of lifts
 
-    Arguments: 
-    mountain - name of a ski area / name of an osm file w/o the file extension
-    blacklist - name of a ski area to ignore the trails for
+    #### Arguments: 
+    - mountain - name of a ski area / name of an osm file w/o the file extension
+    - blacklist - name of a ski area to ignore the trails for
         - if blacklist == mountain, only trails previously found for the mountain
         will be processed
 
-    Returns:
-    (list(trail dict), list(lift dict))
-    trail dict = name (str), id (str), points_df (df), difficulty_modifier (float), is_area (bool), area_centerline_df (df)
-    lift dict = name (str), points_df (df)
+    #### Returns:
+    - (list(trail dict), list(lift dict))
+        - trail dict = name (str), id (str), points_df (df), difficulty_modifier (float), is_area (bool), area_centerline_df (df)
+        - lift dict = name (str), points_df (df)
     """
     filename = mountain + '.osm'
     cached_filename = mountain + '.csv'
@@ -46,9 +45,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
     whitelist_mode = False
     if blacklist == mountain:
         whitelist_mode = True
-    #node_df, way_df, lift_df, useful_info_list, total_trail_count, trail_and_id_list
-    parsed_osm = osmHelper.process_osm(
-        raw_table, blacklist_ids, whitelist_mode)
+    parsed_osm = osmHelper.process_osm(raw_table, blacklist_ids, whitelist_mode)
 
     saveData.save_trail_ids(parsed_osm['name_and_id_list'], mountain + '.csv')
 
@@ -128,33 +125,37 @@ def generate_trails_and_lifts(mountain, blacklist=''):
 
     return (trail_list, lift_list)
 
-# Parameters:
-# mountain: name of ski area
-#   type-string
-# cardinal_direction: which way does the ski area face
-#   type-string
-#   valid options-'n','s','e','w'
-# save_map: whethere to save the output to an svg file
-#   type-bool
-# blacklist: name of nearby ski area to ignore trails and lifts from
-#   type-string
-#
-# Return: the relative difficultly and ease of the difficult and beginner terrain
-#   type-tuple(float,float)
-
 
 def process_mountain(mountain, cardinal_direction, save_map=False, blacklist=''):
+    """
+    Takes in the general information about the mountain and calls the relevant
+    functions to parse the osm, calculate difficulty, and create the map. The
+    function returns the descriptive statistics about the mountain.
+
+    #### Arguments:
+
+    - mountain - name of mountain and OSM file (minus the extension)
+    - cardinal_direction - what direction the mountain (mainly) faces
+    - save_map - whether to save the map (default - false)
+    - blacklist - name of a ski area to ignore the trails for
+        - if blacklist == mountain, only trails previously found for the mountain
+        will be processed
+
+    #### Returns:
+
+    - dict(difficulty (float), ease (float), vertical (float), trail_count (int), lift_count (int))
+    - -1 in the case of failure
+    """
     trail_list, lift_list = generate_trails_and_lifts(mountain, blacklist)
     if trail_list == -1:
         return -1
 
-    #finished_trail_list = []
     for trail in trail_list:
         if not trail['is_area']:
             trail_points = trail['points_df']
         else:
-            trail_points = trail_points['area_centerline_df']
-            perimeter = trail_points['points_df']
+            trail_points = trail['area_centerline_df']
+            perimeter = trail['points_df']
             perimeter['distance'] = helper.calculate_dist(
                 perimeter['coordinates'])
             perimeter['elevation_change'] = helper.calulate_elevation_change(
@@ -177,14 +178,6 @@ def process_mountain(mountain, cardinal_direction, save_map=False, blacklist='')
             trail['points_df'] = perimeter
             trail['area_centerline_df'] = trail_points
 
-        
-        #if not trail['is_area']:
-        #    finished_trail_list.append(
-        #        (trail_points, trail['name'], trail['difficulty_modifier'], trail['is_area'], trail['area_centerline_df'], trail['id']))
-        #else:
-        #    finished_trail_list.append(
-        #        (perimeter, trail['name'], trail['difficulty_modifier'], trail['is_area'], trail_points, trail['id']))
-
     mtn_difficulty = saveData.create_map(
         trail_list, lift_list, mountain, cardinal_direction, save_map)
     if mtn_difficulty == -1:
@@ -201,23 +194,31 @@ def process_mountain(mountain, cardinal_direction, save_map=False, blacklist='')
     }
     return output
 
-# Parameters:
-# mountain: name of ski area
-#   type-str
-# direction: orientation of map
-#   type-char
-# save_map: whether to save the map
-#   type-bool
-# blacklist: any mountains to exclude trails from
-#   type-str
-# location: state ski area is in
-#   type-str
-#
-# Return: -1 for failure, 0 otherwise
-#   type-int
 
+def osm(mountain, direction='', save_map=False, blacklist='', location=''):
+    """
+    Takes in the general information about the mountain, fills in missing information
+    if it is stored from missing runs, calls process mountain, then saves the results
+    to mountain_list.csv
 
-def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
+    #### Arguments:
+
+    - mountain - name of mountain/ OSM file
+    - direction - what direction the mountain (mainly) faces
+    - save_map - whether to save the map (default - false)
+    - blacklist - name of a ski area to ignore the trails for
+        - if blacklist == mountain, only trails previously found for the mountain
+        will be processed
+    - location - what state the mountain is in (2 letter codes)
+
+    #### Returns:
+
+    - 0 for sucess, -1 for failure
+    """
+
+    if '.osm' in mountain:
+        mountain = mountain.replace('.osm', '')
+
     print('\nProcessing {}'.format(helper.format_name(mountain)))
     mountain_df = pd.read_csv('mountain_list.csv')
     previously_run = False
@@ -258,36 +259,43 @@ def osm(mountain='', direction='', save_map=False, blacklist='', location=''):
         print('Mountain data not saved. If this is unexpected, please make sure you have a file called mountain_list.csv')
     return 0
 
-# Parameters:
-# input_csv: name of csv
-#   type-str
-# save_map: whether to save the map
-#   type-bool
-#
-# Return: none
 
+def bulk_osm(input_csv):
+    """
+    Accepts the name of a csv that contains the information to create maps for
+    a list of mountains and calls osm to process each one
 
-def bulk_osm(input_csv, save_map=False):
-    if input_csv[:-4] != '.csv':
-        input_csv = input_csv + '.csv'
-    with open(input_csv, mode='r') as file:
-        csv_file = csv.reader(file)
-        next(csv_file)
-        for line in csv_file:
-            if len(line) == 0:
-                break
-            if line[0][0] == '#':
-                continue
-            osm(line[0], line[1], save_map, line[9], line[2])
+    #### Arguments:
 
-# Parameters:
-# save_output: whether to save the map
-#   type-bool
-#
-# Return: none
+    - input_csv - csv filename with or without the file extension
+
+    #### Return:
+
+    - Void
+    """
+    if '.csv' not in input_csv:
+        input_csv += '.csv'
+
+    mountain_info_df = pd.read_csv(input_csv, keep_default_na=False)
+    for row in mountain_info_df.itertuples():
+        if row.mountain[0] == '#':
+            continue
+        osm(row.mountain, row.direction, True, row.blacklist, row.state)
 
 
 def barplot(save_output=False):
+    """
+    Creates Difficulty Barplots for all mountains within mountain_list.csv
+
+    #### Arguments:
+
+    - save_output - whether to save plots (default = false)
+
+    #### Return:
+
+    - Void
+    """
+
     if not exists('mountain_list.csv'):
         print('Missing cache files, please run bulk_osm or osm and set save_map=True.')
         return

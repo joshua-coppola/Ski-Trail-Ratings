@@ -38,10 +38,10 @@ python3 main.py <ARGS>
 Arguments | Function | Can be used with
 --- | --- | ---
 `-h` | help page | none
-`-s` | save figures | `-[o,c,i,d,l]`
+`-s` | save figures | `-[o,i,d,l]`
 `-o`, `--osm` | create map from OSM file | `-[s,i,d,l]`
-`-c`, `--csv` | create many maps from a csv file where each line refers to an osm file, direction, and mountains to ignore | `-s`
-`-g`, `--gpx` | create map from GPX file | none
+`-c`, `--csv` | create many maps from a csv file where each line. refers to an osm file, direction, and mountains to ignore. Will alway save. | none
+`-g`, `--gpx` | create map from GPX file of a single trail | none
 `-d`, `--direction` | specifies which way a map should face | `-[s,o,i,l]`
 `-i`, `--ignore` | specify a mountain that has been run previously to prevent overlap | `-[s,o,d,l]`
 `-l`, `--location` | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i,d]`

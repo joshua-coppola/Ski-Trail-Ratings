@@ -55,7 +55,7 @@ def main(argv):
 
     show_map = True
     if csv_flag:
-        loadData.bulk_osm(file, save_flag)
+        loadData.bulk_osm(file)
         show_map = False
     elif osm_flag:
         loadData.osm(file, direction, save_flag, blacklist, location)

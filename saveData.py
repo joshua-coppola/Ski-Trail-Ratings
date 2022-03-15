@@ -6,16 +6,19 @@ from pip._vendor.rich.progress import track
 import helper
 import mapHelper
 
-# Parameters:
-# filename: name of csv to save data to
-#   type-string
-# list_df: list of trails
-#   type-list of tuples
-#
-# Return: none
-
-
 def cache_trail_points(filename, list_dfs):
+    """
+    Takes a list of trails and saves them to a cache file to prevent uneeded API calls
+
+    #### Arguments:
+
+        - filename - name of output file location
+        - list_dfs - list of trail dicts
+
+    #### Returns:
+
+        - Void
+    """
     output_df = pd.DataFrame(
         columns=['trail_id', 'for_display', 'lat', 'lon', 'elevation'])
     for entry in list_dfs:
@@ -48,16 +51,20 @@ def cache_trail_points(filename, list_dfs):
     output_df.drop_duplicates(inplace=True)
     output_df.to_csv('cached/trail_points/{}'.format(filename))
 
-# Parameters:
-# tuple_list: list of trail names and osm ids
-#   type-list of tuples
-# mountain_name: name of ski area
-#   type-string
-#
-# Return: none
-
 
 def save_trail_ids(tuple_list, filename):
+    """
+    Saves a list of trail names and ids to use as a blacklist / whitelist later
+
+    #### Arguments:
+
+        - tuple_list - list(trail_name, trail_id)
+        - filename - name of output file location (in the form mountain.csv)
+
+    #### Returns:
+    
+        - Void
+    """
     name_list = [x[0] for x in tuple_list]
     id_list = [x[1] for x in tuple_list]
     export_df = pd.DataFrame()
@@ -66,16 +73,30 @@ def save_trail_ids(tuple_list, filename):
     export_df.to_csv('cached/osm_ids/{}'.format(filename), index=False)
 
 
-# accepts a list of trail tuples, a list of lift tuples, the name of the ski area,
-# and the direction the map should face. The last param is a bool for whether to
-# save the map.
-#
-# Return: the relative difficulty of hard terrain and the relative ease
-# for beginner terrain
-#   type-tuple(float,float)
-
-
 def create_map(trails, lifts, mountain, cardinal_direction, save=False):
+    """
+    Takes the information about the mountain, trails, and lifts, and plots them
+
+    #### Arguments:
+
+    - trails - list of trail dicts
+        -trail_dict = {
+            'name',
+            'id',
+            'points_df',
+            'difficulty_modifier',
+            'is_area',
+            'area_centerline_df'
+        }
+    - lifts - list(dict('name', 'points_df'))
+    - mountain - name of mountain and OSM file (minus the extension)
+    - cardinal_direction - what direction the mountain (mainly) faces
+    - save_map - whether to save the map (default - false)
+
+    #### Returns:
+
+    - (mountain_difficulty (float), mountain_ease (float))
+    """
     print('Creating Map')
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
     objects = []
@@ -131,18 +152,19 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     plt.draw()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
-# Parameters:
-# df_difficulty: dataframe with column for mountain name, difficulty rating, and color
-#   type-df(string, float, string)
-# df_ease: dataframe with column for mountain name, beginner friendliness rating, and color
-#   type-df(string, float, string)
-# save: bool for whether to save the output to an svg
-#   type-bool
-#
-# Return: none
-
 
 def create_difficulty_barplot(df, file_name ,save=False):
+    """
+    Creates difficulty and ease barplots for the provided dataframe
+
+    #### Arguments
+    - df - dataframe[['mountain_name','difficult_rating','ease_rating']]
+    - file_name - partial file path (without file extension)
+    - save - whether to save file (default = false)
+
+    ### Returns:
+    - Void
+    """
     if len(file_name.split('/')) > 1:
         name = file_name.split('/')[1]
     else:
