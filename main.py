@@ -5,6 +5,7 @@ import getopt
 import loadData
 import gpx
 
+
 def main(argv):
     file = ''
     save_flag = False

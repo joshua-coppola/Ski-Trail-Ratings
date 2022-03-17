@@ -6,10 +6,23 @@ import haversine as hs
 from math import degrees, atan
 from requests.api import get
 
-# accepts a string with coords separated by a | and returns a list of elevations
-
 
 def elevation_api(piped_coords, last_called, trailname=''):
+    """
+    Helper function for get_elevation. Accepts piped_coords, timestamp, and
+    trailname and queries an elevation API to fetch elevation data at each
+    point.
+
+    #### Arguments:
+
+    - piped_coords - string of coords separated by a |
+    - last_called - time.time object for last time the API was requested
+    - trailname - name of current trail
+
+    #### Returns:
+
+    - (elevation (list), last_called (time.time()))
+    """
     # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
     # url = 'https://api.opentopodata.org/v1/mapzen?locations={}'
@@ -28,19 +41,28 @@ def elevation_api(piped_coords, last_called, trailname=''):
         return -1
     return (elevation, last_called)
 
-# Parameters:
-# coordinates: list/series of latitude and longitude tuples
-#   type-list/series of tuples
-# trail_name: name of ski trail
-#   type-string
-# api-requests: number of api requests made
-#   type-int
-#
-# Returns: tuple containing series of coordinates and api_requests
-#   type-tuple(series of tuples, int)
 
+def get_elevation(coordinates, last_called=None, trail_name='', api_requests=0):
+    """
+    Takes in coordinates, and optionally a timestamp, trailname, and previous API requests count
+    and returns a series of elevations (float)
 
-def get_elevation(coordinates, last_called, trail_name='', api_requests=0):
+    #### Arguments:
+
+    - coordinates - list of coordinates (lat,lon)
+    - last called - time.time object for last API call time (default = current time)
+    - trail_name - name of current trail. Used for error messages (default = '')
+    - api_requests - number of API requests made by the program (default = 0)
+
+    #### Returns:
+
+    - tuple(elevations (series), api_requests (int), last_called (time))
+    - -1 if error
+    """
+
+    if last_called == None:
+        last_called = time.time()
+
     piped_coords = ''
     point_count = 0
     elevations = []
@@ -71,10 +93,19 @@ def get_elevation(coordinates, last_called, trail_name='', api_requests=0):
             elevations.append(point)
     return (pd.Series(elevations), api_requests, last_called)
 
-# accepts a list of lat/lon pairs and returns a list of distances (in meters)
-
 
 def calculate_dist(coordinates):
+    """
+    Accepts a list of coordinates and returns a list of distances between each point
+
+    #### Arguments:
+
+    - coordinates - list of coordinates (lat,lon)
+
+    #### Returns:
+
+    - distance - list of distances
+    """
     previous_row = (NAN, NAN)
     distance = []
     for row in coordinates:
@@ -82,15 +113,26 @@ def calculate_dist(coordinates):
         previous_row = row
     return distance
 
-# accepts a df with lat, lon, lat/lon pairs, and elevation and returns
-# a df with the same columns, but points spaced out by no more than 20
 
+def fill_in_point_gaps(df, max_gap=20, elevation_included=False):
+    """
+    Accepts a dataframe with lat, lon, coordinates, and optionally elevation,
+    and returns a new dataframe with each point being separated by no more
+    than the max_gap (in meters).
 
-def fill_in_point_gaps(df, max_gap=20, filetype='osm'):
+    #### Arguments:
+    - df - dataframe(lat,lon,coordinates), and optionally an elevation column
+    - max_gap - maximum acceptable gap between points (in meters) (default = 20)
+    - elevation_included - boolean for whether there is an elevation column in the df
+
+    #### Returns:
+
+    - new_df - dataframe(lat,lon,coordinates), and optionally an elevation column
+    """
     lat = df['lat'].tolist()
     lon = df['lon'].tolist()
     coordinates = df['coordinates'].tolist()
-    if filetype == 'gpx':
+    if elevation_included == True:
         elevation = df['elevation'].tolist()
     done = False
     while not done:
@@ -103,7 +145,7 @@ def fill_in_point_gaps(df, max_gap=20, filetype='osm'):
                 lat.insert(index, new_lat)
                 lon.insert(index, new_lon)
                 coordinates.insert(index, (new_lat, new_lon))
-                if filetype == 'gpx':
+                if elevation_included == True:
                     elevation.insert(
                         index, (elevation[index]+elevation[index-1])/2)
                 break
@@ -114,15 +156,24 @@ def fill_in_point_gaps(df, max_gap=20, filetype='osm'):
     new_df['lat'] = lat
     new_df['lon'] = lon
     new_df['coordinates'] = coordinates
-    if filetype == 'gpx':
+    if elevation_included == True:
         new_df['elevation'] = elevation
     return new_df
 
-# accepts a df with 3 columns: lat, lon, lat/lon pairs. Retruns the information
-# as a line down the middle of the area in the same format.
 
+def area_to_line(df, point_gap=15):
+    """
+    Converts the perimeter of an area into a centerline.
 
-def area_to_line(df):
+    #### Arguments:
+
+    - df - dataframe(lat,lon,coordinates), the df may have additional columns
+    - point_gap - set the distance between points in the centerline (default = 15)
+
+    #### Returns:
+
+    - new_df - dataframe(lat,lon,coordinates)
+    """
     coordinates = df.coordinates.to_list()
     new_lat = []
     new_lon = []
@@ -150,13 +201,22 @@ def area_to_line(df):
     new_df['lon'] = new_lon
     new_df['coordinates'] = new_coords
 
-    new_df = fill_in_point_gaps(new_df, 15)
+    new_df = fill_in_point_gaps(new_df, point_gap)
     return new_df
-
-# accepts a series of difficulties and returns an overall trail rating (0-.9 scale) as a float
 
 
 def rate_trail(difficulty):
+    """
+    Provides a numerical rating for a trail
+
+    #### Arguments:
+
+    - difficults - list of difficulties (float)
+
+    #### Returns:
+
+    - max_difficulty - the average rating from the hardest section of trail (float)
+    """
     max_difficulty = 0
     previous = 0
     previous_2 = 0
@@ -168,11 +228,21 @@ def rate_trail(difficulty):
         previous = point
     return max_difficulty
 
-# accepts a float and converts it into a trail color (return a string)
-# possible colors: green, royalblue, black, red, gold
-
 
 def set_color(rating, difficultly_modifier=0):
+    """
+    Converts a trail rating and difficulty modifier into a color to print to
+    the map.
+
+    #### Arguments:
+
+    - rating - trail rating created by rate_trail (float)
+    - difficulty_modifier - additional modifier beyond pitch (float) (default = 0)
+
+    #### Returns:
+
+    - color - css color name (str)
+    """
     rating += .07 * difficultly_modifier
     # 0-17 degrees: green
     if rating < .17:
@@ -190,11 +260,20 @@ def set_color(rating, difficultly_modifier=0):
     else:
         return 'gold'
 
-# accepts a list of elevations and smooths the gaps between groupings of
-# same valued points. Returns a list
-
 
 def smooth_elevations(elevations, passes=20):
+    """
+    Smoothes out errors in elevation data
+
+    #### Arguments:
+
+    - elevations - list of elevations
+    - passes - number of times to repeat smoothing (default = 20)
+
+    #### Returns:
+
+    - elevations - list of elevations
+    """
     if len(elevations) == 0:
         print('No Elevations provided')
         return
@@ -209,11 +288,19 @@ def smooth_elevations(elevations, passes=20):
             previous_point = point
     return elevations
 
-# accepts a list of elevations and returns the difference between
-# neighboring elevations
-
 
 def calulate_elevation_change(elevation):
+    """
+    Calculate the elevation change between pairs of points in a list
+
+    #### Arguments:
+
+    - elevation - list of elevations
+
+    #### Returns:
+
+    - elevation_change - list of elevation differences between points
+    """
     previous_row = NAN
     elevation_change = []
     for row in elevation:
@@ -221,11 +308,20 @@ def calulate_elevation_change(elevation):
         previous_row = row
     return elevation_change
 
-# accepts 2 lists: distance and elevation change, both using the same unit
-# returns a list of slopes (in degrees)
-
 
 def calculate_slope(elevation_change, distance):
+    """
+    Calculate the slope at each point in a list
+
+    #### Arguments:
+
+    - elevation_change - list of elevation differences between points
+    - distance - list of distances between points
+
+    #### Returns:
+
+    -slope - list of slopes (in degrees) at a given point    
+    """
     slope = []
     for x, y in zip(elevation_change, distance):
         if y != 0:
@@ -233,42 +329,55 @@ def calculate_slope(elevation_change, distance):
         else:
             slope.append(0)
     slope[0] = 0
-    # for i, point in enumerate(slope):
-    #    if point > 0:
-    #        slope[i] = 0
     return slope
-
-# accepts a list of slopes and returns a list of difficulties (0-.9 scale)
 
 
 def calculate_point_difficulty(slope):
+    """
+    Converts slopes into difficulty
+
+    #### Arguments:
+    - slope - a list of slopes (in degrees)
+
+    #### Returns:
+
+    - difficulty - a list of difficulties (0-90 scale, float)
+    """
     difficulty = []
     for point in slope:
         difficulty.append((abs(point)/90)*.9)
     difficulty[0] = 0
     return difficulty
 
-# Parameters:
-# coordinates: list/series of coordinates
-#   type-list/series of tuples
-#
-# Returns: trail length
-#   type-float
-
 
 def get_trail_length(coordinates):
+    """
+    Calculates the length of a trail from a list of coordinates
+
+    #### Arguments:
+
+    - coordinates - list of (lat, lon) tuples
+
+    #### Returns:
+
+    - length - trail length in meters (float)
+    """
     distances = calculate_dist(coordinates)
     return(sum(distances[1:]))
 
-# Parameters:
-# name: name of an object
-#   type-string
-#
-# Returns: name, but with spaces replacing the underscores, and each word capitalized
-#   type-string
-
 
 def format_name(name):
+    """
+    Converts a string to have all major words capitalized
+
+    #### Arguments:
+
+    - name - string
+
+    #### Returns:
+
+    - name - formatted name
+    """
     name_list = name.split('_')
     name = ''
     for word in name_list:
@@ -282,15 +391,19 @@ def format_name(name):
             name = '{}{} '.format(name, word)
     return name.strip()
 
-# Parameters:
-# object: list of trails
-#   type-list of tuples
-#
-# Returns: mountain vertical drop
-#   type-float
-
 
 def calculate_mtn_vert(trail_list):
+    """
+    Calulates the vertical drop from the highest trail to lowest
+
+    #### Arguments:
+
+    - trail_list - list of trail dicts
+
+    #### Returns:
+
+    - vertical_drop - vertical drop when combining all provided trails
+    """
     min_ele = 10000
     max_ele = 0
     for trail in trail_list:
@@ -300,39 +413,51 @@ def calculate_mtn_vert(trail_list):
             min_ele = trail['points_df'].elevation.min()
     return(max_ele-min_ele)
 
-# Parameters:
-# elevation: a series of elevations
-#   type-series
-#
-# Returns: the vertical drop of the trail
-#   type-float
-
 
 def calculate_trail_vert(elevation):
+    """
+    Calulates the vertical drop for a given list of elevations
+
+    #### Arguments:
+
+    - elevation - list of elevations
+
+    #### Returns:
+
+    - vertical_drop - vertical drop for the given elevations
+    """
     return elevation.max() - elevation.min()
 
-# Parameters:
-# state: 2 letter state code
-#   type-string
-#
-# Returns: the region of the state
-#   type-string
 
 def assign_region(state):
+    """
+    Takes a 2 letter state code and outputs its region
+
+    #### Arguments:
+
+    - state - US state abbreviations
+
+    #### Returns:
+
+    - region - 'northeast', 'southeast', 'midwest', or 'west'
+    """
     northeast = ['ME', 'NH', 'VT', 'NY', 'MA', 'RI', 'CT', 'PA', 'NJ']
-    southeast = ['MD', 'DE', 'VA', 'WV', 'KY', 'TN', 'NC', 'SC', 'GA', 'FL', 'AL', 'MS', 'LA', 'AR']
-    midwest = ['ND', 'SD', 'MN', 'WI', 'MI', 'OH', 'IN', 'IL', 'IA', 'NE', 'KS', 'MO', 'OK', 'TX']
-    west = ['NM', 'AZ', 'CA', 'NV', 'UT', 'CO', 'WY', 'ID', 'OR', 'WA', 'MT', 'AK', 'HI']
+    southeast = ['MD', 'DE', 'VA', 'WV', 'KY', 'TN',
+                 'NC', 'SC', 'GA', 'FL', 'AL', 'MS', 'LA', 'AR']
+    midwest = ['ND', 'SD', 'MN', 'WI', 'MI', 'OH',
+               'IN', 'IL', 'IA', 'NE', 'KS', 'MO', 'OK', 'TX']
+    west = ['NM', 'AZ', 'CA', 'NV', 'UT', 'CO',
+            'WY', 'ID', 'OR', 'WA', 'MT', 'AK', 'HI']
 
     if len(state.split()) > 1:
         state = state.split()[0]
-    
+
     if state in northeast:
         return 'northeast'
 
     if state in southeast:
         return 'southeast'
-    
+
     if state in midwest:
         return 'midwest'
 

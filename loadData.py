@@ -8,6 +8,7 @@ import helper
 import saveData
 import osmHelper
 
+
 def generate_trails_and_lifts(mountain, blacklist=''):
     """
     Accepts the name of a mountain and the name of a mountain to blacklist
@@ -45,7 +46,8 @@ def generate_trails_and_lifts(mountain, blacklist=''):
     whitelist_mode = False
     if blacklist == mountain:
         whitelist_mode = True
-    parsed_osm = osmHelper.process_osm(raw_table, blacklist_ids, whitelist_mode)
+    parsed_osm = osmHelper.process_osm(
+        raw_table, blacklist_ids, whitelist_mode)
 
     saveData.save_trail_ids(parsed_osm['name_and_id_list'], mountain + '.csv')
 
@@ -104,12 +106,12 @@ def generate_trails_and_lifts(mountain, blacklist=''):
                 api_requests = result[1]
                 last_called = result[2]
         trail_dict = {
-            'name' : column,
-            'id' : way_id,
-            'points_df' : temp_df,
-            'difficulty_modifier' : difficulty_modifier,
-            'is_area' : area_flag,
-            'area_centerline_df' : temp_area_line_df
+            'name': column,
+            'id': way_id,
+            'points_df': temp_df,
+            'difficulty_modifier': difficulty_modifier,
+            'is_area': area_flag,
+            'area_centerline_df': temp_area_line_df
         }
         trail_list.append(trail_dict)
     lift_list = []
@@ -117,7 +119,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
         temp_df = pd.merge(parsed_osm['lift_df'][column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
         temp_df = helper.fill_in_point_gaps(temp_df, 50)
-        lift_list.append({'name' : column, 'points_df' : temp_df})
+        lift_list.append({'name': column, 'points_df': temp_df})
     if parsed_osm['total_trail_count'] == 0:
         print('No trails found.')
         return (-1, -1)
@@ -165,12 +167,14 @@ def process_mountain(mountain, cardinal_direction, save_map=False, blacklist='')
 
         trail_points['elevation'] = helper.smooth_elevations(
             trail_points['elevation'].to_list(), 0)
-        trail_points['distance'] = helper.calculate_dist(trail_points['coordinates'])
+        trail_points['distance'] = helper.calculate_dist(
+            trail_points['coordinates'])
         trail_points['elevation_change'] = helper.calulate_elevation_change(
             trail_points['elevation'])
         trail_points['slope'] = helper.calculate_slope(
             trail_points['elevation_change'], trail_points['distance'])
-        trail_points['difficulty'] = helper.calculate_point_difficulty(trail_points['slope'])
+        trail_points['difficulty'] = helper.calculate_point_difficulty(
+            trail_points['slope'])
 
         if not trail['is_area']:
             trail['points_df'] = trail_points

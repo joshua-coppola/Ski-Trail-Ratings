@@ -38,7 +38,7 @@ def load_gpx(filename):
 
 def gpx(filename):
     df = load_gpx(filename)
-    df = helper.fill_in_point_gaps(df, 15, 'gpx')
+    df = helper.fill_in_point_gaps(df, 15, True)
     df['elevation'] = helper.smooth_elevations(df['elevation'].to_list())
     df['distance'] = helper.calculate_dist(df['coordinates'])
     df['elevation_change'] = helper.calulate_elevation_change(df['elevation'])

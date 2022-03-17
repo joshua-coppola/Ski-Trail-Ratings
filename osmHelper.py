@@ -1,27 +1,19 @@
 import pandas as pd
 
-# Parameters:
-# line: one line of the osm file
-#   type-str
-# difficulty_modifier: int value for additional difficulty parameters
-#   type-int
-# is_trail: trail flag
-#   type-bool
-# is_lift: lift flag
-#   type-bool
-# is_glade: woods trail flag
-#   type-bool
-# is_area: area flag
-#   type-bool
-# is_backcountry: non-frontside trail flag
-#   type-bool
-# glade_override: overrides is_glade if set
-#   type-bool
-#
-# Return: the modified states of the parameters plus node_id and way_name
-#   type-tuple(str, str, int, bool, bool, bool, bool, bool, bool)
 
 def process_way_tags(line, trail_attributes):
+    """
+    Adds / Removes tags based on the passed line from an osm file
+
+    #### Arguments:
+
+    - line - one line from an osm file
+    - trail_attributes - dict of trail tags. Created by process_osm
+
+    #### Returns:
+
+    - trail_attributes - dict of trail tags
+    """
     if '<nd' in line:
         split_row = line.split('"')
         if split_row[1] != '':
@@ -68,18 +60,28 @@ def process_way_tags(line, trail_attributes):
         trail_attributes['is_glade'] = True
     return trail_attributes
 
-# Parameters:
-# lines: a list of lines from the osm file
-#   type-list(str)
-# blacklist: name of blacklist files
-#   type-str
-# whitelist_mode: toggle between using a whitelist or a blacklist
-#   type-bool
-#
-# Returns: tuple of nodes and trail and lift info
-#   type-tuple(df, df, df, list, int, list)
 
 def process_osm(lines, blacklist, whitelist_mode=False):
+    """
+    Accepts a list of lines from an OSM file and processes them into more useful formats
+
+    #### Arguments:
+
+    - lines - list of strings
+    - blacklist - list of trails to blacklist
+    - whitelist_mode - whether to invert the blacklist to a whitelist
+
+    #### Returns:
+
+    - parsed_osm - dict {
+        'node_df' (dataframe),
+        'way_df' (dataframe),
+        'lift_df' (dataframe),
+        'useful_info_list' (list(tuple)),
+        'total_trail_count' (int),
+        'name_and_id_list' (list(tuple))
+        }
+    """
     DEBUG_TRAILS = False
 
     way_df = pd.DataFrame()
@@ -112,16 +114,16 @@ def process_osm(lines, blacklist, whitelist_mode=False):
         if '<way' in row:
             in_way = True
             trail_attributes = {
-                'way_name' : '',
-                'way_id' : row.split('"')[1],
-                'is_trail' : False,
-                'is_lift' : False,
-                'is_glade' : False,
-                'is_backcountry' : False,
-                'is_area' : False,
-                'glade_override' : False,
-                'difficulty_modifier' : 0,
-                'node_id_list' : []
+                'way_name': '',
+                'way_id': row.split('"')[1],
+                'is_trail': False,
+                'is_lift': False,
+                'is_glade': False,
+                'is_backcountry': False,
+                'is_area': False,
+                'glade_override': False,
+                'difficulty_modifier': 0,
+                'node_id_list': []
             }
             if (str(trail_attributes['way_id']) not in blacklist) and whitelist_mode:
                 in_way = False
@@ -134,32 +136,40 @@ def process_osm(lines, blacklist, whitelist_mode=False):
                     trail_attributes['difficulty_modifier'] -= 1
                 if trail_attributes['is_trail'] and not trail_attributes['is_backcountry']:
                     total_trail_count += 1
-                    trail_and_id_list.append((trail_attributes['way_name'], trail_attributes['way_id']))
+                    trail_and_id_list.append(
+                        (trail_attributes['way_name'], trail_attributes['way_id']))
                     if DEBUG_TRAILS:
                         trail_attributes['way_name'] = trail_attributes['way_id']
                     if trail_attributes['way_name'] == '':
-                        trail_attributes['way_name'] = ' _' + str(blank_name_count)
+                        trail_attributes['way_name'] = ' _' + \
+                            str(blank_name_count)
                         blank_name_count += 1
                     if trail_attributes['way_name'] in way_df.columns:
-                        trail_attributes['way_name'] = trail_attributes['way_name'] + '_' + str(blank_name_count)
+                        trail_attributes['way_name'] = trail_attributes['way_name'] + \
+                            '_' + str(blank_name_count)
                         blank_name_count += 1
                     temp_df = pd.DataFrame()
-                    temp_df[trail_attributes['way_name']] = trail_attributes['node_id_list']
+                    temp_df[trail_attributes['way_name']
+                            ] = trail_attributes['node_id_list']
                     way_df = pd.concat([way_df, temp_df], axis=1)
                     useful_info_list.append(
                         (trail_attributes['way_name'], trail_attributes['difficulty_modifier'], trail_attributes['is_area'], trail_attributes['way_id']))
                 if trail_attributes['is_lift']:
-                    trail_and_id_list.append((trail_attributes['way_name'], trail_attributes['way_id']))
+                    trail_and_id_list.append(
+                        (trail_attributes['way_name'], trail_attributes['way_id']))
                     if DEBUG_TRAILS:
                         trail_attributes['way_name'] = trail_attributes['way_id']
                     if trail_attributes['way_name'] == '':
-                        trail_attributes['way_name'] = ' _' + str(blank_name_count)
+                        trail_attributes['way_name'] = ' _' + \
+                            str(blank_name_count)
                         blank_name_count += 1
                     if trail_attributes['way_name'] in lift_df.columns:
-                        trail_attributes['way_name'] = trail_attributes['way_name'] + '_' + str(blank_name_count)
+                        trail_attributes['way_name'] = trail_attributes['way_name'] + \
+                            '_' + str(blank_name_count)
                         blank_name_count += 1
                     temp_df = pd.DataFrame()
-                    temp_df[trail_attributes['way_name']] = trail_attributes['node_id_list']
+                    temp_df[trail_attributes['way_name']
+                            ] = trail_attributes['node_id_list']
                     lift_df = pd.concat([lift_df, temp_df], axis=1)
                 in_way = False
                 trail_attributes['way_name'] = ''
@@ -172,12 +182,12 @@ def process_osm(lines, blacklist, whitelist_mode=False):
     node_df['coordinates'] = coordinates
 
     parsed_osm = {
-        'node_df' : node_df,
-        'way_df' : way_df,
-        'lift_df' : lift_df,
-        'useful_info_list' : useful_info_list,
-        'total_trail_count' : total_trail_count,
-        'name_and_id_list' : trail_and_id_list
+        'node_df': node_df,
+        'way_df': way_df,
+        'lift_df': lift_df,
+        'useful_info_list': useful_info_list,
+        'total_trail_count': total_trail_count,
+        'name_and_id_list': trail_and_id_list
     }
 
     return parsed_osm

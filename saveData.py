@@ -6,6 +6,7 @@ from pip._vendor.rich.progress import track
 import helper
 import mapHelper
 
+
 def cache_trail_points(filename, list_dfs):
     """
     Takes a list of trails and saves them to a cache file to prevent uneeded API calls
@@ -62,7 +63,7 @@ def save_trail_ids(tuple_list, filename):
         - filename - name of output file location (in the form mountain.csv)
 
     #### Returns:
-    
+
         - Void
     """
     name_list = [x[0] for x in tuple_list]
@@ -104,7 +105,15 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
         lift_name = entry['name']
         if '_' in lift_name:
             lift_name = lift_name.split('_')[0]
-        objects.append(((entry['points_df'], lift_name, 0, 0), cardinal_direction, 'grey'))
+        lift_dict = {
+            'points_df': entry['points_df'],
+            'name': lift_name,
+            'is_area': False,
+            'difficulty_modifier': 0,
+            'direction': cardinal_direction,
+            'color': 'grey'
+        }
+        objects.append(lift_dict)
 
     rating_list = []
     for entry in trails:
@@ -123,11 +132,18 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
 
         trail_name = '{} {}{}'.format(
             trail_name.strip(), rating, u'\N{DEGREE SIGN}')
-        objects.append(((entry['points_df'], trail_name, entry['difficulty_modifier'], entry['is_area'], entry['area_centerline_df']), cardinal_direction, color))
+        trail_dict = {
+            'points_df': entry['points_df'],
+            'name': trail_name,
+            'is_area': entry['is_area'],
+            'difficulty_modifier': 0,
+            'direction': cardinal_direction,
+            'color': color
+        }
+        objects.append(trail_dict)
 
     for i in track(range(len(objects)), description="Placing Objects…"):
         mapHelper.place_object(objects[i])
-    
 
     if save:
         plt.savefig(
@@ -153,7 +169,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     return((mountain_difficulty_rating, mountain_ease_rating))
 
 
-def create_difficulty_barplot(df, file_name ,save=False):
+def create_difficulty_barplot(df, file_name, save=False):
     """
     Creates difficulty and ease barplots for the provided dataframe
 
@@ -168,14 +184,14 @@ def create_difficulty_barplot(df, file_name ,save=False):
     if len(file_name.split('/')) > 1:
         name = file_name.split('/')[1]
     else:
-        name = file_name 
+        name = file_name
     df = df.sort_values(by='difficulty', ascending=False)
     df['diff_color'] = [helper.set_color(x/100) for x in df['difficulty']]
     plt.figure(figsize=(8, (len(df['difficulty'])*.13) + 1.5))
     plt.barh(df['mountain'], df['difficulty'], color=df['diff_color'])
     plt.title('{} Difficulty Comparison'.format(name), fontsize=20)
     plt.xlabel('Longer bar = more expert friendly')
-    plt.xlim(0,55)
+    plt.xlim(0, 55)
     plt.tight_layout()
     plt.grid(axis='x')
     for i, value in enumerate(df.difficulty):
@@ -183,10 +199,12 @@ def create_difficulty_barplot(df, file_name ,save=False):
         text_color = 'white'
         if df.diff_color.to_list()[i] == 'gold':
             text_color = 'black'
-        plt.text(0.5, i, i + 1, ha='left', va='center', size = 7, color=text_color)
+        plt.text(0.5, i, i + 1, ha='left',
+                 va='center', size=7, color=text_color)
 
     if save:
-        plt.savefig('maps/difficulty_barplots/{}.svg'.format(file_name), format='svg')
+        plt.savefig(
+            'maps/difficulty_barplots/{}.svg'.format(file_name), format='svg')
     plt.draw()
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
     df['ease'] = 30 - df['ease']
@@ -195,15 +213,18 @@ def create_difficulty_barplot(df, file_name ,save=False):
     plt.barh(df['mountain'], df['ease'], color=df['ease_color'])
     plt.title(f'{name} Beginner Friendliness', fontsize=20)
     plt.xlabel('Longer bar = more beginner friendly')
-    plt.xlim(0,30)
+    plt.xlim(0, 30)
     plt.tight_layout()
     plt.grid(axis='x')
     row_count = len(df.ease)
     for i, value in enumerate(df.ease):
-        plt.text(value+.5, i, round(value, 1), ha='center', va='center', size=6)
-        plt.text(0.25, i, row_count - i, ha='left', va='center', size = 7, color='white')
+        plt.text(value+.5, i, round(value, 1),
+                 ha='center', va='center', size=6)
+        plt.text(0.25, i, row_count - i, ha='left',
+                 va='center', size=7, color='white')
 
     if save:
-        plt.savefig('maps/beginner_friendliness_barplots/{}.svg'.format(file_name), format='svg')
+        plt.savefig(
+            'maps/beginner_friendliness_barplots/{}.svg'.format(file_name), format='svg')
         print(f'{file_name} SVG saved')
     plt.draw()

@@ -4,17 +4,22 @@ import matplotlib.pyplot as plt
 
 import helper
 
-# Parameters:
-# df: dataframe with columns for lat, lon, and coordinates
-#   type-df(float, float, tuple)
-# length: number of characters in label
-#   type-int
-#
-# Returns: tuple with point number and angle
-#   type-tuple(float, float)
-
 
 def get_label_placement(df, length, flip_lat_lon):
+    """
+    Accepts a point dataframe, length of trail/lift name, and orientation and 
+    returns the best placement and rotation for a label.
+
+    #### Arguments:
+
+    - df - trail/lift point_df
+    - length - name
+    - flip_lat_lon - bool
+
+    #### Returns:
+
+    - (point, angle) - tuple with the location and angle for the label
+    """
     point_count = len(df.coordinates)
     point_gap = sum(helper.calculate_dist(df.coordinates)[1:])/point_count
     letter_size = 10 / point_gap
@@ -86,6 +91,18 @@ def get_label_placement(df, length, flip_lat_lon):
 
 
 def find_map_size(trails, lifts):
+    """
+    Calculates the size of the map
+
+    #### Arguments:
+
+    - trails - list of trail dicts
+    - lifts - list of lift dicts
+
+    #### Returns:
+
+    - (x_length, y_length) - floats for the size (in km of the ski area)
+    """
     mountain_max_lat = -90
     mountain_min_lat = 90
     mountain_max_lon = -180
@@ -110,22 +127,24 @@ def find_map_size(trails, lifts):
     x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
     y_length = helper.calculate_dist(
         [bottom_corner, bottom_corner_alt])[1] / 1000
-    return((x_length, y_length))
-
-# Parameters:
-# trails: list of trail tuples
-#   type-list of tuples
-# lifts: list of lifts
-#   type-list of tuples
-# mountain: name of ski area
-#   type-string
-# cardinal_direction: direction for map to face
-#   type-char
-#
-# Return: none
+    return(x_length, y_length)
 
 
 def format_map_template(trails, lifts, mountain, direction):
+    """
+    Create the base template for the map
+
+    #### Arguments:
+
+    - trails - list of trail dicts
+    - lifts - list of trail dicts
+    - mountain - name of mountain
+    - direction - what way the mountain faces
+
+    #### Returns:
+
+    - Void
+    """
     x_length, y_length = find_map_size(trails, lifts)
 
     if 's' in direction or 'n' in direction:
@@ -142,23 +161,22 @@ def format_map_template(trails, lifts, mountain, direction):
             size = 5
     else:
         size = 0
-    #plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .05)))
     plt.subplots(figsize=(x_length*2, ((y_length*2) + size * .04)))
 
-    #top_loc = (y_length*2) / ((y_length*2) + size * .02)
     top_loc = (y_length*2) / ((y_length*2) + size * .02)
     bottom_loc = 1 - top_loc
     plt.title(mountain, fontsize=size, y=1, pad=size * .5)
-    
+
     plt.subplots_adjust(left=0, bottom=bottom_loc, right=1,
                         top=top_loc, wspace=0, hspace=0)
     plt.axis('off')
     plt.xticks([])
     plt.yticks([])
-    
+
     if size > 16:
         size = 16
-    plt.gcf().text(0.5, 0, 'Sources: USGS and OpenStreetMaps', fontsize=size/2.3, ha='center', va='bottom')
+    plt.gcf().text(0.5, 0, 'Sources: USGS and OpenStreetMaps',
+                   fontsize=size/2.3, ha='center', va='bottom')
     add_legend(trails[0], direction, size / 2, bottom_loc)
 
 
@@ -173,56 +191,91 @@ def format_map_template(trails, lifts, mountain, direction):
 # Returns: none
 
 
-def place_object(blob):
-    object_tuple, direction, color = blob
+def place_object(object_dict):
+    """
+    Places objects on the map.
+
+    #### Arguments:
+
+    - object_dict - dict {
+            'points_df' (dataframe),
+            'name' (str),
+            'is_area' (bool),
+            'difficulty_modifier' (float,)
+            'direction' (char),
+            'color' (str)
+            }
+
+    #### Returns:
+
+    - Void
+    """
     lat_mirror = 1
     lon_mirror = -1
     flip_lat_lon = False
-    if 'e' in direction or 'E' in direction:
+    if 'e' in object_dict['direction'] or 'E' in object_dict['direction']:
         lat_mirror = -1
         lon_mirror = 1
-    if 's' in direction or 'S' in direction:
+    if 's' in object_dict['direction'] or 'S' in object_dict['direction']:
         lon_mirror = 1
         flip_lat_lon = True
-    if 'n' in direction or 'N' in direction:
+    if 'n' in object_dict['direction'] or 'N' in object_dict['direction']:
         lat_mirror = -1
         flip_lat_lon = True
 
     point, ang = get_label_placement(
-        object_tuple[0][['lat', 'lon', 'coordinates']], len(object_tuple[1]), flip_lat_lon)
-    area = object_tuple[3]
+        object_dict['points_df'][['lat', 'lon', 'coordinates']], len(object_dict['name']), flip_lat_lon)
+
     if not flip_lat_lon:
-        X = object_tuple[0].lat
-        Y = object_tuple[0].lon
+        X = object_dict['points_df'].lat
+        Y = object_dict['points_df'].lon
     if flip_lat_lon:
-        X = object_tuple[0].lon
-        Y = object_tuple[0].lat
+        X = object_dict['points_df'].lon
+        Y = object_dict['points_df'].lat
         temp = lat_mirror
         lat_mirror = lon_mirror
         lon_mirror = temp
-    if not area:
-        if object_tuple[2] == 0:
-            plt.plot(X * lat_mirror, Y * lon_mirror, c=color)
-        if object_tuple[2] > 0:
+    if not object_dict['is_area']:
+        if object_dict['difficulty_modifier'] == 0:
+            plt.plot(X * lat_mirror, Y * lon_mirror, c=object_dict['color'])
+        if object_dict['difficulty_modifier'] > 0:
             plt.plot(X * lat_mirror, Y * lon_mirror,
-                     c=color, linestyle='dashed')
-    if area:
-        if object_tuple[2] == 0:
-            plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
-            plt.fill(X * lat_mirror, Y * lon_mirror, ec=color, fc='none')
-        if object_tuple[2] > 0:
-            plt.fill(X * lat_mirror, Y * lon_mirror, alpha=.1, fc=color)
+                     c=object_dict['color'], linestyle='dashed')
+    if object_dict['is_area']:
+        if object_dict['difficulty_modifier'] == 0:
             plt.fill(X * lat_mirror, Y * lon_mirror,
-                     ec=color, fc='none', linestyle='dashed')
-    if color == 'gold':
-        color = 'black'
-    if helper.get_trail_length(object_tuple[0].coordinates) > 200:
-        plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_tuple[1], {
-            'color': color, 'size': 2, 'rotation': ang}, ha='center',
+                     alpha=.1, fc=object_dict['color'])
+            plt.fill(X * lat_mirror, Y * lon_mirror,
+                     ec=object_dict['color'], fc='none')
+        if object_dict['difficulty_modifier'] > 0:
+            plt.fill(X * lat_mirror, Y * lon_mirror,
+                     alpha=.1, fc=object_dict['color'])
+            plt.fill(X * lat_mirror, Y * lon_mirror,
+                     ec=object_dict['color'], fc='none', linestyle='dashed')
+    if object_dict['color'] == 'gold':
+        object_dict['color'] = 'black'
+    if helper.get_trail_length(object_dict['points_df'].coordinates) > 200:
+        plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_dict['name'], {
+            'color': object_dict['color'], 'size': 2, 'rotation': ang}, ha='center',
             backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01',
                                                             fc='white', ec='none'))
 
+
 def add_legend(trail, direction, size, legend_offset):
+    """
+    Adds the legend box to the map template.
+
+    #### Arguments:
+
+    - trail - single trail dict
+    - direction - what direction the mountain faces
+    - size - font size to use
+    - legend_offset - amount of negative offset to line the legend up vertically 
+
+    #### Returns:
+
+    - Void
+    """
     if size > 8:
         size = 8
     if size <= 2.5:
@@ -252,10 +305,11 @@ def add_legend(trail, direction, size, legend_offset):
 
     x *= lat_mirror
     y *= lon_mirror
-    plt.plot(x,y, c='green', label='Easy')
-    plt.plot(x,y, c='royalblue', label='Intermediate')
-    plt.plot(x,y, c='black', label='Advanced')
-    plt.plot(x,y, c='red', label='Expert')
-    plt.plot(x,y, c='gold', label='Extreme')
-    plt.plot(x,y, c='black', linestyle='dotted', label='Gladed')
-    plt.legend(fontsize = size, loc='lower center', bbox_to_anchor=(0.5, -legend_offset),frameon=False, ncol=3)
+    plt.plot(x, y, c='green', label='Easy')
+    plt.plot(x, y, c='royalblue', label='Intermediate')
+    plt.plot(x, y, c='black', label='Advanced')
+    plt.plot(x, y, c='red', label='Expert')
+    plt.plot(x, y, c='gold', label='Extreme')
+    plt.plot(x, y, c='black', linestyle='dotted', label='Gladed')
+    plt.legend(fontsize=size, loc='lower center', bbox_to_anchor=(
+        0.5, - legend_offset), frameon=False, ncol=3)
