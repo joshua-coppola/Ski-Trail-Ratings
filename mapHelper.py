@@ -82,15 +82,6 @@ def get_label_placement(df: pd.DataFrame, length: int, flip_lat_lon: bool) -> Tu
         ang += 180
     return(point, ang)
 
-# Parameters:
-# trails: list of trail tuples
-#   type-list of tuples
-# lifts: list of lifts
-#   type-list of tuples
-#
-# Return: map dimensions
-#   type-tuple(float, float)
-
 
 def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
     """
@@ -180,17 +171,6 @@ def format_map_template(trails: List[dict], lifts: List[dict], mountain: str, di
     plt.gcf().text(0.5, 0, 'Sources: USGS and OpenStreetMaps',
                    fontsize=size/2.3, ha='center', va='bottom')
     add_legend(trails[0], direction, size / 2, bottom_loc)
-
-
-# Parameters:
-# object_tuple: trail/lift tuple
-#   type-tuple(df(float, float, tuple), string, int)
-# direction: map direction
-#   type-char
-# color: color of object
-#   type-string
-#
-# Returns: none
 
 
 def place_object(object_dict: dict) -> None:
