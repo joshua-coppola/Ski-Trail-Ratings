@@ -7,7 +7,7 @@ import pandas as pd
 import helper
 
 
-def get_label_placement(df: pd.Dataframe, length: int, flip_lat_lon: bool) -> Tuple[float, float]:
+def get_label_placement(df: pd.DataFrame, length: int, flip_lat_lon: bool) -> Tuple[float, float]:
     """
     Accepts a point dataframe, length of trail/lift name, and orientation and 
     returns the best placement and rotation for a label.
