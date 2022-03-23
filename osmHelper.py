@@ -1,7 +1,8 @@
 import pandas as pd
+from typing import List
 
 
-def process_way_tags(line, trail_attributes):
+def process_way_tags(line: str, trail_attributes: dict) -> dict:
     """
     Adds / Removes tags based on the passed line from an osm file
 
@@ -61,7 +62,7 @@ def process_way_tags(line, trail_attributes):
     return trail_attributes
 
 
-def process_osm(lines, blacklist, whitelist_mode=False):
+def process_osm(lines: List[str], blacklist: str, whitelist_mode: bool = False) -> dict:
     """
     Accepts a list of lines from an OSM file and processes them into more useful formats
 

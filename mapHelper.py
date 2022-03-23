@@ -1,11 +1,13 @@
-from cProfile import label
 from math import degrees, atan2
+from typing import Tuple
+from typing import List
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import helper
 
 
-def get_label_placement(df, length, flip_lat_lon):
+def get_label_placement(df: pd.Dataframe, length: int, flip_lat_lon: bool) -> Tuple[float, float]:
     """
     Accepts a point dataframe, length of trail/lift name, and orientation and 
     returns the best placement and rotation for a label.
@@ -13,7 +15,7 @@ def get_label_placement(df, length, flip_lat_lon):
     #### Arguments:
 
     - df - trail/lift point_df
-    - length - name
+    - length - name length
     - flip_lat_lon - bool
 
     #### Returns:
@@ -90,7 +92,7 @@ def get_label_placement(df, length, flip_lat_lon):
 #   type-tuple(float, float)
 
 
-def find_map_size(trails, lifts):
+def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
     """
     Calculates the size of the map
 
@@ -130,7 +132,7 @@ def find_map_size(trails, lifts):
     return(x_length, y_length)
 
 
-def format_map_template(trails, lifts, mountain, direction):
+def format_map_template(trails: List[dict], lifts: List[dict], mountain: str, direction: str) -> None:
     """
     Create the base template for the map
 
@@ -191,7 +193,7 @@ def format_map_template(trails, lifts, mountain, direction):
 # Returns: none
 
 
-def place_object(object_dict):
+def place_object(object_dict: dict) -> None:
     """
     Places objects on the map.
 
@@ -261,7 +263,7 @@ def place_object(object_dict):
                                                             fc='white', ec='none'))
 
 
-def add_legend(trail, direction, size, legend_offset):
+def add_legend(trail: dict, direction: str, size: float, legend_offset: float) -> None:
     """
     Adds the legend box to the map template.
 

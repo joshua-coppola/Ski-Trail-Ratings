@@ -2,12 +2,14 @@ from decimal import Decimal
 import matplotlib.pyplot as plt
 import pandas as pd
 from pip._vendor.rich.progress import track
+from typing import List
+from typing import Tuple
 
 import helper
 import mapHelper
 
 
-def cache_trail_points(filename, list_dfs):
+def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     """
     Takes a list of trails and saves them to a cache file to prevent uneeded API calls
 
@@ -53,7 +55,7 @@ def cache_trail_points(filename, list_dfs):
     output_df.to_csv('cached/trail_points/{}'.format(filename))
 
 
-def save_trail_ids(tuple_list, filename):
+def save_trail_ids(tuple_list: List[Tuple[str, str]], filename: str) -> None:
     """
     Saves a list of trail names and ids to use as a blacklist / whitelist later
 
@@ -74,7 +76,7 @@ def save_trail_ids(tuple_list, filename):
     export_df.to_csv('cached/osm_ids/{}'.format(filename), index=False)
 
 
-def create_map(trails, lifts, mountain, cardinal_direction, save=False):
+def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_direction: str, save: bool = False) -> Tuple[float, float]:
     """
     Takes the information about the mountain, trails, and lifts, and plots them
 
@@ -169,7 +171,7 @@ def create_map(trails, lifts, mountain, cardinal_direction, save=False):
     return((mountain_difficulty_rating, mountain_ease_rating))
 
 
-def create_difficulty_barplot(df, file_name, save=False):
+def create_difficulty_barplot(df: pd.DataFrame, file_name: str, save: bool = False) -> None:
     """
     Creates difficulty and ease barplots for the provided dataframe
 

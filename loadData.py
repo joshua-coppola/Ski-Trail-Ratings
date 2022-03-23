@@ -9,7 +9,7 @@ import saveData
 import osmHelper
 
 
-def generate_trails_and_lifts(mountain, blacklist=''):
+def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     """
     Accepts the name of a mountain and the name of a mountain to blacklist
     and returns a tuple with a list of trails and a list of lifts
@@ -128,7 +128,7 @@ def generate_trails_and_lifts(mountain, blacklist=''):
     return (trail_list, lift_list)
 
 
-def process_mountain(mountain, cardinal_direction, save_map=False, blacklist=''):
+def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = False, blacklist: str = ''):
     """
     Takes in the general information about the mountain and calls the relevant
     functions to parse the osm, calculate difficulty, and create the map. The
@@ -199,7 +199,7 @@ def process_mountain(mountain, cardinal_direction, save_map=False, blacklist='')
     return output
 
 
-def osm(mountain, direction='', save_map=False, blacklist='', location=''):
+def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: str = '', location: str = ''):
     """
     Takes in the general information about the mountain, fills in missing information
     if it is stored from missing runs, calls process mountain, then saves the results
@@ -264,7 +264,7 @@ def osm(mountain, direction='', save_map=False, blacklist='', location=''):
     return 0
 
 
-def bulk_osm(input_csv):
+def bulk_osm(input_csv: str):
     """
     Accepts the name of a csv that contains the information to create maps for
     a list of mountains and calls osm to process each one
@@ -287,7 +287,7 @@ def bulk_osm(input_csv):
         osm(row.mountain, row.direction, True, row.blacklist, row.state)
 
 
-def barplot(save_output=False):
+def barplot(save_output: bool = False):
     """
     Creates Difficulty Barplots for all mountains within mountain_list.csv
 

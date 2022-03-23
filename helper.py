@@ -1,5 +1,9 @@
+import imp
 import time
 import json
+from typing import Tuple
+from typing import List
+from typing import Union
 import pandas as pd
 from numpy import NAN
 import haversine as hs
@@ -7,7 +11,7 @@ from math import degrees, atan
 from requests.api import get
 
 
-def elevation_api(piped_coords, last_called, trailname=''):
+def elevation_api(piped_coords: str, last_called: float, trailname: str = '') -> Tuple[list, float]:
     """
     Helper function for get_elevation. Accepts piped_coords, timestamp, and
     trailname and queries an elevation API to fetch elevation data at each
@@ -42,7 +46,7 @@ def elevation_api(piped_coords, last_called, trailname=''):
     return (elevation, last_called)
 
 
-def get_elevation(coordinates, last_called=None, trail_name='', api_requests=0):
+def get_elevation(coordinates: Union[list, pd.Series], last_called: Union[float, None] = None, trail_name: str ='', api_requests: int =0):
     """
     Takes in coordinates, and optionally a timestamp, trailname, and previous API requests count
     and returns a series of elevations (float)
@@ -94,7 +98,7 @@ def get_elevation(coordinates, last_called=None, trail_name='', api_requests=0):
     return (pd.Series(elevations), api_requests, last_called)
 
 
-def calculate_dist(coordinates):
+def calculate_dist(coordinates: Union[list, pd.Series]) -> List[float]:
     """
     Accepts a list of coordinates and returns a list of distances between each point
 
@@ -114,7 +118,7 @@ def calculate_dist(coordinates):
     return distance
 
 
-def fill_in_point_gaps(df, max_gap=20, elevation_included=False):
+def fill_in_point_gaps(df: pd.DataFrame, max_gap: int = 20, elevation_included: bool = False) -> pd.DataFrame:
     """
     Accepts a dataframe with lat, lon, coordinates, and optionally elevation,
     and returns a new dataframe with each point being separated by no more
@@ -161,7 +165,7 @@ def fill_in_point_gaps(df, max_gap=20, elevation_included=False):
     return new_df
 
 
-def area_to_line(df, point_gap=15):
+def area_to_line(df: pd.DataFrame, point_gap: int = 15) -> pd.DataFrame:
     """
     Converts the perimeter of an area into a centerline.
 
@@ -205,7 +209,7 @@ def area_to_line(df, point_gap=15):
     return new_df
 
 
-def rate_trail(difficulty):
+def rate_trail(difficulty: Union[list, pd.Series]) -> float:
     """
     Provides a numerical rating for a trail
 
@@ -229,7 +233,7 @@ def rate_trail(difficulty):
     return max_difficulty
 
 
-def set_color(rating, difficultly_modifier=0):
+def set_color(rating: float, difficultly_modifier: Union[int, float]=0):
     """
     Converts a trail rating and difficulty modifier into a color to print to
     the map.
@@ -261,7 +265,7 @@ def set_color(rating, difficultly_modifier=0):
         return 'gold'
 
 
-def smooth_elevations(elevations, passes=20):
+def smooth_elevations(elevations: Union[list, pd.Series], passes: int = 20) -> Union[list, pd.Series]:
     """
     Smoothes out errors in elevation data
 
@@ -289,7 +293,7 @@ def smooth_elevations(elevations, passes=20):
     return elevations
 
 
-def calulate_elevation_change(elevation):
+def calulate_elevation_change(elevation: Union[list, pd.Series]) -> List[float]:
     """
     Calculate the elevation change between pairs of points in a list
 
@@ -309,7 +313,7 @@ def calulate_elevation_change(elevation):
     return elevation_change
 
 
-def calculate_slope(elevation_change, distance):
+def calculate_slope(elevation_change: Union[list, pd.Series], distance) -> List[float]:
     """
     Calculate the slope at each point in a list
 
@@ -332,7 +336,7 @@ def calculate_slope(elevation_change, distance):
     return slope
 
 
-def calculate_point_difficulty(slope):
+def calculate_point_difficulty(slope: Union[list, pd.Series]) -> List[float]:
     """
     Converts slopes into difficulty
 
@@ -350,7 +354,7 @@ def calculate_point_difficulty(slope):
     return difficulty
 
 
-def get_trail_length(coordinates):
+def get_trail_length(coordinates: Union[list, pd.Series]) -> float:
     """
     Calculates the length of a trail from a list of coordinates
 
@@ -366,7 +370,7 @@ def get_trail_length(coordinates):
     return(sum(distances[1:]))
 
 
-def format_name(name):
+def format_name(name: str) -> str:
     """
     Converts a string to have all major words capitalized
 
@@ -392,7 +396,7 @@ def format_name(name):
     return name.strip()
 
 
-def calculate_mtn_vert(trail_list):
+def calculate_mtn_vert(trail_list: List[dict]) -> float:
     """
     Calulates the vertical drop from the highest trail to lowest
 
@@ -414,7 +418,7 @@ def calculate_mtn_vert(trail_list):
     return(max_ele-min_ele)
 
 
-def calculate_trail_vert(elevation):
+def calculate_trail_vert(elevation: Union[list, pd.Series]) -> float:
     """
     Calulates the vertical drop for a given list of elevations
 
@@ -429,7 +433,7 @@ def calculate_trail_vert(elevation):
     return elevation.max() - elevation.min()
 
 
-def assign_region(state):
+def assign_region(state: str):
     """
     Takes a 2 letter state code and outputs its region
 
@@ -463,3 +467,4 @@ def assign_region(state):
 
     if state in west:
         return 'west'
+    return 'error'
