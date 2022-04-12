@@ -100,8 +100,8 @@ def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
     mountain_min_lat = 90
     mountain_max_lon = -180
     mountain_min_lon = 180
-    for categeory in [trails, lifts]:
-        for entry in categeory:
+    for category in [trails, lifts]:
+        for entry in category:
             trail_max_lat = entry['points_df']['lat'].max()
             trail_min_lat = entry['points_df']['lat'].min()
             if trail_max_lat > mountain_max_lat:

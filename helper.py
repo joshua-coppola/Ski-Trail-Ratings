@@ -215,7 +215,7 @@ def rate_trail(difficulty: Union[list, pd.Series]) -> float:
 
     #### Arguments:
 
-    - difficults - list of difficulties (float)
+    - difficulty - list of difficulties (float)
 
     #### Returns:
 
@@ -267,7 +267,7 @@ def set_color(rating: float, difficultly_modifier: Union[int, float]=0):
 
 def smooth_elevations(elevations: Union[list, pd.Series], passes: int = 20) -> Union[list, pd.Series]:
     """
-    Smoothes out errors in elevation data
+    Smooths out errors in elevation data
 
     #### Arguments:
 
@@ -293,7 +293,7 @@ def smooth_elevations(elevations: Union[list, pd.Series], passes: int = 20) -> U
     return elevations
 
 
-def calulate_elevation_change(elevation: Union[list, pd.Series]) -> List[float]:
+def calculate_elevation_change(elevation: Union[list, pd.Series]) -> List[float]:
     """
     Calculate the elevation change between pairs of points in a list
 
@@ -398,7 +398,7 @@ def format_name(name: str) -> str:
 
 def calculate_mtn_vert(trail_list: List[dict]) -> float:
     """
-    Calulates the vertical drop from the highest trail to lowest
+    Calculates the vertical drop from the highest trail to lowest
 
     #### Arguments:
 
@@ -420,7 +420,7 @@ def calculate_mtn_vert(trail_list: List[dict]) -> float:
 
 def calculate_trail_vert(elevation: Union[list, pd.Series]) -> float:
     """
-    Calulates the vertical drop for a given list of elevations
+    Calculates the vertical drop for a given list of elevations
 
     #### Arguments:
 

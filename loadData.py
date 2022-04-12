@@ -30,7 +30,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     if not exists('osm/{}'.format(filename)):
         print('OSM file missing')
         return (-1, -1)
-    if not exists('cached/osm_ids/{}.csv'.format(blacklist)) and blacklist != '':
+    if not exists('cached/trails/{}.csv'.format(blacklist)) and blacklist != '':
         print('Blacklist file missing')
 
     file = open('osm/{}'.format(filename), 'r')
@@ -38,7 +38,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
 
     if blacklist != '':
         blacklist_ids = (pd.read_csv(
-            'cached/osm_ids/{}.csv'.format(blacklist)))['id'].to_list()
+            'cached/trails/{}.csv'.format(blacklist)))['id'].to_list()
         blacklist_ids = [str(x) for x in blacklist_ids]
     else:
         blacklist_ids = []
@@ -49,7 +49,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     parsed_osm = osmHelper.process_osm(
         raw_table, blacklist_ids, whitelist_mode)
 
-    saveData.save_trail_ids(parsed_osm['name_and_id_list'], mountain + '.csv')
+    #saveData.save_attributes(parsed_osm['attribute_list'], mountain + '.csv')
 
     cached = True
     if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
@@ -78,11 +78,11 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
         temp_df['coordinates'] = [(round(Decimal(x[0]), 8), round(Decimal(x[1]), 8))
                                   for x in temp_df.coordinates]
 
-        for row in parsed_osm['useful_info_list']:
-            if column == row[0]:
-                difficulty_modifier = row[1]
-                area_flag = row[2]
-                way_id = row[3]
+        for row in parsed_osm['attribute_list']:
+            if column == row['way_name']:
+                difficulty_modifier = row['difficulty_modifier']
+                area_flag = row['is_area']
+                way_id = row['way_id']
         try:
             temp_df['elevation'] = [ele_dict[x] for x in temp_df.coordinates]
         except:
@@ -118,8 +118,11 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     for column in parsed_osm['lift_df']:
         temp_df = pd.merge(parsed_osm['lift_df'][column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
+        for row in parsed_osm['attribute_list']:
+            if column == row['way_name']:
+                way_id = row['way_id']
         temp_df = helper.fill_in_point_gaps(temp_df, 50)
-        lift_list.append({'name': column, 'points_df': temp_df})
+        lift_list.append({'name': column, 'id': way_id, 'points_df': temp_df})
     if parsed_osm['total_trail_count'] == 0:
         print('No trails found.')
         return (-1, -1)
@@ -160,16 +163,14 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
             perimeter = trail['points_df']
             perimeter['distance'] = helper.calculate_dist(
                 perimeter['coordinates'])
-            perimeter['elevation_change'] = helper.calulate_elevation_change(
+            perimeter['elevation_change'] = helper.calculate_elevation_change(
                 perimeter['elevation'])
             perimeter['slope'] = helper.calculate_slope(
                 perimeter['elevation_change'], perimeter['distance'])
 
-        trail_points['elevation'] = helper.smooth_elevations(
-            trail_points['elevation'].to_list(), 0)
         trail_points['distance'] = helper.calculate_dist(
             trail_points['coordinates'])
-        trail_points['elevation_change'] = helper.calulate_elevation_change(
+        trail_points['elevation_change'] = helper.calculate_elevation_change(
             trail_points['elevation'])
         trail_points['slope'] = helper.calculate_slope(
             trail_points['elevation_change'], trail_points['distance'])
@@ -181,12 +182,17 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
         else:
             trail['points_df'] = perimeter
             trail['area_centerline_df'] = trail_points
+        trail['difficulty'] = helper.rate_trail(trail_points.difficulty)
+        trail['steepest_pitch'] = trail['difficulty']
+        trail['vert'] = helper.calculate_trail_vert(trail_points.elevation)
+        trail['length'] = helper.get_trail_length(trail_points.coordinates)
 
     mtn_difficulty = saveData.create_map(
         trail_list, lift_list, mountain, cardinal_direction, save_map)
     if mtn_difficulty == -1:
         return -1
     vert = helper.calculate_mtn_vert(trail_list)
+    saveData.save_attributes(mountain + '.csv', trail_list, lift_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
 
     output = {
@@ -217,7 +223,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
 
     #### Returns:
 
-    - 0 for sucess, -1 for failure
+    - 0 for success, -1 for failure
     """
 
     if '.osm' in mountain:
@@ -247,7 +253,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
-        row = [[mountain, direction, location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
+        row = [[mountain, f'{mountain}.osm', direction, location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
                 mountain_attributes['vertical'], mountain_attributes['trail_count'], mountain_attributes['lift_count'], blacklist]]
         if previously_run:
             mountain_df.loc[mountain_df.mountain == mountain] = row

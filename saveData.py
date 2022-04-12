@@ -11,7 +11,7 @@ import mapHelper
 
 def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     """
-    Takes a list of trails and saves them to a cache file to prevent uneeded API calls
+    Takes a list of trails and saves them to a cache file to prevent unneeded API calls
 
     #### Arguments:
 
@@ -55,25 +55,25 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     output_df.to_csv('cached/trail_points/{}'.format(filename))
 
 
-def save_trail_ids(tuple_list: List[Tuple[str, str]], filename: str) -> None:
+def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]) -> None:
     """
     Saves a list of trail names and ids to use as a blacklist / whitelist later
 
     #### Arguments:
 
-        - tuple_list - list(trail_name, trail_id)
         - filename - name of output file location (in the form mountain.csv)
+        - trail_list - list(dict)
 
     #### Returns:
 
         - Void
     """
-    name_list = [x[0] for x in tuple_list]
-    id_list = [x[1] for x in tuple_list]
-    export_df = pd.DataFrame()
-    export_df['name'] = name_list
-    export_df['id'] = id_list
-    export_df.to_csv('cached/osm_ids/{}'.format(filename), index=False)
+    trail_df = pd.DataFrame(trail_list)
+    lift_df = pd.DataFrame(lift_list)
+    trail_df = trail_df[['name', 'id', 'is_area', 'difficulty', 'difficulty_modifier', 'steepest_pitch', 'vert', 'length']]
+    lift_df = lift_df[['name', 'id']]
+    trail_df.to_csv('cached/trails/{}'.format(filename), index=False)
+    lift_df.to_csv('cached/lifts/{}'.format(filename), index=False)
 
 
 def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_direction: str, save: bool = False) -> Tuple[float, float]:
