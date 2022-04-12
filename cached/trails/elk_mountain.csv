@@ -1,38 +1,31 @@
-name,id
-Lift C East Chair,96605542
-Lift D Middle Chair,96605544
-Lift A Beginner's Chair,96605546
-Lift F North Chair,96605548
-Lift E North Chair,96605549
-Lift B East Chair,96605551
-Wissahickon,208860038
-Lenape,208860039
-Kickapoo,208860040
-Iroquois,208860041
-Beginner's Slope,208860042
-East Slope,208860043
-Stomping Grounds Terrain Park,208860044
-Mohawk,208860045
-Lackawanna Spur,208860047
-Lackawanna,208860048
-Little Foot Terrain Park,208860049
-Lehigh,208860050
-West Slope,208860051
-Tioga,208860052
-Snow Bowl,208860053
-Tunkhannock,208860055
-Mahican,208860056
-Hiawatha,208860057
-Chippewa,208860058
-Lower Tunkhannock,208860059
-Slalom,208860060
-Schuylkill,208860061
-Tioga Spur,208860062
-Tuscarora,208860063
-Seneca,208860064
-Delaware,208860065
-Wyalusing,208860066
-Tecumseh,208860067
-Susquehanna,208860068
-Lift G Cable Tow,208860939
-Delaware Chute,209386339
+name,id,is_area,difficulty,difficulty_modifier,steepest_pitch,vert,length
+Wissahickon,422325024,False,21.9,0,21.9,158.3,757.3
+Lenape,422323366,False,19.7,0,19.7,184.0,981.0
+Kickapoo,422325023,False,23.9,0,23.9,141.0,739.3
+Iroquois,208860041,False,24.9,0,24.9,101.3,309.7
+Beginner's Slope,422325737,False,10.7,0,10.7,16.1,156.2
+East Slope,422323668,False,19.4,0,19.4,91.1,486.8
+Stomping Grounds Terrain Park,422325736,False,11.3,0,11.3,22.5,124.0
+Mohawk,422324131,False,27.5,0,27.5,143.2,552.1
+Lackawanna Spur,422323656,False,18.0,0,18.0,46.5,178.1
+Lackawanna,422323368,False,24.7,0,24.7,134.7,385.2
+Little Foot Terrain Park,208860049,False,13.0,0,13.0,24.2,146.6
+Lehigh,422325027,False,18.8,0,18.8,188.5,1855.5
+West Slope,422323772,False,17.5,0,17.5,88.7,465.2
+Tioga,422323771,False,19.3,0,19.3,143.1,929.6
+Snow Bowl,422325022,False,15.0,0,15.0,31.2,170.0
+Tunkhannock,422322442,False,24.3,0,24.3,127.6,352.0
+Mahican,208860056,False,13.3,0,13.3,81.0,606.7
+Hiawatha,422325026,False,8.7,0,8.7,18.1,259.4
+Chippewa,422325020,False,25.1,0,25.1,164.6,627.0
+Lower Tunkhannock,422323770,False,19.7,0,19.7,120.7,537.8
+Slalom,422323658,False,23.7,0,23.7,181.8,602.8
+Schuylkill,422326283,False,12.9,0,12.9,41.7,338.2
+Tioga Spur,422325025,False,19.0,0,19.0,78.4,283.4
+Tuscarora,422323662,False,23.1,0,23.1,217.3,822.4
+Seneca,422324129,False,23.4,0,23.4,147.5,460.0
+Delaware,422323673,False,20.1,0,20.1,229.4,1321.6
+Wyalusing,422325019,False,22.4,0,22.4,183.7,701.8
+Tecumseh,422325021,False,25.2,0,25.2,121.6,418.2
+Susquehanna,422322441,False,24.0,0,24.0,154.6,453.2
+Delaware Chute,422324132,False,12.9,0,12.9,33.5,181.3
