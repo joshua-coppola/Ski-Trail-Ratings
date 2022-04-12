@@ -37,9 +37,15 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     raw_table = file.readlines()
 
     if blacklist != '':
-        blacklist_ids = (pd.read_csv(
-            'cached/trails/{}.csv'.format(blacklist)))['id'].to_list()
-        blacklist_ids = [str(x) for x in blacklist_ids]
+        try:
+            blacklist_ids = (pd.read_csv(
+                'cached/trails/{}.csv'.format(blacklist)))['id'].to_list()
+            blacklist_ids_lifts = (pd.read_csv(
+                'cached/lifts/{}.csv'.format(blacklist))['id'].to_list())
+            blacklist_ids += blacklist_ids_lifts
+            blacklist_ids = [str(x) for x in blacklist_ids]
+        except:
+            blacklist_ids = []
     else:
         blacklist_ids = []
 
@@ -54,7 +60,12 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     cached = True
     if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
         cached = False
-        print('Disabling cache loading: no cache file found.')
+        print('Disabling trail cache loading: missing trail cache file.')
+
+    lift_cached = True
+    if not exists('cached/lift_points/{}'.format(cached_filename)) and cached:
+        lift_cached = False
+        print('Disabling lift cache loading: missing lift cache file.')
 
     trail_list = []
     api_requests = 0
@@ -64,12 +75,23 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
         elevation_df['coordinates'] = [
             (round(Decimal(x), 8), round(Decimal(y), 8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
+    if lift_cached:
+        elevation_df = pd.read_csv(
+            'cached/lift_points/{}'.format(cached_filename))
+        elevation_df['coordinates'] = [
+            (round(Decimal(x), 8), round(Decimal(y), 8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
+        try:
+            lift_ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
+        except:
+            lift_ele_dict = {}
     last_called = time.time()
+
+    print('Found {} trails and {} lifts\n'.format(parsed_osm['trail_count'], parsed_osm['lift_count']))
 
     # insert dummy column so that the progress bar completes properly
     parsed_osm['way_df'] = pd.concat(
         [parsed_osm['way_df'], pd.Series(0)], axis=1)
-    for column, _ in zip(parsed_osm['way_df'], track(range(parsed_osm['total_trail_count']), description="Loading Trails…")):
+    for column, _ in zip(parsed_osm['way_df'], track(range(parsed_osm['trail_count']), description="Loading Trails… ")):
         temp_df = pd.merge((parsed_osm['way_df'])[column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
         del temp_df['id']
@@ -115,18 +137,31 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
         }
         trail_list.append(trail_dict)
     lift_list = []
-    for column in parsed_osm['lift_df']:
+    # insert dummy column so that the progress bar completes properly
+    parsed_osm['lift_df'] = pd.concat(
+        [parsed_osm['lift_df'], pd.Series(0)], axis=1)
+    for column, _ in zip(parsed_osm['lift_df'], track(range(parsed_osm['lift_count']), description="Loading Lifts…  ")):
         temp_df = pd.merge(parsed_osm['lift_df'][column], parsed_osm['node_df'],
                            left_on=column, right_on='id')
         for row in parsed_osm['attribute_list']:
             if column == row['way_name']:
                 way_id = row['way_id']
         temp_df = helper.fill_in_point_gaps(temp_df, 50)
+        temp_df['coordinates'] = [(round(Decimal(x[0]), 8), round(Decimal(x[1]), 8))
+                                  for x in temp_df.coordinates]
+        try:
+            temp_df['elevation'] = [lift_ele_dict[x] for x in temp_df.coordinates]
+        except:
+            result = helper.get_elevation(
+                temp_df['coordinates'], last_called, column, api_requests)
+            temp_df['elevation'] = result[0]
+            api_requests = result[1]
+            last_called = result[2]
         lift_list.append({'name': column, 'id': way_id, 'points_df': temp_df})
-    if parsed_osm['total_trail_count'] == 0:
+    if parsed_osm['trail_count'] == 0:
         print('No trails found.')
         return (-1, -1)
-    print('{} API requests made'.format(api_requests))
+    print('{} API requests made\n'.format(api_requests))
 
     return (trail_list, lift_list)
 
@@ -187,6 +222,16 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
         trail['vert'] = helper.calculate_trail_vert(trail_points.elevation)
         trail['length'] = helper.get_trail_length(trail_points.coordinates)
 
+    for lift in lift_list:
+        lift_points = lift['points_df']
+        lift_points['distance'] = helper.calculate_dist(
+            lift_points['coordinates'])
+        lift_points['elevation_change'] = helper.calculate_elevation_change(
+            lift_points['elevation'])
+        lift_points['slope'] = helper.calculate_slope(
+            lift_points['elevation_change'], lift_points['distance'])
+        lift['points_df'] = lift_points
+    
     mtn_difficulty = saveData.create_map(
         trail_list, lift_list, mountain, cardinal_direction, save_map)
     if mtn_difficulty == -1:
@@ -194,6 +239,7 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
     vert = helper.calculate_mtn_vert(trail_list)
     saveData.save_attributes(mountain + '.csv', trail_list, lift_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
+    saveData.cache_lift_points(mountain + '.csv', lift_list)
 
     output = {
         'difficulty': mtn_difficulty[0],

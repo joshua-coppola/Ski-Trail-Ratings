@@ -94,6 +94,7 @@ def process_osm(lines: List[str], blacklist: str, whitelist_mode: bool = False) 
     attribute_list = []
     blank_name_count = 0
     total_trail_count = 0
+    total_lift_count = 0
 
     in_way = False
 
@@ -150,7 +151,9 @@ def process_osm(lines: List[str], blacklist: str, whitelist_mode: bool = False) 
                     temp_df[trail_attributes['way_name']
                             ] = trail_attributes['node_id_list']
                     way_df = pd.concat([way_df, temp_df], axis=1)
+                    attribute_list.append(trail_attributes)
                 if trail_attributes['is_lift']:
+                    total_lift_count += 1
                     if DEBUG_TRAILS:
                         trail_attributes['way_name'] = trail_attributes['way_id']
                     if trail_attributes['way_name'] == '':
@@ -165,7 +168,7 @@ def process_osm(lines: List[str], blacklist: str, whitelist_mode: bool = False) 
                     temp_df[trail_attributes['way_name']
                             ] = trail_attributes['node_id_list']
                     lift_df = pd.concat([lift_df, temp_df], axis=1)
-                attribute_list.append(trail_attributes)
+                    attribute_list.append(trail_attributes)
                 in_way = False
             else:
                 trail_attributes = process_way_tags(row, trail_attributes)
@@ -179,7 +182,8 @@ def process_osm(lines: List[str], blacklist: str, whitelist_mode: bool = False) 
         'node_df': node_df,
         'way_df': way_df,
         'lift_df': lift_df,
-        'total_trail_count': total_trail_count,
+        'trail_count': total_trail_count,
+        'lift_count': total_lift_count,
         'attribute_list': attribute_list
     }
 

@@ -54,6 +54,40 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     output_df.drop_duplicates(inplace=True)
     output_df.to_csv('cached/trail_points/{}'.format(filename))
 
+def cache_lift_points(filename: str, list_dfs: pd.DataFrame) -> None:
+    """
+    Takes a list of trails and saves them to a cache file to prevent unneeded API calls
+
+    #### Arguments:
+
+        - filename - name of output file location
+        - list_dfs - list of trail dicts
+
+    #### Returns:
+
+        - Void
+    """
+    output_df = pd.DataFrame(
+        columns=['lift_id', 'for_display', 'lat', 'lon', 'elevation', 'slope'])
+    for entry in list_dfs:
+        lift = pd.DataFrame()
+        lift['lift_id'] = entry['id']
+        lift['for_display'] = True
+        lift['lat'] = entry['points_df'].lat
+        lift['lon'] = entry['points_df'].lon
+        lift['elevation'] = entry['points_df'].elevation
+        lift['slope'] = entry['points_df'].slope
+        lift['lift_id'] = entry['id']
+        lift['for_display'] = True
+        output_df = output_df.append(lift)
+    output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
+    output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
+    output_df['elevation'] = [round(Decimal(x), 2)
+                              for x in output_df.elevation]
+    output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
+    output_df.drop_duplicates(inplace=True)
+    output_df.to_csv('cached/lift_points/{}'.format(filename))
+
 
 def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]) -> None:
     """
@@ -106,7 +140,6 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     - (mountain_difficulty (float), mountain_ease (float))
     """
-    print('Creating Map')
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
     objects = []
     for entry in lifts:
@@ -144,7 +177,7 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
             'points_df': entry['points_df'],
             'name': trail_name,
             'is_area': entry['is_area'],
-            'difficulty_modifier': 0,
+            'difficulty_modifier': entry['difficulty_modifier'],
             'direction': cardinal_direction,
             'color': color
         }
