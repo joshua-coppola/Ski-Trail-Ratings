@@ -81,12 +81,14 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
         elevation_df['coordinates'] = [
             (round(Decimal(x), 8), round(Decimal(y), 8)) for x, y in zip(elevation_df.lat, elevation_df.lon)]
         try:
-            lift_ele_dict = dict(zip(elevation_df.coordinates, elevation_df.elevation))
+            lift_ele_dict = dict(
+                zip(elevation_df.coordinates, elevation_df.elevation))
         except:
             lift_ele_dict = {}
     last_called = time.time()
 
-    print('Found {} trails and {} lifts\n'.format(parsed_osm['trail_count'], parsed_osm['lift_count']))
+    print('Found {} trails and {} lifts\n'.format(
+        parsed_osm['trail_count'], parsed_osm['lift_count']))
 
     # insert dummy column so that the progress bar completes properly
     parsed_osm['way_df'] = pd.concat(
@@ -150,7 +152,8 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
         temp_df['coordinates'] = [(round(Decimal(x[0]), 8), round(Decimal(x[1]), 8))
                                   for x in temp_df.coordinates]
         try:
-            temp_df['elevation'] = [lift_ele_dict[x] for x in temp_df.coordinates]
+            temp_df['elevation'] = [lift_ele_dict[x]
+                                    for x in temp_df.coordinates]
         except:
             result = helper.get_elevation(
                 temp_df['coordinates'], last_called, column, api_requests)
@@ -231,7 +234,7 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
         lift_points['slope'] = helper.calculate_slope(
             lift_points['elevation_change'], lift_points['distance'])
         lift['points_df'] = lift_points
-    
+
     mtn_difficulty = saveData.create_map(
         trail_list, lift_list, mountain, cardinal_direction, save_map)
     if mtn_difficulty == -1:

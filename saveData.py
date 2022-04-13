@@ -54,6 +54,7 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     output_df.drop_duplicates(inplace=True)
     output_df.to_csv('cached/trail_points/{}'.format(filename))
 
+
 def cache_lift_points(filename: str, list_dfs: pd.DataFrame) -> None:
     """
     Takes a list of trails and saves them to a cache file to prevent unneeded API calls
@@ -105,9 +106,12 @@ def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]
     trail_df = pd.DataFrame(trail_list)
     lift_df = pd.DataFrame(lift_list)
     if(trail_df.shape[0]) != 0:
-        trail_df = trail_df[['name', 'id', 'is_area', 'difficulty', 'difficulty_modifier', 'steepest_pitch', 'vert', 'length']]
-        trail_df['difficulty'] = [round(Decimal(x * 100), 1) for x in trail_df.difficulty]
-        trail_df['steepest_pitch'] = [round(Decimal(x * 100), 1) for x in trail_df.steepest_pitch]
+        trail_df = trail_df[['name', 'id', 'is_area', 'difficulty',
+                             'difficulty_modifier', 'steepest_pitch', 'vert', 'length']]
+        trail_df['difficulty'] = [round(Decimal(x * 100), 1)
+                                  for x in trail_df.difficulty]
+        trail_df['steepest_pitch'] = [
+            round(Decimal(x * 100), 1) for x in trail_df.steepest_pitch]
         trail_df['vert'] = [round(Decimal(x), 1) for x in trail_df.vert]
         trail_df['length'] = [round(Decimal(x), 1) for x in trail_df.length]
     if(lift_df.shape[0]) != 0:

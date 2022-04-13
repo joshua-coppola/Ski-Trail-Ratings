@@ -7,7 +7,7 @@ The ratings are created by evaluating the average of the steepest 60 meter stret
 Pitch (in degrees) | Difficulty | Color on Map
 --- | --- | ---
 0-17 | beginner | green
-17-24 | intermeidate | blue
+17-24 | intermediate | blue
 24-30 | advanced | black
 30-45 | expert | red
 45+ | extreme terrain | yellow
@@ -29,7 +29,7 @@ There is also a metric produced using the same methods but reversed. This indica
 
 A CSV file may be provided where each line contains the necessary information to run the program on an OSM file. This provides the same functionality as running a single OSM file, but with added speed for processing many mountains in one batch.
 
-## CLI Useage and Arguments
+## CLI Usage and Arguments
 
 ``` bash
 python3 main.py <ARGS>

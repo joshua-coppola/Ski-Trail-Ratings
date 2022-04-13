@@ -1,4 +1,3 @@
-import imp
 import time
 import json
 from typing import Tuple
@@ -46,7 +45,7 @@ def elevation_api(piped_coords: str, last_called: float, trailname: str = '') ->
     return (elevation, last_called)
 
 
-def get_elevation(coordinates: Union[list, pd.Series], last_called: Union[float, None] = None, trail_name: str ='', api_requests: int =0):
+def get_elevation(coordinates: Union[list, pd.Series], last_called: Union[float, None] = None, trail_name: str = '', api_requests: int = 0):
     """
     Takes in coordinates, and optionally a timestamp, trailname, and previous API requests count
     and returns a series of elevations (float)
@@ -233,7 +232,7 @@ def rate_trail(difficulty: Union[list, pd.Series]) -> float:
     return max_difficulty
 
 
-def set_color(rating: float, difficultly_modifier: Union[int, float]=0):
+def set_color(rating: float, difficultly_modifier: Union[int, float] = 0):
     """
     Converts a trail rating and difficulty modifier into a color to print to
     the map.
