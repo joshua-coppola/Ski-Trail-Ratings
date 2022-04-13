@@ -34,7 +34,7 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
         trail['slope'] = entry['points_df'].slope
         trail['trail_id'] = entry['id']
         trail['for_display'] = True
-        output_df = output_df.append(trail)
+        output_df = pd.concat([output_df, trail])
         if entry['is_area']:
             trail = pd.DataFrame()
             trail['trail_id'] = entry['id']
@@ -45,7 +45,7 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
             trail['slope'] = entry['area_centerline_df'].slope
             trail['trail_id'] = entry['id']
             trail['for_display'] = False
-            output_df = output_df.append(trail)
+            output_df = pd.concat([output_df, trail])
     output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
     output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2)
@@ -80,7 +80,7 @@ def cache_lift_points(filename: str, list_dfs: pd.DataFrame) -> None:
         lift['slope'] = entry['points_df'].slope
         lift['lift_id'] = entry['id']
         lift['for_display'] = True
-        output_df = output_df.append(lift)
+        output_df = pd.concat([output_df, lift])
     output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
     output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2)
