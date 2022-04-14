@@ -34,6 +34,7 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
         trail['slope'] = entry['points_df'].slope
         trail['trail_id'] = entry['id']
         trail['for_display'] = True
+        trail['index'] = trail.index
         output_df = pd.concat([output_df, trail])
         if entry['is_area']:
             trail = pd.DataFrame()
@@ -45,14 +46,16 @@ def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
             trail['slope'] = entry['area_centerline_df'].slope
             trail['trail_id'] = entry['id']
             trail['for_display'] = False
+            trail['index'] = trail.index
             output_df = pd.concat([output_df, trail])
     output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
     output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2)
                               for x in output_df.elevation]
     output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
+    output_df['index'] = output_df['index'].astype(int)
     output_df.drop_duplicates(inplace=True)
-    output_df.to_csv('cached/trail_points/{}'.format(filename))
+    output_df.to_csv('cached/trail_points/{}'.format(filename), index=False)
 
 
 def cache_lift_points(filename: str, list_dfs: pd.DataFrame) -> None:
@@ -80,14 +83,17 @@ def cache_lift_points(filename: str, list_dfs: pd.DataFrame) -> None:
         lift['slope'] = entry['points_df'].slope
         lift['lift_id'] = entry['id']
         lift['for_display'] = True
+        lift['index'] = lift.index
         output_df = pd.concat([output_df, lift])
     output_df['lat'] = [round(Decimal(x), 8) for x in output_df.lat]
     output_df['lon'] = [round(Decimal(x), 8) for x in output_df.lon]
     output_df['elevation'] = [round(Decimal(x), 2)
                               for x in output_df.elevation]
     output_df['slope'] = [round(Decimal(x), 2) for x in output_df.slope]
+    if(output_df.shape[0]) != 0:
+        output_df['index'] = output_df['index'].astype(int)
     output_df.drop_duplicates(inplace=True)
-    output_df.to_csv('cached/lift_points/{}'.format(filename))
+    output_df.to_csv('cached/lift_points/{}'.format(filename), index=False)
 
 
 def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]) -> None:
