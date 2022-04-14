@@ -87,7 +87,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
             lift_ele_dict = {}
     last_called = time.time()
 
-    print('Found {} trails and {} lifts\n'.format(
+    print('Found \033[36m{} trails\033[0m and \033[36m{} lifts\033[0m\n'.format(
         parsed_osm['trail_count'], parsed_osm['lift_count']))
 
     # insert dummy column so that the progress bar completes properly
@@ -164,7 +164,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     if parsed_osm['trail_count'] == 0:
         print('No trails found.')
         return (-1, -1)
-    print('{} API requests made\n'.format(api_requests))
+    print('\033[35m{} API Requests\033[0m\n'.format(api_requests))
 
     return (trail_list, lift_list)
 
@@ -278,7 +278,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
     if '.osm' in mountain:
         mountain = mountain.replace('.osm', '')
 
-    print('\nProcessing {}'.format(helper.format_name(mountain)))
+    print('\n\033[1mProcessing {}\033[0m'.format(helper.format_name(mountain)))
     mountain_df = pd.read_csv('mountain_list.csv')
     previously_run = False
     if mountain in mountain_df.mountain.to_list():
