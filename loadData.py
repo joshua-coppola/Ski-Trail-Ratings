@@ -302,7 +302,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
-        row = [[mountain, f'{mountain}.osm', direction, location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
+        row = [[helper.format_name(mountain), f'{mountain}.osm', direction, location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
                 mountain_attributes['vertical'], mountain_attributes['trail_count'], mountain_attributes['lift_count'], blacklist]]
         if previously_run:
             mountain_df.loc[mountain_df.mountain == mountain] = row
