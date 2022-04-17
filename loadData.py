@@ -322,7 +322,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
     return 0
 
 
-def bulk_osm(input_csv: str):
+def bulk_osm(input_csv: str = 'mountain_list.csv'):
     """
     Accepts the name of a csv that contains the information to create maps for
     a list of mountains and calls osm to process each one

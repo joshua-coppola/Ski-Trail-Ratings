@@ -8,6 +8,7 @@ from typing import Tuple
 import helper
 import mapHelper
 
+plt.rcParams.update({'figure.max_open_warning': 0})
 
 def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     """

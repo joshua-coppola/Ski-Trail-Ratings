@@ -40,7 +40,7 @@ Arguments | Function | Can be used with
 `-h` | help page | none
 `-s` | save figures | `-[o,i,d,l]`
 `-o`, `--osm` | create map from OSM file | `-[s,i,d,l]`
-`-c`, `--csv` | create many maps from a csv file where each line. refers to an osm file, direction, and mountains to ignore. Will alway save. | none
+`-c`, `--csv` | create maps for each mountain in mountain_list.csv. Will alway save. | none
 `-g`, `--gpx` | create map from GPX file of a single trail | none
 `-d`, `--direction` | specifies which way a map should face | `-[s,o,i,l]`
 `-i`, `--ignore` | specify a mountain that has been run previously to prevent overlap | `-[s,o,d,l]`
