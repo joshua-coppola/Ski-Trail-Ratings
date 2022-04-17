@@ -199,6 +199,8 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
     if save:
         plt.savefig(
             'maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
+        plt.savefig('maps/transparent_maps/{}.svg'.format(
+            helper.format_name(mountain)), format='svg', transparent=True)
     rating_list.sort(reverse=True)
     long_list = 30
     if len(rating_list) < 30:
@@ -215,7 +217,8 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
     #print('\033[36mBeginner Friendliness Rating: {}\033[0m'.format(mountain_ease_rating))
-    print(f'Mountain Rating: \033[36m{mountain_difficulty_rating}D, {mountain_ease_rating}E\033[0m')
+    print(
+        f'Mountain Rating: \033[36m{mountain_difficulty_rating}D, {mountain_ease_rating}E\033[0m')
     plt.draw()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
