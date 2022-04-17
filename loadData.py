@@ -28,6 +28,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     filename = mountain + '.osm'
     cached_filename = mountain + '.csv'
     if not exists('osm/{}'.format(filename)):
+        print('osm/{}'.format(filename))
         print('OSM file missing')
         return (-1, -1)
     if not exists('cached/trails/{}.csv'.format(blacklist)) and blacklist != '':
@@ -278,12 +279,14 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
     if '.osm' in mountain:
         mountain = mountain.replace('.osm', '')
 
+    filename = f'{mountain}.osm'
+
     print('\n\033[1mProcessing {}\033[0m'.format(helper.format_name(mountain)))
     mountain_df = pd.read_csv('mountain_list.csv')
     previously_run = False
-    if mountain in mountain_df.mountain.to_list():
+    if filename in mountain_df.file_name.to_list():
         previously_run = True
-        mountain_row = mountain_df.loc[mountain_df.mountain == mountain]
+        mountain_row = mountain_df.loc[mountain_df.file_name == filename]
     if direction == '' and previously_run:
         value = mountain_row.direction.to_list()[0]
         if str(value) != 'nan':
@@ -339,7 +342,7 @@ def bulk_osm(input_csv: str):
     for row in mountain_info_df.itertuples():
         if row.mountain[0] == '#':
             continue
-        osm(row.mountain, row.direction, True, row.blacklist, row.state)
+        osm(row.file_name.split('.')[0], row.direction, True, row.blacklist, row.state)
 
 
 def barplot(save_output: bool = False):

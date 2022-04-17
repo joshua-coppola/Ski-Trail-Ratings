@@ -198,8 +198,8 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     if save:
         plt.savefig(
-            'maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
-        plt.savefig('maps/transparent_maps/{}.svg'.format(
+            'figures/maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
+        plt.savefig('figures/transparent_maps/{}.svg'.format(
             helper.format_name(mountain)), format='svg', transparent=True)
     rating_list.sort(reverse=True)
     long_list = 30
@@ -258,7 +258,7 @@ def create_difficulty_barplot(df: pd.DataFrame, file_name: str, save: bool = Fal
 
     if save:
         plt.savefig(
-            'maps/difficulty_barplots/{}.svg'.format(file_name), format='svg')
+            'figures/difficulty_barplots/{}.svg'.format(file_name), format='svg')
     plt.draw()
     df['ease_color'] = [helper.set_color(x/100) for x in df['ease']]
     df['ease'] = 30 - df['ease']
@@ -279,6 +279,6 @@ def create_difficulty_barplot(df: pd.DataFrame, file_name: str, save: bool = Fal
 
     if save:
         plt.savefig(
-            'maps/beginner_friendliness_barplots/{}.svg'.format(file_name), format='svg')
+            'figures/beginner_friendliness_barplots/{}.svg'.format(file_name), format='svg')
         print(f'{file_name} SVG saved')
     plt.draw()
