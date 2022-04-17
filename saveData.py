@@ -126,6 +126,43 @@ def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]
     trail_df.to_csv('cached/trails/{}'.format(filename), index=False)
     lift_df.to_csv('cached/lifts/{}'.format(filename), index=False)
 
+def save_bounding_box(filename: str, trails: List[dict], lifts: List[dict]):
+    """
+    Saves a CSV with 4 rows of latitude and longitude marking a square perimeter around
+    the mountain
+
+    #### Arguments:
+    - filename - name of output file
+    - trails - list of trail dicts
+        -trail_dict = {
+            'name',
+            'id',
+            'points_df',
+            'difficulty_modifier',
+            'is_area',
+            'area_centerline_df'
+        }
+    - lifts - list(dict('name', 'points_df'))
+
+    #### Returns:
+
+    - None
+    """
+    edge_coords = mapHelper.find_map_size(trails, lifts, True)
+    lat = []
+    lat.append(edge_coords['max_lat'])
+    lat.append(edge_coords['max_lat'])
+    lat.append(edge_coords['min_lat'])
+    lat.append(edge_coords['min_lat'])
+    lon = []
+    lon.append(edge_coords['max_lon'])
+    lon.append(edge_coords['min_lon'])
+    lon.append(edge_coords['min_lon'])
+    lon.append(edge_coords['max_lon'])
+    df = pd.DataFrame()
+    df['latitude'] = lat
+    df['longitude'] = lon
+    df.to_csv('figures/bounding_boxes/{}'.format(filename), index=False)
 
 def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_direction: str, save: bool = False) -> Tuple[float, float]:
     """

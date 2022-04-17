@@ -244,6 +244,7 @@ def process_mountain(mountain: str, cardinal_direction: str, save_map: bool = Fa
     saveData.save_attributes(mountain + '.csv', trail_list, lift_list)
     saveData.cache_trail_points(mountain + '.csv', trail_list)
     saveData.cache_lift_points(mountain + '.csv', lift_list)
+    saveData.save_bounding_box(mountain + '.csv', trail_list, lift_list)
 
     output = {
         'difficulty': mtn_difficulty[0],

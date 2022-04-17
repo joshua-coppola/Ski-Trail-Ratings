@@ -83,7 +83,7 @@ def get_label_placement(df: pd.DataFrame, length: int, flip_lat_lon: bool) -> Tu
     return(point, ang)
 
 
-def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
+def find_map_size(trails: List[dict], lifts: List[dict], return_coords: bool = False):
     """
     Calculates the size of the map
 
@@ -91,10 +91,12 @@ def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
 
     - trails - list of trail dicts
     - lifts - list of lift dicts
+    - return_coords - whether to return the length of the sides or the location
 
     #### Returns:
 
     - (x_length, y_length) - floats for the size (in km of the ski area)
+    - dict(max_lat, min_lat, max_lon, min_lon)
     """
     mountain_max_lat = -90
     mountain_min_lat = 90
@@ -120,7 +122,9 @@ def find_map_size(trails: List[dict], lifts: List[dict]) -> Tuple[float, float]:
     x_length = helper.calculate_dist([top_corner, bottom_corner])[1] / 1000
     y_length = helper.calculate_dist(
         [bottom_corner, bottom_corner_alt])[1] / 1000
-    return(x_length, y_length)
+    if not return_coords:
+        return(x_length, y_length)
+    return {'max_lat': mountain_max_lat, 'min_lat': mountain_min_lat, 'max_lon': mountain_max_lon, 'min_lon': mountain_min_lon}
 
 
 def format_map_template(trails: List[dict], lifts: List[dict], mountain: str, direction: str) -> None:
