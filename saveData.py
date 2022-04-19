@@ -162,7 +162,7 @@ def save_bounding_box(filename: str, trails: List[dict], lifts: List[dict]):
     df = pd.DataFrame()
     df['latitude'] = lat
     df['longitude'] = lon
-    df.to_csv('figures/bounding_boxes/{}'.format(filename), index=False)
+    df.to_csv('cached/bounding_boxes/{}'.format(filename), index=False)
 
 def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_direction: str, save: bool = False) -> Tuple[float, float]:
     """
@@ -188,7 +188,6 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     - (mountain_difficulty (float), mountain_ease (float))
     """
-    mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
     objects = []
     for entry in lifts:
         lift_name = entry['name']
@@ -231,7 +230,9 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
         }
         objects.append(trail_dict)
 
-    for i in track(range(len(objects)), description="Placing Objects…"):
+    mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
+
+    for i in track(range(len(objects)), description="Creating Map…"):
         mapHelper.place_object(objects[i])
 
     if save:
@@ -239,6 +240,16 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
             'figures/maps/{}.svg'.format(helper.format_name(mountain)), format='svg')
         plt.savefig('figures/transparent_maps/{}.svg'.format(
             helper.format_name(mountain)), format='svg', transparent=True)
+
+    mapHelper.format_thumbnail_template(trails, lifts, cardinal_direction)
+
+    for i in track(range(len(objects)), description="Creating Thumbnail…"):
+        mapHelper.place_object(objects[i], False)
+
+    if save:
+        plt.savefig(
+            'figures/thumbnails/{}.svg'.format(helper.format_name(mountain)), format='svg')
+    
     rating_list.sort(reverse=True)
     long_list = 30
     if len(rating_list) < 30:
@@ -254,10 +265,11 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
         (sum(easy_list[0])/long_list) * .2) + ((sum(easy_list[1])/5) * .8)
     mountain_ease_rating = round(mountain_ease_rating, 1)
 
+    plt.draw()
+
     #print('\033[36mBeginner Friendliness Rating: {}\033[0m'.format(mountain_ease_rating))
     print(
         f'Mountain Rating: \033[36m{mountain_difficulty_rating}D, {mountain_ease_rating}E\033[0m')
-    plt.draw()
     return((mountain_difficulty_rating, mountain_ease_rating))
 
 

@@ -177,7 +177,41 @@ def format_map_template(trails: List[dict], lifts: List[dict], mountain: str, di
     add_legend(trails[0], direction, size / 2, bottom_loc)
 
 
-def place_object(object_dict: dict) -> None:
+def format_thumbnail_template(trails: List[dict], lifts: List[dict], direction: str) -> None:
+    """
+    Create the base template for the map
+
+    #### Arguments:
+
+    - trails - list of trail dicts
+    - lifts - list of trail dicts
+    - mountain - name of mountain
+    - direction - what way the mountain faces
+
+    #### Returns:
+
+    - Void
+    """
+    x_length, y_length = find_map_size(trails, lifts)
+    divisor = x_length * 2
+    x_length = x_length / divisor
+    y_length = y_length / divisor
+
+    if 's' in direction or 'n' in direction:
+        temp = x_length
+        x_length = y_length
+        y_length = temp
+
+    plt.subplots(figsize=(x_length*2, ((y_length*2))))
+
+    plt.subplots_adjust(left=0, bottom=0, right=1,
+                        top=1, wspace=0, hspace=0)
+    plt.axis('off')
+    plt.xticks([])
+    plt.yticks([])
+
+
+def place_object(object_dict: dict, place_labels: bool = True) -> None:
     """
     Places objects on the map.
 
@@ -191,6 +225,7 @@ def place_object(object_dict: dict) -> None:
             'direction' (char),
             'color' (str)
             }
+    - place_labels - whether to add trailnames
 
     #### Returns:
 
@@ -212,6 +247,13 @@ def place_object(object_dict: dict) -> None:
     point, ang = get_label_placement(
         object_dict['points_df'][['lat', 'lon', 'coordinates']], len(object_dict['name']), flip_lat_lon)
 
+    fig = plt.gcf()
+    size = fig.get_size_inches()[0] / 3
+    if size > 2:
+        size = 2
+    if size < .4:
+        size = .4
+
     if not flip_lat_lon:
         X = object_dict['points_df'].lat
         Y = object_dict['points_df'].lon
@@ -223,26 +265,27 @@ def place_object(object_dict: dict) -> None:
         lon_mirror = temp
     if not object_dict['is_area']:
         if object_dict['difficulty_modifier'] == 0:
-            plt.plot(X * lat_mirror, Y * lon_mirror, c=object_dict['color'])
+            plt.plot(X * lat_mirror, Y * lon_mirror, c=object_dict['color'], lw=size)
         if object_dict['difficulty_modifier'] > 0:
             plt.plot(X * lat_mirror, Y * lon_mirror,
-                     c=object_dict['color'], linestyle='dashed')
+                     c=object_dict['color'], linestyle='dashed', lw=size)
     if object_dict['is_area']:
         if object_dict['difficulty_modifier'] == 0:
             plt.fill(X * lat_mirror, Y * lon_mirror,
                      alpha=.1, fc=object_dict['color'])
             plt.fill(X * lat_mirror, Y * lon_mirror,
-                     ec=object_dict['color'], fc='none')
+                     ec=object_dict['color'], fc='none', lw=size)
         if object_dict['difficulty_modifier'] > 0:
             plt.fill(X * lat_mirror, Y * lon_mirror,
                      alpha=.1, fc=object_dict['color'])
             plt.fill(X * lat_mirror, Y * lon_mirror,
-                     ec=object_dict['color'], fc='none', linestyle='dashed')
-    if object_dict['color'] == 'gold':
-        object_dict['color'] = 'black'
-    if helper.get_trail_length(object_dict['points_df'].coordinates) > 200:
+                     ec=object_dict['color'], fc='none', linestyle='dashed', lw=size)
+    label_color = object_dict['color']
+    if label_color == 'gold':
+        label_color = 'black'
+    if helper.get_trail_length(object_dict['points_df'].coordinates) > 200 and place_labels:
         plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_dict['name'], {
-            'color': object_dict['color'], 'size': 2, 'rotation': ang}, ha='center',
+            'color': label_color, 'size': 2, 'rotation': ang}, ha='center',
             backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01',
                                                             fc='white', ec='none'))
 
@@ -297,5 +340,15 @@ def add_legend(trail: dict, direction: str, size: float, legend_offset: float) -
     plt.plot(x, y, c='red', label='Expert')
     plt.plot(x, y, c='gold', label='Extreme')
     plt.plot(x, y, c='black', linestyle='dotted', label='Gladed')
-    plt.legend(fontsize=size, loc='lower center', bbox_to_anchor=(
+    leg = plt.legend(fontsize=size, loc='lower center', bbox_to_anchor=(
         0.5, - legend_offset), frameon=False, ncol=3)
+
+    fig = plt.gcf()
+    line_width = fig.get_size_inches()[0] / 3
+    if line_width > 2:
+        line_width = 2
+    if line_width < .4:
+        line_width = .4
+
+    for row in leg.get_lines():
+        row.set_linewidth(line_width)
