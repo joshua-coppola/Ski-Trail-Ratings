@@ -188,6 +188,7 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     - (mountain_difficulty (float), mountain_ease (float))
     """
+
     objects = []
     for entry in lifts:
         lift_name = entry['name']
@@ -232,7 +233,7 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     mapHelper.format_map_template(trails, lifts, mountain, cardinal_direction)
 
-    for i in track(range(len(objects)), description="Creating Map…"):
+    for i in track(range(len(objects)), description="Creating Map…   "):
         mapHelper.place_object(objects[i])
 
     if save:

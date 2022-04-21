@@ -352,3 +352,53 @@ def add_legend(trail: dict, direction: str, size: float, legend_offset: float) -
 
     for row in leg.get_lines():
         row.set_linewidth(line_width)
+
+
+def find_direction(trails: List[dict], lifts: List[dict]):
+    """
+    Finds what direction the map should face
+
+    #### Arguments:
+
+    - trails- dict {
+            'points_df' (dataframe),
+            'name' (str),
+            'is_area' (bool),
+            'difficulty_modifier' (float,)
+            'direction' (char),
+            'color' (str)
+            }
+    - lifts - dict (see trails)
+
+    #### Returns:
+
+    - 'n', 's', 'e', 'w'
+    """
+    max_elevation = {'height': 0, 'lat': 0, 'lon': 0}
+    min_elevation = {'height': 10000, 'lat': 0, 'lon': 0}
+    for trail in trails:
+        for point_ele, point_lat, point_lon in zip(trail['points_df'].elevation, trail['points_df'].lat, trail['points_df'].lon):
+            if max_elevation['height'] < point_ele:
+                max_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+            if min_elevation['height'] > point_ele:
+                min_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+    for lift in lifts:
+        for point_ele, point_lat, point_lon in zip(lift['points_df'].elevation, lift['points_df'].lat, lift['points_df'].lon):
+            if max_elevation['height'] < point_ele:
+                max_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+            if min_elevation['height'] > point_ele:
+                min_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+    lat_difference = max_elevation['lat'] - min_elevation['lat']
+    lon_difference = max_elevation['lon'] - min_elevation['lon']
+
+    ratio = abs(lat_difference / lon_difference)
+
+    if lat_difference < 0 and ratio > 1:
+        return 'n'
+    if lat_difference > 0 and ratio > 1:
+        return 's'
+    if lon_difference < 0 and ratio < 1:
+        return 'w'
+    if lon_difference > 0 and ratio < 1:
+        return 'e'
+

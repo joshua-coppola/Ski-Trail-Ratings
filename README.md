@@ -38,13 +38,12 @@ python3 main.py <ARGS>
 Arguments | Function | Can be used with
 --- | --- | ---
 `-h` | help page | none
-`-s` | save figures | `-[o,i,d,l]`
-`-o`, `--osm` | create map from OSM file | `-[s,i,d,l]`
+`-s` | save figures | `-[o,i,l]`
+`-o`, `--osm` | create map from OSM file | `-[s,i,l]`
 `-c`, `--csv` | create maps for each mountain in mountain_list.csv. Will alway save. | none
 `-g`, `--gpx` | create map from GPX file of a single trail | none
-`-d`, `--direction` | specifies which way a map should face | `-[s,o,i,l]`
-`-i`, `--ignore` | specify a mountain that has been run previously to prevent overlap | `-[s,o,d,l]`
-`-l`, `--location` | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i,d]`
+`-i`, `--ignore` | specify a mountain that has been run previously to prevent overlap | `-[s,o,l]`
+`-l`, `--location` | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i]`
 `-b` | create barplot comparing difficulty between mountains | `-s`
 
 All filename arguments should not contain the file extension.
