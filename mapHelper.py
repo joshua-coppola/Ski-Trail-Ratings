@@ -265,7 +265,8 @@ def place_object(object_dict: dict, place_labels: bool = True) -> None:
         lon_mirror = temp
     if not object_dict['is_area']:
         if object_dict['difficulty_modifier'] == 0:
-            plt.plot(X * lat_mirror, Y * lon_mirror, c=object_dict['color'], lw=size)
+            plt.plot(X * lat_mirror, Y * lon_mirror,
+                     c=object_dict['color'], lw=size)
         if object_dict['difficulty_modifier'] > 0:
             plt.plot(X * lat_mirror, Y * lon_mirror,
                      c=object_dict['color'], linestyle='dashed', lw=size)
@@ -376,22 +377,34 @@ def find_direction(trails: List[dict], lifts: List[dict]):
     """
     max_elevation = {'height': 0, 'lat': 0, 'lon': 0}
     min_elevation = {'height': 10000, 'lat': 0, 'lon': 0}
+
     for trail in trails:
         for point_ele, point_lat, point_lon in zip(trail['points_df'].elevation, trail['points_df'].lat, trail['points_df'].lon):
             if max_elevation['height'] < point_ele:
-                max_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+                max_elevation = {'height': point_ele,
+                                 'lat': point_lat, 'lon': point_lon}
             if min_elevation['height'] > point_ele:
-                min_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+                min_elevation = {'height': point_ele,
+                                 'lat': point_lat, 'lon': point_lon}
     for lift in lifts:
         for point_ele, point_lat, point_lon in zip(lift['points_df'].elevation, lift['points_df'].lat, lift['points_df'].lon):
             if max_elevation['height'] < point_ele:
-                max_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+                max_elevation = {'height': point_ele,
+                                 'lat': point_lat, 'lon': point_lon}
             if min_elevation['height'] > point_ele:
-                min_elevation = {'height': point_ele, 'lat': point_lat, 'lon': point_lon}
+                min_elevation = {'height': point_ele,
+                                 'lat': point_lat, 'lon': point_lon}
+
+    print(max_elevation)
+    print(min_elevation)
+
     lat_difference = max_elevation['lat'] - min_elevation['lat']
     lon_difference = max_elevation['lon'] - min_elevation['lon']
 
     ratio = abs(lat_difference / lon_difference)
+    print(lat_difference)
+    print(lon_difference)
+    print(ratio)
 
     if lat_difference < 0 and ratio > 1:
         return 'n'
@@ -401,4 +414,3 @@ def find_direction(trails: List[dict], lifts: List[dict]):
         return 'w'
     if lon_difference > 0 and ratio < 1:
         return 'e'
-

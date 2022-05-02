@@ -15,8 +15,9 @@ def main(argv):
     bar_flag = False
     blacklist = ''
     location = ''
+    direction = ''
     try:
-        opts, args = getopt.getopt(argv, "hbso:g:ci:l:", [
+        opts, args = getopt.getopt(argv, "hbso:g:d:ci:l:", [
                                    "osm=", "csv", "gpx=", "ignore=", "location="])
     except getopt.GetoptError:
         print(
@@ -28,7 +29,7 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-h':
             print(
-                'main.py -o <inputfile> -i <blacklisted_mountain> -l <state> -s')
+                'main.py -o <inputfile> -d <direction> -i <blacklisted_mountain> -l <state> -s')
             print('main.py -g <inputfile>')
             print('main.py -c -s')
             print('main.py -b -s')
@@ -39,6 +40,8 @@ def main(argv):
         elif opt in ("-g", "--gpx"):
             file = arg
             gpx_flag = True
+        elif opt in ("-d"):
+            direction = arg
         elif opt in ("-c", "--csv"):
             csv_flag = True
         elif opt in ("-i", "--ignore"):
@@ -55,7 +58,7 @@ def main(argv):
         loadData.bulk_osm()
         show_map = False
     elif osm_flag:
-        loadData.osm(file, save_flag, blacklist, location)
+        loadData.osm(file, direction, save_flag, blacklist, location)
     elif gpx_flag:
         gpx.gpx(file)
     if bar_flag:

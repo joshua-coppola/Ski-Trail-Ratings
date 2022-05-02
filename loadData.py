@@ -171,7 +171,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     return (trail_list, lift_list)
 
 
-def process_mountain(mountain: str, save_map: bool = False, blacklist: str = ''):
+def process_mountain(mountain: str, cardinal_direction: str = '', save_map: bool = False, blacklist: str = ''):
     """
     Takes in the general information about the mountain and calls the relevant
     functions to parse the osm, calculate difficulty, and create the map. The
@@ -237,7 +237,8 @@ def process_mountain(mountain: str, save_map: bool = False, blacklist: str = '')
             lift_points['elevation_change'], lift_points['distance'])
         lift['points_df'] = lift_points
 
-    cardinal_direction = mapHelper.find_direction(trail_list, lift_list)
+    if cardinal_direction == '':
+        cardinal_direction = mapHelper.find_direction(trail_list, lift_list)
     mtn_difficulty = saveData.create_map(
         trail_list, lift_list, mountain, cardinal_direction, save_map)
     if mtn_difficulty == -1:
@@ -259,7 +260,7 @@ def process_mountain(mountain: str, save_map: bool = False, blacklist: str = '')
     return output
 
 
-def osm(mountain: str, save_map: bool = False, blacklist: str = '', location: str = ''):
+def osm(mountain: str, direction: str, save_map: bool = False, blacklist: str = '', location: str = ''):
     """
     Takes in the general information about the mountain, fills in missing information
     if it is stored from missing runs, calls process mountain, then saves the results
@@ -268,6 +269,7 @@ def osm(mountain: str, save_map: bool = False, blacklist: str = '', location: st
     #### Arguments:
 
     - mountain - name of mountain/ OSM file
+    - direction - orientation of the mountain
     - save_map - whether to save the map (default - false)
     - blacklist - name of a ski area to ignore the trails for
         - if blacklist == mountain, only trails previously found for the mountain
@@ -298,12 +300,17 @@ def osm(mountain: str, save_map: bool = False, blacklist: str = '', location: st
         value = mountain_row.state.to_list()[0]
         if str(value) != 'nan':
             location = value
+    if direction == '' and previously_run:
+        value = mountain_row.direction.to_list()[0]
+        if str(value) != 'nan':
+            direction = value
     mountain_attributes = process_mountain(
-        mountain, save_map, blacklist)
+        mountain, direction, save_map, blacklist)
     if mountain_attributes == -1:
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
+        print(mountain_attributes['direction'])
         row = [[helper.format_name(mountain), f'{mountain}.osm', mountain_attributes['direction'], location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
                 mountain_attributes['vertical'], mountain_attributes['trail_count'], mountain_attributes['lift_count'], blacklist]]
         if previously_run:
