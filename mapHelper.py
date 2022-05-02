@@ -395,16 +395,10 @@ def find_direction(trails: List[dict], lifts: List[dict]):
                 min_elevation = {'height': point_ele,
                                  'lat': point_lat, 'lon': point_lon}
 
-    print(max_elevation)
-    print(min_elevation)
-
     lat_difference = max_elevation['lat'] - min_elevation['lat']
     lon_difference = max_elevation['lon'] - min_elevation['lon']
 
     ratio = abs(lat_difference / lon_difference)
-    print(lat_difference)
-    print(lon_difference)
-    print(ratio)
 
     if lat_difference < 0 and ratio > 1:
         return 'n'
