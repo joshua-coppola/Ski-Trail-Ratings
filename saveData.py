@@ -10,6 +10,7 @@ import mapHelper
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
+
 def cache_trail_points(filename: str, list_dfs: pd.DataFrame) -> None:
     """
     Takes a list of trails and saves them to a cache file to prevent unneeded API calls
@@ -126,6 +127,7 @@ def save_attributes(filename: str, trail_list: List[dict], lift_list: List[dict]
     trail_df.to_csv('cached/trails/{}'.format(filename), index=False)
     lift_df.to_csv('cached/lifts/{}'.format(filename), index=False)
 
+
 def save_bounding_box(filename: str, trails: List[dict], lifts: List[dict]):
     """
     Saves a CSV with 4 rows of latitude and longitude marking a square perimeter around
@@ -163,6 +165,7 @@ def save_bounding_box(filename: str, trails: List[dict], lifts: List[dict]):
     df['latitude'] = lat
     df['longitude'] = lon
     df.to_csv('cached/bounding_boxes/{}'.format(filename), index=False)
+
 
 def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_direction: str, save: bool = False) -> Tuple[float, float]:
     """
@@ -250,7 +253,7 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
     if save:
         plt.savefig(
             'figures/thumbnails/{}.svg'.format(helper.format_name(mountain)), format='svg')
-    
+
     rating_list.sort(reverse=True)
     long_list = 30
     if len(rating_list) < 30:
@@ -259,7 +262,6 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
     mountain_difficulty_rating = (
         (sum(hard_list[0])/long_list) * .2) + ((sum(hard_list[1])/5) * .8)
     mountain_difficulty_rating = round(mountain_difficulty_rating, 1)
-    #print('\033[36mDifficultly Rating: {}\033[0m'.format(mountain_difficulty_rating))
     rating_list.sort()
     easy_list = [rating_list[0:long_list], rating_list[0:5]]
     mountain_ease_rating = (
@@ -268,7 +270,6 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
 
     plt.draw()
 
-    #print('\033[36mBeginner Friendliness Rating: {}\033[0m'.format(mountain_ease_rating))
     print(
         f'Mountain Rating: \033[36m{mountain_difficulty_rating}D, {mountain_ease_rating}E\033[0m')
     return((mountain_difficulty_rating, mountain_ease_rating))

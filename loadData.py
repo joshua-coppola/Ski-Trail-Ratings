@@ -310,7 +310,6 @@ def osm(mountain: str, direction: str, save_map: bool = False, blacklist: str = 
         return -1
     if save_map and exists('mountain_list.csv'):
         # row = (mountain, direction, state, region, difficulty, ease, vert, trail_count, lift_count, blacklist)
-        print(mountain_attributes['direction'])
         row = [[helper.format_name(mountain), f'{mountain}.osm', mountain_attributes['direction'], location, helper.assign_region(location), mountain_attributes['difficulty'], mountain_attributes['ease'],
                 mountain_attributes['vertical'], mountain_attributes['trail_count'], mountain_attributes['lift_count'], blacklist]]
         if previously_run:
