@@ -347,7 +347,7 @@ def bulk_osm(input_csv: str = 'mountain_list.csv'):
     for row in mountain_info_df.itertuples():
         if row.mountain[0] == '#':
             continue
-        osm(row.file_name.split('.')[0], True, row.blacklist, row.state)
+        osm(row.file_name.split('.')[0], row.direction, True, row.blacklist, row.state)
 
 
 def barplot(save_output: bool = False):
