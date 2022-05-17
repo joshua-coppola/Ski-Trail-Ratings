@@ -10,6 +10,53 @@ from math import degrees, atan
 from requests.api import get
 
 
+def osm_api(bounding_box: str):
+    """
+    Helper function for fetching OSM files when coordinates are provided. Accepts 
+    a comma separated string of min_lon, min_lat, max_lon, max_lat. 
+
+    Ex: '-72.7867,43.3652,-72.6727,43.4469'
+
+    #### Arguments:
+
+    - bounding_box: string of coordinates in the form outlined above
+
+    #### Returns:
+
+    - OSM text blob
+    - None in case of failure
+    """
+    url = f'https://overpass-api.de/api/map?bbox={bounding_box}'
+    response = get(url)
+    if response.status_code == 200:
+        return response.content
+    else:
+        print('OSM API call failed with code:')
+        print(response.status_code)
+        print(response.content)
+        return None
+
+
+def create_osm_bounding_box(latitude: float, longitude: float) -> str:
+    """
+    Creates the bounding box string used in the OSM API query made by osm_api
+
+    #### Arguments:
+
+    - latitude: float - center of mountain lat
+    - longitude: float - center of mountain lon
+
+    #### Returns:
+
+    - formatted string ready for osm_api
+    """
+    min_lon = longitude - .05
+    min_lat = latitude - .05
+    max_lon = longitude + .05
+    max_lat = latitude + .05
+    return f'{min_lon},{min_lat},{max_lon},{max_lat}'
+
+
 def elevation_api(piped_coords: str, last_called: float, trailname: str = '') -> Tuple[list, float]:
     """
     Helper function for get_elevation. Accepts piped_coords, timestamp, and
@@ -26,7 +73,6 @@ def elevation_api(piped_coords: str, last_called: float, trailname: str = '') ->
 
     - (elevation (list), last_called (time.time()))
     """
-    # url = 'https://api.open-elevation.com/api/v1/lookup?locations={}'
     url = 'https://api.opentopodata.org/v1/ned10m?locations={}'
     # url = 'https://api.opentopodata.org/v1/mapzen?locations={}'
     if time.time() - last_called < 1:

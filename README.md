@@ -5,7 +5,7 @@ This program accepts a OSM or GPX file of a ski trail (OSM or GPX) or ski area (
 The ratings are created by evaluating the average of the steepest 60 meter stretch on the trail in degrees. If the trail is gladed, it will then have a modifier applied that adds 7 degrees to approximate the difficulty increase of glades compared to an open ski slope of the same pitch. The table of ratings can be seen below.
 
 | Pitch (in degrees) | Difficulty      | Color on Map |
-| ------------------ | --------------- | ------------ |
+|--------------------|-----------------|--------------|
 | 0-17               | beginner        | green        |
 | 17-24              | intermediate    | blue         |
 | 24-30              | advanced        | black        |
@@ -37,16 +37,17 @@ A CSV file may be provided where each line contains the necessary information to
 python3 main.py <ARGS>
 ```
 
-| Arguments          | Function                                                                                                            | Can be used with |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `-h`               | help page                                                                                                           | none             |
-| `-s`               | save figures                                                                                                        | `-[o,i,l]`       |
-| `-o`, `--osm`      | create map from OSM file                                                                                            | `-[s,i,l]`       |
-| `-c`, `--csv`      | create maps for each mountain in mountain_list.csv. Will alway save.                                                | none             |
-| `-g`, `--gpx`      | create map from GPX file of a single trail                                                                          | none             |
-| `-i`, `--ignore`   | specify a mountain that has been run previously to prevent overlap                                                  | `-[s,o,l]`       |
-| `-l`, `--location` | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i]`       |
-| `-b`               | create bar plot comparing difficulty between mountains                                                              | `-s`             |
+| Arguments             | Function                                                                                                            | Can be used with |
+|-----------------------|---------------------------------------------------------------------------------------------------------------------|------------------|
+| `-h`                  | help page                                                                                                           | none             |
+| `-s`                  | save figures                                                                                                        | `-[o,i,l]`       |
+| `-o`, `--osm`         | create map from OSM file                                                                                            | `-[s,i,l]`       |
+| `-c`, `--csv`         | create maps for each mountain in mountain_list.csv. Will alway save.                                                | none             |
+| `-f`, `--fetch-files` | create maps without a provided OSM file. Instead, it uses a CSV with the name of the mountain, and the coordinates. | none             |
+| `-g`, `--gpx`         | create map from GPX file of a single trail                                                                          | none             |
+| `-i`, `--ignore`      | specify a mountain that has been run previously to prevent overlap                                                  | `-[s,o,l]`       |
+| `-l`, `--location`    | specify the state where the mountain is located. For multiple states, add quotes and add a space between each state | `-[s,o,i]`       |
+| `-b`                  | create bar plot comparing difficulty between mountains                                                              | `-s`             |
 
 All filename arguments should not contain the file extension.
 
@@ -70,6 +71,5 @@ Areas are converted into a line with mixed results. Additional logic would proba
 
 Add support for international ski areas by adding logic to switch to alternative elevation sources when outside the US.
 
-Provide method to provide mountain coordinates and get back an OSM file from Open Street Maps's API.
-
 Add Windows support.
+

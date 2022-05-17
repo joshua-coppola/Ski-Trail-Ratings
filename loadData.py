@@ -60,12 +60,12 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     #saveData.save_attributes(parsed_osm['attribute_list'], mountain + '.csv')
 
     cached = True
-    if not exists('cached/trail_points/{}'.format(cached_filename)) and cached:
+    if not exists('cached/trail_points/{}'.format(cached_filename)):
         cached = False
         print('Disabling trail cache loading: missing trail cache file.')
 
     lift_cached = True
-    if not exists('cached/lift_points/{}'.format(cached_filename)) and cached:
+    if not exists('cached/lift_points/{}'.format(cached_filename)):
         lift_cached = False
         print('Disabling lift cache loading: missing lift cache file.')
 
@@ -260,7 +260,7 @@ def process_mountain(mountain: str, cardinal_direction: str = '', save_map: bool
     return output
 
 
-def osm(mountain: str, direction: str, save_map: bool = False, blacklist: str = '', location: str = ''):
+def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: str = '', location: str = ''):
     """
     Takes in the general information about the mountain, fills in missing information
     if it is stored from missing runs, calls process mountain, then saves the results
@@ -347,7 +347,8 @@ def bulk_osm(input_csv: str = 'mountain_list.csv'):
     for row in mountain_info_df.itertuples():
         if row.mountain[0] == '#':
             continue
-        osm(row.file_name.split('.')[0], row.direction, True, row.blacklist, row.state)
+        osm(row.file_name.split('.')[
+            0], row.direction, True, row.blacklist, row.state)
 
 
 def barplot(save_output: bool = False):
@@ -382,3 +383,35 @@ def barplot(save_output: bool = False):
         temp_df = df.loc[df['region'] == region]
         saveData.create_difficulty_barplot(
             temp_df, helper.format_name(region), save_output)
+
+
+def create_osm(filename: str = 'mountain_coords.csv'):
+    """
+
+    """
+    if not exists(filename):
+        print('No file found')
+        return
+    df = pd.read_csv(filename)
+    for row in df.itertuples():
+        if row.name[0] == '#':
+            continue
+        bounding_box = helper.create_osm_bounding_box(
+            row.latitude, row.longitude)
+        print(bounding_box)
+
+        osm_file = helper.osm_api(bounding_box)
+
+        if osm_file != None:
+            f = open(f'osm/{row.name}.osm', 'wb')
+            f.write(osm_file)
+            f.close()
+        else:
+            time.sleep(5)
+            osm_file = helper.osm_api(bounding_box)
+
+            f = open(f'osm/{row.name}.osm', 'wb')
+            f.write(osm_file)
+            f.close()
+
+        osm(row.name, '', True, '', row.state)

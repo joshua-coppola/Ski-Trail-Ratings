@@ -335,12 +335,12 @@ def add_legend(trail: dict, direction: str, size: float, legend_offset: float) -
 
     x *= lat_mirror
     y *= lon_mirror
-    plt.plot(x, y, c='green', label='Easy')
-    plt.plot(x, y, c='royalblue', label='Intermediate')
-    plt.plot(x, y, c='black', label='Advanced')
-    plt.plot(x, y, c='red', label='Expert')
-    plt.plot(x, y, c='gold', label='Extreme')
-    plt.plot(x, y, c='black', linestyle='dotted', label='Gladed')
+    plt.plot(x, y, c='green', lw=0.001, label='Easy')
+    plt.plot(x, y, c='royalblue', lw=0.001, label='Intermediate')
+    plt.plot(x, y, c='black', lw=0.001, label='Advanced')
+    plt.plot(x, y, c='red', lw=0.001, label='Expert')
+    plt.plot(x, y, c='gold', lw=0.001, label='Extreme', )
+    plt.plot(x, y, c='black', lw=0.001, linestyle='dotted', label='Gladed')
     leg = plt.legend(fontsize=size, loc='lower center', bbox_to_anchor=(
         0.5, - legend_offset), frameon=False, ncol=3)
 
