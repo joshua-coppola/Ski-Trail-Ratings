@@ -317,7 +317,7 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
             output = mountain_df
         else:
             row = pd.Series(row[0], index=mountain_df.columns)
-            output = mountain_df.append(row, ignore_index=True)
+            output_df = pd.concat([output_df, row])
             output.sort_values(by=['mountain'], inplace=True)
         output['trail_count'] = output['trail_count'].astype(int)
         output['lift_count'] = output['lift_count'].astype(int)
