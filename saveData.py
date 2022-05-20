@@ -4,6 +4,7 @@ import pandas as pd
 from pip._vendor.rich.progress import track
 from typing import List
 from typing import Tuple
+from os.path import exists
 
 import helper
 import mapHelper
@@ -253,6 +254,9 @@ def create_map(trails: List[dict], lifts: List[dict], mountain: str, cardinal_di
     if save:
         plt.savefig(
             'figures/thumbnails/{}.svg'.format(helper.format_name(mountain)), format='svg')
+        if exists('../star-maps/static/thumbnails'):
+            plt.savefig(
+                '../star-maps/static/thumbnails/{}.svg'.format(helper.format_name(mountain)), format='svg')
 
     rating_list.sort(reverse=True)
     long_list = 30

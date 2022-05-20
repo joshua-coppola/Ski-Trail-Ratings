@@ -27,6 +27,7 @@ def osm_api(bounding_box: str):
     - None in case of failure
     """
     url = f'https://overpass-api.de/api/map?bbox={bounding_box}'
+    print('Fetching OSM file...')
     response = get(url)
     if response.status_code == 200:
         return response.content
@@ -50,6 +51,8 @@ def create_osm_bounding_box(latitude: float, longitude: float) -> str:
 
     - formatted string ready for osm_api
     """
+    latitude = float(latitude)
+    longitude = float(longitude)
     min_lon = longitude - .05
     min_lat = latitude - .05
     max_lon = longitude + .05

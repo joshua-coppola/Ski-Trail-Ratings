@@ -399,7 +399,6 @@ def create_osm(filename: str = 'mountain_coords.csv'):
             continue
         bounding_box = helper.create_osm_bounding_box(
             row.latitude, row.longitude)
-        print(bounding_box)
 
         osm_file = helper.osm_api(bounding_box)
 

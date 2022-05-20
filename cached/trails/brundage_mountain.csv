@@ -1,0 +1,83 @@
+name,id,is_area,difficulty,difficulty_modifier,steepest_pitch,vert,length
+Hidden Valley Road,13698351,False,11.7,0,11.7,75.1,660.5
+Centennial Lane,13698544,False,8.9,0,8.9,48.8,714.9
+South Lodge Lane,13712454,False,8.3,0,8.3,26.9,318.6
+South Lodge Lane_0,13715867,False,9.2,0,9.2,7.5,103.4
+South Lodge Lane_1,13716331,False,14.1,0,14.1,39.8,452.7
+Red Fox,13719649,False,18.9,0,18.9,78.8,297.3
+Lakeview Ridge,13724934,False,11.3,0,11.3,11.1,77.8
+South Lodge Lane_2,13728552,False,7.9,0,7.9,54.4,685.3
+Main Street,320445543,False,21.6,0,21.6,460.8,1708.6
+The Face,320445681,False,27.9,0,27.9,132.0,365.8
+Temptation,342388430,False,22.0,0,22.0,95.8,335.9
+Bear Terrain Park,342388431,False,15.7,0,15.7,50.3,284.0
+45th Parallel,342388432,False,24.1,0,24.1,436.4,1725.2
+Alpine,342388434,False,24.2,0,24.2,323.4,997.2
+Badger,342388435,False,19.2,0,19.2,62.8,230.5
+Bear,342388436,False,18.5,0,18.5,187.8,996.9
+Bee Line,342388437,False,24.7,0,24.7,127.5,363.6
+Boydstun Lane,342388438,False,12.6,0,12.6,118.4,1187.3
+Celebration,342388440,False,24.5,0,24.5,124.2,380.2
+Dixie,342388441,False,28.0,0,28.0,172.7,445.4
+Dropline,342388442,False,23.2,0,23.2,195.9,678.6
+Easy Street,342388443,False,11.3,0,11.3,27.5,227.9
+Engen,342388444,False,23.0,0,23.0,358.3,1007.2
+Griz,342388445,False,16.9,0,16.9,122.6,499.1
+Hotshot,342388446,False,24.0,0,24.0,216.1,751.2
+Jammer,342388447,False,17.7,0,17.7,146.0,617.9
+Kickback,342388448,False,23.2,0,23.2,230.6,1163.2
+Lakeview Ridge_3,342388449,False,18.0,0,18.0,105.3,437.8
+Lakeview Ridge_4,342388450,False,8.3,0,8.3,5.6,48.0
+Race Course,342388451,False,26.4,0,26.4,99.6,294.9
+Red Fox_5,342388452,False,6.6,0,6.6,7.5,78.0
+Sensation,342388453,False,22.9,0,22.9,116.2,359.8
+Sidewinder,342388454,False,21.2,0,21.2,168.7,527.9
+Skid Row,342388455,False,23.9,0,23.9,115.2,289.3
+Skidaddle,342388456,False,29.1,0,29.1,75.8,196.7
+Springboard,342388457,False,19.5,0,19.5,105.4,436.4
+Stump,342388458,False,22.1,0,22.1,128.4,415.2
+Swinger,342388459,False,25.2,0,25.2,155.9,442.4
+Temptation_6,342388460,False,17.5,0,17.5,155.8,922.8
+Temptation_7,342388461,False,7.1,0,7.1,25.0,531.4
+Warren's Way,342388463,False,25.1,0,25.1,177.9,561.2
+South Lodge Lane_8,342388464,False,6.5,0,6.5,23.2,302.8
+Judd's Gem,550188901,False,20.2,0,20.2,215.2,976.6
+Upper Slobovia,550188902,False,24.2,0,24.2,210.5,722.4
+North,550188903,False,24.6,0,24.6,314.6,1179.6
+Rodeo,550188904,False,19.5,0,19.5,165.2,767.1
+Stair Step,550188905,False,24.8,0,24.8,237.1,725.9
+North Boundary Trail,550188908,False,15.6,0,15.6,165.2,1129.3
+Deadwood Shred Park,550188909,False,25.5,0,25.5,192.1,641.0
+Johnny's Glade,550189561,True,19.9,1,19.9,84.0,432.1
+Rappel,767376792,False,35.1,0,35.1,73.8,150.8
+Roller Coaster,767376793,False,8.7,0,8.7,21.3,241.8
+Pizza Pie,767376794,False,13.5,0,13.5,14.5,67.0
+Slot Car,767376796,False,24.1,0,24.1,115.7,388.8
+Lower North,767376797,False,21.0,0,21.0,129.5,738.0
+Lower Rodeo,767376798,False,20.1,0,20.1,89.9,498.5
+Northwest Passage,767376799,False,41.2,0,41.2,249.5,968.3
+Goat Trail,767376800,False,14.6,0,14.6,50.9,329.7
+Ranger Trail,767376801,False,30.6,0,30.6,254.9,919.0
+Chipmunk,767376802,False,19.0,0,19.0,33.9,130.1
+Easy Way,767376804,False,12.8,0,12.8,41.6,301.2
+French Fry,767376805,False,11.4,0,11.4,13.8,95.8
+Meadow Bowl,767411272,False,28.4,0,28.4,337.5,1003.3
+South Lodge Lane_9,797131379,False,26.6,0,26.6,115.8,1083.2
+South Lodge Lane_10,797131382,False,10.3,0,10.3,86.6,1073.7
+Exit 8,797131384,False,6.6,0,6.6,6.6,86.2
+ _11,872011751,False,22.6,0,22.6,75.9,196.8
+Lakeview Ridge_12,872803353,False,7.1,0,7.1,8.1,145.0
+ _13,889055892,False,3.6,0,3.6,0.7,9.8
+South Lodge Lane_14,889055893,False,7.5,0,7.5,3.1,35.2
+Hidden Valley,889055894,False,22.2,0,22.2,39.7,196.0
+Chinook Chute,889055895,False,40.3,0,40.3,97.0,190.4
+Dry Fly,889055896,False,39.2,0,39.2,64.3,149.6
+Hippie Flats,889055897,False,28.1,0,28.1,62.0,169.5
+Funnel,889055898,False,25.2,0,25.2,61.7,198.4
+Hey Diddle Diddle,889055899,False,16.9,0,16.9,69.7,306.6
+Valley Girl,889055900,False,24.3,0,24.3,81.2,383.6
+Lower Slots,889055901,False,30.8,0,30.8,42.2,107.9
+The Slots,889055902,False,37.8,0,37.8,105.5,184.4
+Slots Gully,889055903,False,26.4,0,26.4,57.7,276.3
+Aspen Patch,889055904,False,28.3,0,28.3,77.2,215.4
+Lower Alpine,889055905,False,22.0,0,22.0,117.0,514.7
