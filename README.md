@@ -71,4 +71,6 @@ Areas are converted into a line with mixed results. Additional logic would proba
 
 Add support for international ski areas by adding logic to switch to alternative elevation sources when outside the US.
 
-Add Windows support.
+### To Fix
+
+Kendall Mountain - title and sources get cutoff

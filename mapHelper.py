@@ -284,7 +284,7 @@ def place_object(object_dict: dict, place_labels: bool = True) -> None:
     label_color = object_dict['color']
     if label_color == 'gold':
         label_color = 'black'
-    if helper.get_trail_length(object_dict['points_df'].coordinates) > 200 and place_labels:
+    if helper.get_trail_length(object_dict['points_df'].coordinates) > 75 and place_labels:
         plt.text(X[point] * lat_mirror, Y[point] * lon_mirror, object_dict['name'], {
             'color': label_color, 'size': 2, 'rotation': ang}, ha='center',
             backgroundcolor='white', va='center', bbox=dict(boxstyle='square,pad=0.01',

@@ -35,7 +35,7 @@ def generate_trails_and_lifts(mountain: str, blacklist: str = ''):
     if not exists('cached/trails/{}.csv'.format(blacklist)) and blacklist != '':
         print('Blacklist file missing')
 
-    file = open('osm/{}'.format(filename), 'r')
+    file = open('osm/{}'.format(filename), 'r', encoding='utf8')
     raw_table = file.readlines()
 
     if blacklist != '':
@@ -317,10 +317,11 @@ def osm(mountain: str, direction: str = '', save_map: bool = False, blacklist: s
             output = mountain_df
         else:
             row = pd.Series(row[0], index=mountain_df.columns)
-            output_df = pd.concat([output_df, row])
+            mountain_df.loc[-1] = row
+            output = mountain_df
             output.sort_values(by=['mountain'], inplace=True)
-        output['trail_count'] = output['trail_count'].astype(int)
-        output['lift_count'] = output['lift_count'].astype(int)
+        output['trail_count'] = output['trail_count'].astype("Int64")
+        output['lift_count'] = output['lift_count'].astype("Int64")
         output.to_csv('mountain_list.csv', index=False)
     else:
         print('Mountain data not saved. If this is unexpected, please make sure you have a file called mountain_list.csv')

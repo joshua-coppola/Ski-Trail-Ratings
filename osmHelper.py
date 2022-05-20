@@ -56,7 +56,7 @@ def process_way_tags(line: str, trail_attributes: dict) -> dict:
     if 'Glade' in line and not trail_attributes['is_glade']:
         trail_attributes['difficulty_modifier'] += 1
         trail_attributes['is_glade'] = True
-    if '<tag k="aerialway"' in line and not 'v="zip_line"' in line and not 'v="station"' in line:
+    if '<tag k="aerialway"' in line and not 'v="zip_line"' in line and not 'v="station"' in line and not 'v="goods"' in line:
         trail_attributes['is_lift'] = True
     if 'Tree Skiing' in line and not trail_attributes['is_glade']:
         trail_attributes['difficulty_modifier'] += 1
