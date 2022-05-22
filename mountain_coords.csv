@@ -1,14 +1,9 @@
-name,state,latitude,longitude
-bald_mountain,ID,46.57,-115.87
-brundage_mountain,ID,45.005,-116.155
-cottonwood_butte,ID,46.0755,-116.4528
-little_ski_hill,ID,44.93,-116.163056
-lookout_pass,ID,47.453,-115.707
-lost_trail_powder_mountain,ID,45.692,-113.952
-magic_mountain,ID,42.188306,-114.286111
-pebble_creek,ID,42.778,-112.16
-pomerelle,ID,42.318,-113.608
-rotarun,ID,43.4975,-114.366
-silver_mountain,ID,47.495,-116.135
-snowhaven,ID,45.869,-116.09
-soldier_mountain,ID,43.485,-114.83
+name,state,latitude,longitude,size
+bear_paw,MT,48.1644, -109.670219,s
+blacktail_mountain,MT,48.013056, -114.246944,s
+great_divide,MT,46.7497, -112.3043,m
+maverick_mountain,MT,45.435, -113.129444,s
+red_lodge_mountain,MT,45.191, -109.335,m
+showdown,MT,46.838611, -110.708889,s
+teton_pass,MT,47.928056, -112.815278,s
+turner_mountain,MT,48.605, -115.63,s

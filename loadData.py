@@ -388,7 +388,16 @@ def barplot(save_output: bool = False):
 
 def create_osm(filename: str = 'mountain_coords.csv'):
     """
+    Takes a csv filename and fetches an OSM file for each row of coordinates,
+    then creates a map of each resort
 
+    #### Arguments:
+
+    - filename: name of a csv file with name, state, latitude, longitude, and size (s,m,l,xl)
+
+    #### Returns:
+
+    - None
     """
     if not exists(filename):
         print('No file found')
@@ -397,8 +406,16 @@ def create_osm(filename: str = 'mountain_coords.csv'):
     for row in df.itertuples():
         if row.name[0] == '#':
             continue
+        size = 1
+        if row.size == 's':
+            size = .6
+        if row.size == 'l':
+            size = 1.5
+        if row.size == 'xl':
+            size = 2
+
         bounding_box = helper.create_osm_bounding_box(
-            row.latitude, row.longitude)
+            row.latitude, row.longitude, size)
 
         osm_file = helper.osm_api(bounding_box)
 
