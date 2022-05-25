@@ -40,6 +40,8 @@ def process_way_tags(line: str, trail_attributes: dict) -> dict:
         trail_attributes['is_backcountry'] = True
     if '<tag k="piste:type" v="hike"/>' in line:
         trail_attributes['is_backcountry'] = True
+    if '<tag k="mtb:scale:imba"' in line:
+        trail_attributes['is_backcountry'] = True
     if '<tag k="gladed" v="yes"/>' in line and not trail_attributes['is_glade']:
         trail_attributes['difficulty_modifier'] += 1
         trail_attributes['is_glade'] = True

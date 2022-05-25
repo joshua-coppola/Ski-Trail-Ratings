@@ -174,6 +174,18 @@ def format_map_template(trails: List[dict], lifts: List[dict], mountain: str, di
         size = 16
     plt.gcf().text(0.5, 0, 'Sources: USGS and OpenStreetMaps',
                    fontsize=size/2.3, ha='center', va='bottom')
+
+    # Compass Rose
+    rotate = 0
+    if direction == 's':
+        rotate = 180
+    if direction == 'w':
+        rotate = -90
+    if direction == 'e':
+        rotate = 90
+    plt.gcf().text(.1, .1, '\u25b2\n\u25c1 N \u25b7\n\u25bd',
+                   ha='center', va='center', rotation=rotate, fontsize=size * .7)
+
     add_legend(trails[0], direction, size / 2, bottom_loc)
 
 
